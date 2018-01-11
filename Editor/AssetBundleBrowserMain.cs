@@ -40,7 +40,7 @@ namespace AssetBundleBrowser
         const float k_ToolbarPadding = 15;
         const float k_MenubarPadding = 32;
 
-        BuildMainData m_Data;
+        MainData m_Data;
 
         [MenuItem("Window/AssetBundle Browser", priority = 2050)]
         static void ShowWindow()
@@ -283,15 +283,19 @@ namespace AssetBundleBrowser
             {
                 BinaryFormatter bf = new BinaryFormatter();
                 FileStream file = File.Open(dataPath, FileMode.Open);
-                var data = bf.Deserialize(file) as BuildMainData;
+                var data = bf.Deserialize(file) as MainData;
                 if (data != null)
                     m_Data = data;
                 file.Close();
             }
+            if (m_Data == null)
+            {
+                m_Data = new MainData();
+            }
         }
 
         [System.Serializable]
-        public class BuildMainData
+        public class MainData
         {
             public string dataSource;
         }
