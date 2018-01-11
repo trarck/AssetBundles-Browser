@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 
 using YH.AssetManager;
+using UnityEngine;
 
 namespace AssetBundleBrowser.AssetBundleDataSource
 {
