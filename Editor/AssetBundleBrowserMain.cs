@@ -229,7 +229,6 @@ namespace AssetBundleBrowser
                             if (index > 0)
                                 menu.AddSeparator("");
                              
-                            var counter = index;
                             menu.AddItem(new GUIContent(string.Format("{0} ({1})", ds.Name, ds.ProviderName)), false,
                                 () =>
                                 {
