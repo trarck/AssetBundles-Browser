@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
 using UnityEditor;
 using UnityEngine;
 
@@ -38,6 +40,8 @@ namespace AssetBundleBrowser
         const float k_ToolbarPadding = 15;
         const float k_MenubarPadding = 32;
 
+        BuildMainData m_Data;
+
         [MenuItem("Window/AssetBundle Browser", priority = 2050)]
         static void ShowWindow()
         {
@@ -60,6 +64,7 @@ namespace AssetBundleBrowser
 
         private void OnEnable()
         {
+            LoadData();
 
             Rect subPos = GetSubWindowArea();
             if(m_ManageTab == null)
@@ -85,10 +90,28 @@ namespace AssetBundleBrowser
             {
                 m_DataSourceList.AddRange(info.GetMethod("CreateDataSources").Invoke(null, null) as List<AssetBundleDataSource.ABDataSource>);
             }
-             
+
             if (m_DataSourceList.Count > 1)
             {
                 multiDataSource = true;
+
+                if (!string.IsNullOrEmpty(m_Data.dataSource))
+                {
+                    for (int i = 0; i < m_DataSourceList.Count; ++i)
+                    {
+                        if (m_DataSourceList[i].Name.Equals(m_Data.dataSource, System.StringComparison.CurrentCultureIgnoreCase))
+                        {
+                            m_DataSourceIndex = i;
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    m_DataSourceIndex = 0;
+                    m_Data.dataSource = m_DataSourceList[0].Name;
+                }
+
                 if (m_DataSourceIndex >= m_DataSourceList.Count)
                     m_DataSourceIndex = 0;
                 AssetBundleModel.Model.DataSource = m_DataSourceList[m_DataSourceIndex];
@@ -96,6 +119,8 @@ namespace AssetBundleBrowser
         }
         private void OnDisable()
         {
+            SaveData();
+
             if (m_BuildTab != null)
                 m_BuildTab.OnDisable();
             if (m_InspectTab != null)
@@ -208,9 +233,9 @@ namespace AssetBundleBrowser
                             menu.AddItem(new GUIContent(string.Format("{0} ({1})", ds.Name, ds.ProviderName)), false,
                                 () =>
                                 {
-                                    m_DataSourceIndex = counter;
                                     var thisDataSource = ds;
                                     AssetBundleModel.Model.DataSource = thisDataSource;
+                                    m_Data.dataSource = thisDataSource.Name;
                                     m_ManageTab.ForceReloadData();
                                 }
                             );
@@ -235,6 +260,40 @@ namespace AssetBundleBrowser
             }
         }
 
+        void SaveData()
+        {
+            var dataPath = System.IO.Path.GetFullPath(".");
+            dataPath = dataPath.Replace("\\", "/");
+            dataPath += "/" + AssetBundleConstans.MainSetting;
 
+            BinaryFormatter bf = new BinaryFormatter();
+            FileStream file = File.Create(dataPath);
+
+            bf.Serialize(file, m_Data);
+            file.Close();
+        }
+
+        void LoadData()
+        {
+            var dataPath = System.IO.Path.GetFullPath(".");
+            dataPath = dataPath.Replace("\\", "/");
+            dataPath += "/" + AssetBundleConstans.MainSetting;
+
+            if (File.Exists(dataPath))
+            {
+                BinaryFormatter bf = new BinaryFormatter();
+                FileStream file = File.Open(dataPath, FileMode.Open);
+                var data = bf.Deserialize(file) as BuildMainData;
+                if (data != null)
+                    m_Data = data;
+                file.Close();
+            }
+        }
+
+        [System.Serializable]
+        public class BuildMainData
+        {
+            public string dataSource;
+        }
     }
 }

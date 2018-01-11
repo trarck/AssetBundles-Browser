@@ -254,6 +254,14 @@ namespace AssetBundleBrowser.AssetBundleModel
         protected bool m_IsSceneBundle;
         protected long m_TotalSize;
 
+        public long size
+        {
+            get
+            {
+                return m_TotalSize;
+            }
+        }
+
         internal BundleDataInfo(string name, BundleFolderInfo parent) : base(name, parent)
         {
             m_ConcreteAssets = new List<AssetInfo>();
@@ -544,6 +552,11 @@ namespace AssetBundleBrowser.AssetBundleModel
         internal override List<AssetInfo> GetDependencies()
         {
             return m_DependentAssets;
+        }
+
+        public List<AssetInfo> GetConcretes()
+        {
+            return m_ConcreteAssets;
         }
     }
 
