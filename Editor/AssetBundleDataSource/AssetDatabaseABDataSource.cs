@@ -77,8 +77,13 @@ namespace AssetBundleBrowser.AssetBundleDataSource
             get { return true; } 
         }
 
-        public bool BuildAssetBundles(ABBuildInfo info)
-        {
+        public bool BuildAssetBundles (ABBuildInfo info) {
+            if(info == null)
+            {
+                Debug.Log("Error in build");
+                return false;
+            }
+
             var buildManifest = BuildPipeline.BuildAssetBundles(info.outputDirectory, info.options, info.buildTarget);
 
             if (buildManifest == null)
