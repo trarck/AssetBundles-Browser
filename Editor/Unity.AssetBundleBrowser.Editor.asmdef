@@ -1,9 +1,12 @@
 {
     "name": "Unity.AssetBundleBrowser.Editor",
     "references": [
+        "AssetManager"
     ],
+    "optionalUnityReferences": [],
     "includePlatforms": [
         "Editor"
     ],
-    "excludePlatforms": []
+    "excludePlatforms": [],
+    "allowUnsafeCode": false
 }
