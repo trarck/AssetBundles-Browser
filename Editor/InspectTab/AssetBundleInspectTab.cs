@@ -112,7 +112,7 @@ namespace AssetBundleBrowser
 
             if (Application.isPlaying)
             {
-                var style = GUI.skin.label;
+                var style = new GUIStyle(GUI.skin.label);
                 style.alignment = TextAnchor.MiddleCenter;
                 style.wordWrap = true;
                 GUI.Label(
@@ -193,7 +193,7 @@ namespace AssetBundleBrowser
             {
                 var gamePath = System.IO.Path.GetFullPath(".");//TODO - FileUtil.GetProjectRelativePath??
                 gamePath = gamePath.Replace("\\", "/");
-                if (folderPath.StartsWith(gamePath))
+                if (folderPath.Length > gamePath.Length && folderPath.StartsWith(gamePath))
                     folderPath = folderPath.Remove(0, gamePath.Length + 1);
 
                 AddBundleFolder(folderPath);

@@ -87,7 +87,6 @@ namespace AssetBundleBrowser
             m_Controller = ctrl;
             showBorder = true;
             showAlternatingRowBackgrounds = true;
-            DefaultStyles.label.richText = true;
             multiColumnHeader.sortingChanged += OnSortingChanged;
         }
 
@@ -185,6 +184,34 @@ namespace AssetBundleBrowser
                 Object o = AssetDatabase.LoadAssetAtPath<Object>(assetItem.asset.fullAssetName);
                 EditorGUIUtility.PingObject(o);
                 Selection.activeObject = o;
+            }
+        }
+
+        public void SetSelection( List<string> paths )
+        {
+            List<int> selected = new List<int>();
+            AddIfInPaths( paths, selected, rootItem );
+            SetSelection( selected );
+        }
+
+        void AddIfInPaths( List<string> paths, List<int> selected, TreeViewItem me )
+        {
+            var assetItem = me as AssetBundleModel.AssetTreeItem;
+            if( assetItem != null && assetItem.asset != null )
+            {
+                if( paths.Contains( assetItem.asset.fullAssetName ) )
+                {
+                    if( selected.Contains( me.id ) == false )
+                        selected.Add( me.id );
+                }
+            }
+
+            if( me.hasChildren )
+            {
+                foreach( TreeViewItem item in me.children )
+                {
+                    AddIfInPaths( paths, selected, item );
+                }
             }
         }
 

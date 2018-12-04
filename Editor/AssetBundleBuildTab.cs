@@ -172,7 +172,7 @@ namespace AssetBundleBrowser
         {
             m_ScrollPosition = EditorGUILayout.BeginScrollView(m_ScrollPosition);
             bool newState = false;
-            var centeredStyle = GUI.skin.GetStyle("Label");
+            var centeredStyle = new GUIStyle(GUI.skin.GetStyle("Label"));
             centeredStyle.alignment = TextAnchor.UpperCenter;
             GUILayout.Label(new GUIContent("Example build setup"), centeredStyle);
             //basic options
@@ -380,8 +380,9 @@ namespace AssetBundleBrowser
 
             foreach (string filePath in Directory.GetFiles(sourceDirName, "*.*", SearchOption.AllDirectories))
             {
-                string newFilePath = Path.Combine(Path.GetDirectoryName(filePath).Replace(sourceDirName, destDirName),
-                    Path.GetFileName(filePath));
+                var fileDirName = Path.GetDirectoryName(filePath).Replace("\\", "/");
+                var fileName = Path.GetFileName(filePath);
+                string newFilePath = Path.Combine(fileDirName.Replace(sourceDirName, destDirName), fileName);
 
                 File.Copy(filePath, newFilePath, true);
             }
