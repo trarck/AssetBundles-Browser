@@ -7,8 +7,18 @@ namespace AssetBundleBrowser.AssetBundleModel
 
     public static class Import
     {
+        public enum Format
+        {
+            FullPath=1,
+            ShortName=2,
+            WithFolder=4,
+            WithExt=8
+        }
 
-        internal static int ImportFile(string filePath, BundleFolderInfo parent=null,bool useFullPath = false)
+        public delegate string CreateBundleNameDelegate(string filePath, bool useFullPath, bool useExt);
+        public static CreateBundleNameDelegate CreateBundleNameHandle=null;
+
+        internal static int ImportFile(string filePath, BundleFolderConcreteInfo parent =null,bool useFullname=true,bool useExt=false)
         {
             if (Path.IsPathRooted(filePath))
             {
@@ -20,51 +30,81 @@ namespace AssetBundleBrowser.AssetBundleModel
                 return 0;
             }
 
-            var newBundle = Model.CreateEmptyBundle(parent, GetBundleName(filePath, useFullPath));
+            var newBundle = Model.CreateEmptyBundle(parent, CreateBundleName(filePath, useFullname, useExt));
             Model.MoveAssetToBundle(filePath, newBundle.m_Name.bundleName, newBundle.m_Name.variant);
             return newBundle.nameHashCode;
         }
-        public static int ImportFile(string filePath, bool useFullPath = false)
+        public static int ImportFile(string filePath,bool useFullname = true, bool useExt = true)
         {
-            return ImportFile(filePath,null,useFullPath);
+            return ImportFile(filePath,null, useFullname, useExt);
         }
-        internal static void ImportForlder(string folderPath, BundleFolderInfo parent = null, bool useFullPath = false)
+
+        private struct ImportFolderInfo
+        {
+            public ImportFolderInfo(DirectoryInfo directory, BundleFolderConcreteInfo parent)
+            {
+                this.directory = directory;
+                 this.parent = parent;
+            }
+            public DirectoryInfo directory;
+            public BundleFolderConcreteInfo parent;
+        }
+
+        internal static void ImportFolder(string folderPath, BundleFolderConcreteInfo parent = null, Format format = Format.FullPath)
         {
             if (!Directory.Exists(folderPath))
                 return;
-            Stack<DirectoryInfo> dirs = new Stack<DirectoryInfo>();
-            dirs.Push(new DirectoryInfo(folderPath));
-            DirectoryInfo dir = null;
+            Stack<ImportFolderInfo> dirs = new Stack<ImportFolderInfo>();
+
+            ImportFolderInfo startInfo = new ImportFolderInfo();
+            startInfo.directory = new DirectoryInfo(folderPath);
+            startInfo.parent = parent;
+            dirs.Push(startInfo);
+
+            ImportFolderInfo dir;
             while (dirs.Count > 0)
             {
                 dir = dirs.Pop();
 
-                foreach (FileInfo fi in dir.GetFiles())
+                if ((format & Format.WithFolder)==Format.WithFolder)
+                {
+                    parent = Model.CreateEmptyBundleFolder(dir.parent, dir.directory.Name) as BundleFolderConcreteInfo;
+                }
+
+                foreach (FileInfo fi in dir.directory.GetFiles())
                 {
                     if (Path.GetExtension(fi.Name).ToLower() == ".meta")
                         continue;
 
-                    ImportFile(fi.FullName, parent, useFullPath);
+                    ImportFile(fi.FullName, parent, (format&Format.FullPath)== Format.FullPath, (format & Format.WithExt) == Format.WithExt);
                 }
 
-                foreach(DirectoryInfo di in dir.GetDirectories())
+                foreach(DirectoryInfo di in dir.directory.GetDirectories())
                 {
                     if (!di.Name.StartsWith("."))
                     {
-                        dirs.Push(di);
+                        dirs.Push(new ImportFolderInfo(di, parent));
                     }
                 }
             }
         }
-        public static void ImportForlder(string folderPath,  bool useFullPath = false)
+        public static void ImportFolder(string folderPath, Format format = Format.FullPath)
         {
-            ImportForlder(folderPath, null, useFullPath);
+            ImportFolder(folderPath, null, format);
         }
-        private static string GetBundleName(string filePath,bool useFullPath)
+        private static string CreateBundleName(string filePath,bool useFullPath,bool useExt)
         {
+            if (CreateBundleNameHandle != null)
+            {
+                return CreateBundleNameHandle(filePath, useFullPath, useExt);
+            }
             if (useFullPath)
             {
                 return filePath.Replace('/', '_').Replace('\\', '_').Replace('.','_').ToLower();
+            }
+            else if(useExt)
+            {
+                return Path.GetFileName(filePath).Replace('.', '_').ToLower();
             }
             else
             {
@@ -109,7 +149,6 @@ namespace AssetBundleBrowser.AssetBundleModel
             else
             {
                 System.Text.StringBuilder result = new System.Text.StringBuilder();
-                System.Text.StringBuilder toSB = new System.Text.StringBuilder();
 
                 for (int j = i; j < froms.Length; ++j)
                 {

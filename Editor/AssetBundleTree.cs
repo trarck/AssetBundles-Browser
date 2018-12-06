@@ -654,7 +654,7 @@ namespace AssetBundleBrowser
 
         void ImportFromFolder(object context)
         {
-            AssetBundleModel.BundleFolderInfo folder = null;
+            AssetBundleModel.BundleFolderConcreteInfo folder = null;
 
             var selectedNodes = context as List<AssetBundleModel.BundleTreeItem>;
             if (selectedNodes != null && selectedNodes.Count > 0)
@@ -662,20 +662,26 @@ namespace AssetBundleBrowser
                 folder = selectedNodes[0].bundle as AssetBundleModel.BundleFolderConcreteInfo;
             }
 
-            foreach(UnityEngine.Object obj in Selection.objects)
+            //AssetBundleModel.Import.CreateBundleNameHandle = delegate (string filePath, bool useFullPath, bool useExt)
+            //{
+            //    return filePath.Replace('/', '_').Replace('\\', '_').Replace('.', '^').ToLower();
+            //};
+
+            foreach (UnityEngine.Object obj in Selection.objects)
             {
-                
+
                 string objPath = AssetDatabase.GetAssetPath(obj.GetInstanceID());
-                string fullPath= System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Application.dataPath), objPath);
+                string fullPath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Application.dataPath), objPath);
                 if (System.IO.Directory.Exists(fullPath))
                 {
-                    AssetBundleModel.Import.ImportForlder(fullPath, folder, true);
+                    AssetBundleModel.Import.ImportFolder(fullPath, folder, AssetBundleModel.Import.Format.FullPath|AssetBundleModel.Import.Format.WithExt);
                 }
                 else
                 {
-                    AssetBundleModel.Import.ImportFile(objPath, folder, true);
-                }                
+                    AssetBundleModel.Import.ImportFile(objPath, folder);
+                }
             }
+
 
             AssetBundleModel.Model.ExecuteAssetMove();
             Refresh();

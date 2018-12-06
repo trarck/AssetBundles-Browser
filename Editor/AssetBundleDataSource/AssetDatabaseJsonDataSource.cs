@@ -242,8 +242,6 @@ namespace AssetBundleBrowser.AssetBundleDataSource
             var dataPath = Path.GetFullPath(".");
             var dataFile = Path.Combine(dataPath, AssetBundleConstans.JsonDatabaseFile);
 
-            Debug.Log(Path.GetDirectoryName(dataFile));
-
             if (!Directory.Exists(Path.GetDirectoryName(dataFile)))
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(dataFile));

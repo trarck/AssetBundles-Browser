@@ -270,6 +270,13 @@ namespace AssetBundleBrowser.AssetBundleModel
             BundleNameData nameData = new BundleNameData(folder.m_Name.bundleName, name);
             return AddFoldersToBundle(s_RootLevelBundles, nameData);
         }
+        internal static BundleFolderInfo CreateEmptyBundleFolder(BundleFolderConcreteInfo folder,string newName)
+        {
+            folder = (folder == null) ? s_RootLevelBundles : folder;
+            string name = GetUniqueName(folder, newName)+"/dummy";
+            BundleNameData nameData = new BundleNameData(folder.m_Name.bundleName, name);
+            return AddFoldersToBundle(s_RootLevelBundles, nameData);
+        }
 
         private static BundleInfo AddBundleToModel(string name)
         {
