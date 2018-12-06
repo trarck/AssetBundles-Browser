@@ -125,6 +125,11 @@ namespace AssetBundleBrowser
             }
 
             List<AssetBundleModel.BundleTreeItem> selectedNodes = new List<AssetBundleModel.BundleTreeItem>();
+            foreach (var nodeID in GetSelection())
+            {
+                selectedNodes.Add(FindItem(nodeID, rootItem) as AssetBundleModel.BundleTreeItem);
+            }
+
             GenericMenu menu = new GenericMenu();
 
             if (!AssetBundleModel.Model.DataSource.IsReadOnly ()) {
@@ -133,6 +138,9 @@ namespace AssetBundleBrowser
             }
 
             menu.AddItem(new GUIContent("Reload all data"), false, ForceReloadData, selectedNodes);
+
+            menu.AddItem(new GUIContent("Import from folder"), false, ImportFromFolder, selectedNodes);
+
             menu.ShowAsContext();
         }
 
@@ -642,6 +650,35 @@ namespace AssetBundleBrowser
             Reload();
             SetSelection(hashCodes, TreeViewSelectionOptions.RevealAndFrame);
             SelectionChanged(hashCodes);
+        }
+
+        void ImportFromFolder(object context)
+        {
+            AssetBundleModel.BundleFolderInfo folder = null;
+
+            var selectedNodes = context as List<AssetBundleModel.BundleTreeItem>;
+            if (selectedNodes != null && selectedNodes.Count > 0)
+            {
+                folder = selectedNodes[0].bundle as AssetBundleModel.BundleFolderConcreteInfo;
+            }
+
+            foreach(UnityEngine.Object obj in Selection.objects)
+            {
+                
+                string objPath = AssetDatabase.GetAssetPath(obj.GetInstanceID());
+                string fullPath= System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Application.dataPath), objPath);
+                if (System.IO.Directory.Exists(fullPath))
+                {
+                    AssetBundleModel.Import.ImportForlder(fullPath, folder, true);
+                }
+                else
+                {
+                    AssetBundleModel.Import.ImportFile(objPath, folder, true);
+                }                
+            }
+
+            AssetBundleModel.Model.ExecuteAssetMove();
+            Refresh();
         }
     }
 }
