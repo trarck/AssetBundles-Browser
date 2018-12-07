@@ -667,23 +667,69 @@ namespace AssetBundleBrowser
             //    return filePath.Replace('/', '_').Replace('\\', '_').Replace('.', '^').ToLower();
             //};
 
+            //translate to asset path
+            List<string> assetPaths = new List<string>();
             foreach (UnityEngine.Object obj in Selection.objects)
             {
 
                 string objPath = AssetDatabase.GetAssetPath(obj.GetInstanceID());
-                string fullPath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Application.dataPath), objPath);
-                if (System.IO.Directory.Exists(fullPath))
+                assetPaths.Add(objPath);
+            }
+
+            ImportFromFolder(assetPaths, folder);    
+        }
+
+        public void ImportFromFolder()
+        {
+            //translate to asset path
+            List<string> assetPaths = new List<string>();
+            foreach (UnityEngine.Object obj in Selection.objects)
+            {
+                string objPath = AssetDatabase.GetAssetPath(obj.GetInstanceID());
+                assetPaths.Add(objPath);
+            }
+
+            ImportFromFolder(assetPaths, null);
+        }
+
+        public void ImportFromFolder(List<string> assetPaths, AssetBundleModel.BundleFolderConcreteInfo parent=null)
+        {
+            //check parent folder.
+            if (parent == null)
+            {
+                //get from selection
+                foreach (var nodeID in GetSelection())
                 {
-                    AssetBundleModel.Import.ImportFolder(fullPath, folder, AssetBundleModel.Import.Format.FullPath|AssetBundleModel.Import.Format.WithExt);
-                }
-                else
-                {
-                    AssetBundleModel.Import.ImportFile(objPath, folder);
+                    AssetBundleModel.BundleTreeItem treeItem =FindItem(nodeID, rootItem) as AssetBundleModel.BundleTreeItem;
+                    if (treeItem != null)
+                    {
+                        parent = treeItem.bundle as AssetBundleModel.BundleFolderConcreteInfo;
+                        if (parent != null)
+                        {
+                            break;
+                        }
+                    }
                 }
             }
 
+            //import from asset folder
+            foreach (string assetPath in assetPaths)
+            {
+                string fullPath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Application.dataPath), assetPath);
+                if (System.IO.Directory.Exists(fullPath))
+                {
+                    AssetBundleModel.Import.ImportFolder(fullPath, parent, AssetBundleModel.Import.Format.FullPath | AssetBundleModel.Import.Format.WithExt);
+                }
+                else
+                {
+                    AssetBundleModel.Import.ImportFile(assetPath, parent);
+                }
+            }
 
+            //save to database
             AssetBundleModel.Model.ExecuteAssetMove();
+
+            //refresh bundle list tree
             Refresh();
         }
     }

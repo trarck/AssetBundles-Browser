@@ -18,7 +18,7 @@ namespace AssetBundleBrowser.AssetBundleModel
         public delegate string CreateBundleNameDelegate(string filePath, bool useFullPath, bool useExt);
         public static CreateBundleNameDelegate CreateBundleNameHandle=null;
 
-        internal static int ImportFile(string filePath, BundleFolderConcreteInfo parent =null,bool useFullname=true,bool useExt=false)
+        internal static int ImportFile(string filePath, BundleFolderConcreteInfo parent,bool useFullname=false,bool useExt=false)
         {
             if (Path.IsPathRooted(filePath))
             {
@@ -36,7 +36,13 @@ namespace AssetBundleBrowser.AssetBundleModel
         }
         public static int ImportFile(string filePath,bool useFullname = true, bool useExt = true)
         {
-            return ImportFile(filePath,null, useFullname, useExt);
+            return ImportFile(filePath, null, useFullname, useExt);
+        }
+        public static int ImportFileToStringPath(string filePath,string parentPath, bool useFullname = true, bool useExt = true)
+        {
+            BundleNameData nameData = new BundleNameData(parentPath);
+            BundleFolderConcreteInfo parentFolder = Model.FindBundle(nameData) as BundleFolderConcreteInfo;
+            return ImportFile(filePath, parentFolder, useFullname, useExt);
         }
 
         private struct ImportFolderInfo
@@ -44,13 +50,13 @@ namespace AssetBundleBrowser.AssetBundleModel
             public ImportFolderInfo(DirectoryInfo directory, BundleFolderConcreteInfo parent)
             {
                 this.directory = directory;
-                 this.parent = parent;
+                this.parent = parent;
             }
             public DirectoryInfo directory;
             public BundleFolderConcreteInfo parent;
         }
 
-        internal static void ImportFolder(string folderPath, BundleFolderConcreteInfo parent = null, Format format = Format.FullPath)
+        internal static void ImportFolder(string folderPath, BundleFolderConcreteInfo parent, Format format)
         {
             if (!Directory.Exists(folderPath))
                 return;
@@ -90,8 +96,16 @@ namespace AssetBundleBrowser.AssetBundleModel
         }
         public static void ImportFolder(string folderPath, Format format = Format.FullPath)
         {
-            ImportFolder(folderPath, null, format);
+            ImportFolder(folderPath, null,format);
         }
+
+        public static void ImportFolderToStringPath(string folderPath,string parentPath, Format format = Format.FullPath)
+        {
+            BundleNameData nameData = new BundleNameData(parentPath);
+            BundleFolderConcreteInfo parentFolder =Model.FindBundle(nameData) as BundleFolderConcreteInfo;
+            ImportFolder(folderPath, parentFolder, format);
+        }
+
         private static string CreateBundleName(string filePath,bool useFullPath,bool useExt)
         {
             if (CreateBundleNameHandle != null)

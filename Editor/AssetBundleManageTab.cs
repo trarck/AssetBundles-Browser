@@ -273,5 +273,18 @@ namespace AssetBundleBrowser
         {
             m_AssetList.SetSelection( assets );
         }
+        internal void ShowToolsMenu()
+        {
+            GenericMenu menu = new GenericMenu();
+
+            menu.AddItem(new GUIContent("Import from folder"), false, ImportFromFolder);
+
+            menu.ShowAsContext();
+        }
+        
+        void ImportFromFolder()
+        {
+            m_BundleTree.ImportFromFolder();
+        }
     }
 }

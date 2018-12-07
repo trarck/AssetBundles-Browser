@@ -47,6 +47,7 @@ namespace AssetBundleBrowser
         internal AssetBundleInspectTab m_InspectTab;
 
         private Texture2D m_RefreshTexture;
+        private Texture2D m_ToolsTexture;
 
         const float k_ToolbarPadding = 15;
         const float k_MenubarPadding = 32;
@@ -90,6 +91,7 @@ namespace AssetBundleBrowser
             m_InspectTab.OnEnable(subPos);
 
             m_RefreshTexture = EditorGUIUtility.FindTexture("Refresh");
+            m_ToolsTexture = Resources.Load("Icons/tools")as Texture2D;
 
             InitDataSources();
         } 
@@ -197,6 +199,10 @@ namespace AssetBundleBrowser
             switch(m_Mode)
             {
                 case Mode.Browser:
+                    clicked = GUILayout.Button(m_ToolsTexture, GUILayout.Width(22), GUILayout.Height(22));
+                    if (clicked)
+                        m_ManageTab.ShowToolsMenu();
+
                     clicked = GUILayout.Button(m_RefreshTexture);
                     if (clicked)
                         m_ManageTab.ForceReloadData();
