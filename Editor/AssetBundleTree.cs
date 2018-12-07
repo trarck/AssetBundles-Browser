@@ -584,6 +584,25 @@ namespace AssetBundleBrowser
             AssetBundleModel.Model.ExecuteAssetMove();
             ReloadAndSelect(hashCodes);
         }
+        private void DragPathsAsManyBundlesEx()
+        {
+            List<int> hashCodes = new List<int>();
+            foreach (var assetPath in dragToNewSpacePaths)
+            {
+                string fullPath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Application.dataPath), assetPath);
+                if (System.IO.Directory.Exists(fullPath))
+                {
+                    hashCodes.AddRange(AssetBundleModel.Import.ImportFolder(fullPath, dragToNewSpaceRoot as AssetBundleModel.BundleFolderConcreteInfo,
+                        AssetBundleModel.Import.Format.ShortName));
+                }
+                else
+                {
+                    hashCodes.Add(AssetBundleModel.Import.ImportFile(assetPath, dragToNewSpaceRoot as AssetBundleModel.BundleFolderConcreteInfo,false,false));
+                }
+            }
+            AssetBundleModel.Model.ExecuteAssetMove();
+            ReloadAndSelect(hashCodes);
+        }
 
         private void DragPathsToNewSpace(string[] paths, AssetBundleModel.BundleFolderInfo root)
         {
@@ -596,11 +615,11 @@ namespace AssetBundleBrowser
                 var message = "Create ";
                 message += paths.Length;
                 message += " Bundles";
-                menu.AddItem(new GUIContent(message), false, DragPathsAsManyBundles);
+                menu.AddItem(new GUIContent(message), false, DragPathsAsManyBundlesEx);
                 menu.ShowAsContext();
             }
             else
-                DragPathsAsManyBundles();
+                DragPathsAsManyBundlesEx();
         }
 
         protected override void SetupDragAndDrop(SetupDragAndDropArgs args)
