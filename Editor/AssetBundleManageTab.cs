@@ -152,10 +152,14 @@ namespace AssetBundleBrowser
             }
             else
             {
+                float searchHeight = 20f;
+
                 //Left half
+                OnGUISearchBar(new Rect(m_Position.x, m_Position.y, m_HorizontalSplitterRect.x, searchHeight));
+
                 var bundleTreeRect = new Rect(
                     m_Position.x,
-                    m_Position.y,
+                    m_Position.y+ searchHeight,
                     m_HorizontalSplitterRect.x,
                     m_VerticalSplitterRectLeft.y - m_Position.y);
                 
@@ -169,10 +173,10 @@ namespace AssetBundleBrowser
                 //Right half.
                 float panelLeft = m_HorizontalSplitterRect.x + k_SplitterWidth;
                 float panelWidth = m_VerticalSplitterRectRight.width - k_SplitterWidth * 2;
-                float searchHeight = 20f;
-                float panelTop = m_Position.y + searchHeight;
+                
+                float panelTop = m_Position.y;
                 float panelHeight = m_VerticalSplitterRectRight.y - panelTop;
-                OnGUISearchBar(new Rect(panelLeft, m_Position.y, panelWidth, searchHeight));
+                
                 m_AssetList.OnGUI(new Rect(
                     panelLeft,
                     panelTop,
