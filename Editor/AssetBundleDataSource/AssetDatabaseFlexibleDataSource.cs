@@ -7,27 +7,46 @@ using System.Linq;
 
 namespace AssetBundleBrowser.AssetBundleDataSource
 {
-    public class AssetDatabaseJsonDataSource : ABDataSource
+    public class AssetDatabaseFlexibleDataSource : ABDataSource
     {
         [Serializable]
-        protected class AssetDatabaseAsset
+        public class Asset
         {
             public string path;
-            public string bundleName;
-            public string variantName;
+            public List<Bundle> bundles;
         }
 
-        protected class JsonAssetDatabase
+        [Serializable]
+        public class Bundle
         {
-            public List<AssetDatabaseAsset> assets;
+            public string name;
+            public string variantName;
+            public List<string> assets; 
+
+            public string GetFullName()
+            {
+                if (string.IsNullOrEmpty(variantName))
+                {
+                    return name;
+                }
+                else
+                {
+                    return name + "." + variantName;
+                }
+            }
         }
 
-        protected Dictionary<string, AssetDatabaseAsset> m_Assets;
-        protected Dictionary<string, HashSet<string>> m_Bundles;
+        public class Database
+        {
+            public List<Bundle> bundles;
+        }
+
+        protected Dictionary<string, Asset> m_Assets;
+        protected Dictionary<string, Bundle> m_Bundles;
 
         public static List<ABDataSource> CreateDataSources()
         {
-            var op = new AssetDatabaseJsonDataSource();
+            var op = new AssetDatabaseFlexibleDataSource();
             op.Init();
             op.Load();
 
@@ -38,13 +57,13 @@ namespace AssetBundleBrowser.AssetBundleDataSource
 
         public string Name {
             get {
-                return "JsonDataSource";
+                return "FlexibleDataSource";
             }
         }
 
         public string ProviderName {
             get {
-                return "JsonDataSource";
+                return "FlexibleDataSource";
             }
         }
 
@@ -52,7 +71,7 @@ namespace AssetBundleBrowser.AssetBundleDataSource
         {
             if (m_Bundles.ContainsKey(assetBundleName))
             {
-                return m_Bundles[assetBundleName].ToArray();
+                return m_Bundles[assetBundleName].assets.ToArray();
             }
             return new string[0];
         }
@@ -61,21 +80,31 @@ namespace AssetBundleBrowser.AssetBundleDataSource
             if (!m_Assets.ContainsKey(assetPath)) {
                 return string.Empty;
             }
-            AssetDatabaseAsset item = m_Assets[assetPath];
 
-            var bundleName = item.bundleName;
-            if (item.variantName.Length > 0) {
-                bundleName = bundleName + "." + item.variantName;
+            Asset asset = m_Assets[assetPath];
+
+            if(asset.bundles!=null && asset.bundles.Count > 0)
+            {
+                return asset.bundles[0].GetFullName();
             }
-            return bundleName;
+
+            return string.Empty;
         }
 
         public string GetImplicitAssetBundleName(string assetPath) {
-            if(m_Assets.ContainsKey(assetPath))
+            if (!m_Assets.ContainsKey(assetPath))
             {
-                return m_Assets[assetPath].bundleName;
+                return string.Empty;
             }
-            return null;
+
+            Asset asset = m_Assets[assetPath];
+
+            if (asset.bundles != null && asset.bundles.Count > 0)
+            {
+                return asset.bundles[0].name;
+            }
+
+            return string.Empty;
         }
 
         public string[] GetAllAssetBundleNames() {
@@ -87,9 +116,22 @@ namespace AssetBundleBrowser.AssetBundleDataSource
         }
 
         public void SetAssetBundleNameAndVariant (string assetPath, string bundleName, string variantName) {
+
+            if(string.IsNullOrEmpty(bundleName) || string.IsNullOrEmpty(assetPath))
+            {
+                return;
+            }
+
+            Bundle bundle=null;
+            if(!m_Bundles.TryGetValue(bundleName,out bundle))
+            {
+                bundle = new Bundle();
+                bundle.name = bundleName;
+            }
+
             if (m_Assets.ContainsKey(assetPath))
             {
-                AssetDatabaseAsset item = m_Assets[assetPath];
+                Asset asset = m_Assets[assetPath];
 
                 var oldBundleName = item.bundleName;
 
@@ -120,12 +162,11 @@ namespace AssetBundleBrowser.AssetBundleDataSource
             }
             else
             {
-                AssetDatabaseAsset item = new AssetDatabaseAsset();
-                item.path = assetPath;
-                item.bundleName = bundleName;
-                item.variantName = variantName;
+                Asset asset = new Asset();
+                asset.path = assetPath;
+                asset.bundles = new List<Bundle>();
 
-                m_Assets[assetPath] = item;
+                m_Assets[assetPath] = asset;
 
                 if (!string.IsNullOrEmpty(bundleName))
                 {
@@ -147,7 +188,7 @@ namespace AssetBundleBrowser.AssetBundleDataSource
             List<string> bundleNames = m_Bundles.Keys.ToList();
             foreach(string bundleName in bundleNames)
             {
-                if (m_Bundles[bundleName].Count == 0)
+                if (m_Bundles[bundleName].assets.Count == 0)
                 {
                     m_Bundles.Remove(bundleName);
                 }
@@ -172,11 +213,11 @@ namespace AssetBundleBrowser.AssetBundleDataSource
             List<AssetBundleBuild> builds = new List<AssetBundleBuild>();
             foreach (string bundleName in bundleNames)
             {
-                if (m_Bundles[bundleName].Count > 0)
+                if (m_Bundles[bundleName].assets.Count > 0)
                 {
                     AssetBundleBuild build = new AssetBundleBuild();
                     build.assetBundleName = bundleName;
-                    build.assetNames = m_Bundles[bundleName].ToArray();
+                    build.assetNames = m_Bundles[bundleName].assets.ToArray();
                     builds.Add(build);
                 }
             }
@@ -201,22 +242,30 @@ namespace AssetBundleBrowser.AssetBundleDataSource
 
         public void Init()
         {
-            m_Assets = new Dictionary<string, AssetDatabaseAsset>();
-            m_Bundles = new Dictionary<string, HashSet<string>>();
+            m_Assets = new Dictionary<string, Asset>();
+            m_Bundles = new Dictionary<string, Bundle>();
         }
 
-        void BuildData(JsonAssetDatabase db)
+        void BuildData(Database db)
         {
             if (db != null)
             {
-                foreach (AssetDatabaseAsset item in db.assets)
+                foreach (Bundle bundle in db.bundles)
                 {
-                    m_Assets[item.path] = item;
-                    if (!m_Bundles.ContainsKey(item.bundleName))
+                    foreach(string assetPath in bundle.assets)
                     {
-                        m_Bundles[item.bundleName] = new HashSet<string>();
+                        Asset asset;
+                        if (!m_Assets.TryGetValue(assetPath,out asset))
+                        {
+                            asset = new Asset();
+                            asset.path = assetPath;
+                            asset.bundles = new List<Bundle>();
+                            m_Assets[assetPath] = asset;
+                        }
+
+                        asset.bundles.Add(bundle);
                     }
-                    m_Bundles[item.bundleName].Add(item.path);
+                    m_Bundles[bundle.GetFullName()] = bundle;
                 }
             }
         }
@@ -228,15 +277,15 @@ namespace AssetBundleBrowser.AssetBundleDataSource
             if (File.Exists(dataFile))
             {
                 string cnt = File.ReadAllText(dataFile);
-                JsonAssetDatabase db = JsonUtility.FromJson<JsonAssetDatabase>(cnt);
+                Database db = JsonUtility.FromJson<Database>(cnt);
                 BuildData(db);
             }
         }
 
         public void Save()
         {
-            JsonAssetDatabase db = new JsonAssetDatabase();
-            db.assets = m_Assets.Values.ToList();
+            Database db = new Database();
+            db.bundles = m_Bundles.Values.ToList();
             string cnt = JsonUtility.ToJson(db);
 
             var dataPath = Path.GetFullPath(".");
