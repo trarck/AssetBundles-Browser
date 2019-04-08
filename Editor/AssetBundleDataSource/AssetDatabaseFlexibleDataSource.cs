@@ -129,56 +129,56 @@ namespace AssetBundleBrowser.AssetBundleDataSource
                 bundle.name = bundleName;
             }
 
-            if (m_Assets.ContainsKey(assetPath))
-            {
-                Asset asset = m_Assets[assetPath];
+            //if (m_Assets.ContainsKey(assetPath))
+            //{
+            //    Asset asset = m_Assets[assetPath];
 
-                var oldBundleName = item.bundleName;
+            //    var oldBundleName = asset.bundleName;
 
-                //无论如何都要把上次的asset从bundle中移除。
-                m_Bundles[oldBundleName].Remove(assetPath);
+            //    //无论如何都要把上次的asset从bundle中移除。
+            //    m_Bundles[oldBundleName].Remove(assetPath);
 
-                if (string.IsNullOrEmpty(bundleName))
-                {
-                    //asset的bundle name为空，则表示删除asset.
-                    m_Assets.Remove(assetPath);
-                }
-                else
-                {
-                    if (oldBundleName != bundleName)
-                    {
-                        item.bundleName = bundleName;
+            //    if (string.IsNullOrEmpty(bundleName))
+            //    {
+            //        //asset的bundle name为空，则表示删除asset.
+            //        m_Assets.Remove(assetPath);
+            //    }
+            //    else
+            //    {
+            //        if (oldBundleName != bundleName)
+            //        {
+            //            item.bundleName = bundleName;
 
-                        if (!m_Bundles.ContainsKey(bundleName))
-                        {
-                            m_Bundles[bundleName] = new HashSet<string>();
-                        }
+            //            if (!m_Bundles.ContainsKey(bundleName))
+            //            {
+            //                m_Bundles[bundleName] = new HashSet<string>();
+            //            }
 
-                        m_Bundles[bundleName].Add(assetPath);
-                    }
+            //            m_Bundles[bundleName].Add(assetPath);
+            //        }
 
-                    item.variantName = variantName;
-                }
-            }
-            else
-            {
-                Asset asset = new Asset();
-                asset.path = assetPath;
-                asset.bundles = new List<Bundle>();
+            //        item.variantName = variantName;
+            //    }
+            //}
+            //else
+            //{
+            //    Asset asset = new Asset();
+            //    asset.path = assetPath;
+            //    asset.bundles = new List<Bundle>();
 
-                m_Assets[assetPath] = asset;
+            //    m_Assets[assetPath] = asset;
 
-                if (!string.IsNullOrEmpty(bundleName))
-                {
+            //    if (!string.IsNullOrEmpty(bundleName))
+            //    {
 
-                    if (!m_Bundles.ContainsKey(bundleName))
-                    {
-                        m_Bundles[bundleName] = new HashSet<string>();
-                    }
+            //        if (!m_Bundles.ContainsKey(bundleName))
+            //        {
+            //            m_Bundles[bundleName] = new HashSet<string>();
+            //        }
 
-                    m_Bundles[bundleName].Add(assetPath);
-                }
-            }
+            //        m_Bundles[bundleName].Add(assetPath);
+            //    }
+            //}
 
             Save();
         }
