@@ -242,11 +242,17 @@ namespace AssetBundleBrowser.AssetBundleDataSource
                 }
             }
 
+            if (!Directory.Exists(info.outputDirectory))
+            {
+                Directory.CreateDirectory(info.outputDirectory);
+            }
+
             var buildManifest = BuildPipeline.BuildAssetBundles(info.outputDirectory,builds.ToArray(), info.options, info.buildTarget);
             if (buildManifest == null)
                 return false;
 
-            DatabaseUtil.ClearTempManifest(info.outputDirectory);
+            //不能消除Manifest，否则无法增量构建。可以在最终目录把Manifest删除
+            //DatabaseUtil.ClearTempManifest(info.outputDirectory);
 
             DatabaseUtil.SaveBundleManifest(buildManifest, info.outputDirectory);
 
