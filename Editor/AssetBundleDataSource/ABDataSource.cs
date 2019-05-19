@@ -99,6 +99,14 @@ namespace AssetBundleBrowser.AssetBundleDataSource
         /// Sets the asset bundle name (and variant) on a given asset
         /// </summary>
         void SetAssetBundleNameAndVariant (string assetPath, string bundleName, string variantName);
+
+        /// <summary>
+        /// Remove the asset's bundle use name (and variant) on a given asset
+        /// </summary>
+        /// <param name="assetPath"></param>
+        /// <param name="bundleName"></param>
+        /// <param name="variantName"></param>
+        void RemoveAssetBundleNameAndVariant(string assetPath, string bundleName, string variantName);
         /// <summary>
         /// Clears out any asset bundle names that do not have assets associated with them.
         /// </summary>

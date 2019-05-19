@@ -62,6 +62,11 @@ namespace AssetBundleBrowser.AssetBundleDataSource
             AssetImporter.GetAtPath(assetPath).SetAssetBundleNameAndVariant(bundleName, variantName);
         }
 
+        public void RemoveAssetBundleNameAndVariant(string assetPath, string bundleName, string variantName)
+        {
+            SetAssetBundleNameAndVariant(assetPath,null, null);
+        }
+
         public void RemoveUnusedAssetBundleNames() {
             AssetDatabase.RemoveUnusedAssetBundleNames ();
         }

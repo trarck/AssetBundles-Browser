@@ -142,6 +142,11 @@ namespace AssetBundleBrowser.AssetBundleDataSource
             Save();
         }
 
+        public void RemoveAssetBundleNameAndVariant(string assetPath, string bundleName, string variantName)
+        {
+            SetAssetBundleNameAndVariant(assetPath, null, null);
+        }
+
         public void RemoveUnusedAssetBundleNames()
         {
             List<string> bundleNames = m_Bundles.Keys.ToList();
