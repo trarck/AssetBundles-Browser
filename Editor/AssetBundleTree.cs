@@ -5,6 +5,7 @@ using UnityEditor.IMGUI.Controls;
 using System.Linq;
 using System;
 
+using AssetBundleBrowser.View;
 
 namespace AssetBundleBrowser
 {
@@ -33,13 +34,13 @@ namespace AssetBundleBrowser
 
         protected override bool DoesItemMatchSearch(TreeViewItem item, string search)
         {
-            var bundleItem = item as AssetBundleModel.BundleTreeItem;
+            var bundleItem = item as BundleTreeItem;
             return bundleItem.bundle.DoesItemMatchSearch(search);
         }
 
         protected override void RowGUI(RowGUIArgs args)
         {
-            var bundleItem = (args.item as AssetBundleModel.BundleTreeItem);
+            var bundleItem = (args.item as BundleTreeItem);
             if (args.item.icon == null)
                 extraSpaceBeforeIconAndLabel = 16f;
             else
@@ -69,7 +70,7 @@ namespace AssetBundleBrowser
                 args.newName = args.newName.ToLower();
                 args.acceptedRename = true;
 
-                AssetBundleModel.BundleTreeItem renamedItem = FindItem(args.itemID, rootItem) as AssetBundleModel.BundleTreeItem;
+                BundleTreeItem renamedItem = FindItem(args.itemID, rootItem) as BundleTreeItem;
                 args.acceptedRename = AssetBundleModel.Model.HandleBundleRename(renamedItem, args.newName);
                 ReloadAndSelect(renamedItem.bundle.nameHashCode, false);
             }
@@ -94,7 +95,7 @@ namespace AssetBundleBrowser
             {
                 foreach (var id in selectedIds)
                 {
-                    var item = FindItem(id, rootItem) as AssetBundleModel.BundleTreeItem;
+                    var item = FindItem(id, rootItem) as BundleTreeItem;
                     if(item != null && item.bundle != null)
                     {
                         item.bundle.RefreshAssetList();
@@ -124,10 +125,10 @@ namespace AssetBundleBrowser
                 return;
             }
 
-            List<AssetBundleModel.BundleTreeItem> selectedNodes = new List<AssetBundleModel.BundleTreeItem>();
+            List<BundleTreeItem> selectedNodes = new List<BundleTreeItem>();
             foreach (var nodeID in GetSelection())
             {
-                selectedNodes.Add(FindItem(nodeID, rootItem) as AssetBundleModel.BundleTreeItem);
+                selectedNodes.Add(FindItem(nodeID, rootItem) as BundleTreeItem);
             }
 
             GenericMenu menu = new GenericMenu();
@@ -151,7 +152,7 @@ namespace AssetBundleBrowser
             }
 
             m_ContextOnItem = true;
-            List<AssetBundleModel.BundleTreeItem> selectedNodes = new List<AssetBundleModel.BundleTreeItem>();
+            List<BundleTreeItem> selectedNodes = new List<BundleTreeItem>();
             foreach (var nodeID in GetSelection())
             {
                 selectedNodes.Add(FindItem(nodeID, rootItem) as AssetBundleModel.BundleTreeItem);
