@@ -2,7 +2,7 @@
 using System.IO;
 using UnityEngine;
 
-namespace AssetBundleBrowser.AssetBundleModel
+namespace AssetBundleBuilder.Model
 {
 
     public static class Import

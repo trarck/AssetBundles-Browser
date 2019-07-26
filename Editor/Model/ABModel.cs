@@ -6,9 +6,9 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.IMGUI.Controls;
 
-using AssetBundleBrowser.AssetBundleDataSource;
+using AssetBundleBuilder.DataSource;
 
-namespace AssetBundleBrowser.AssetBundleModel
+namespace AssetBundleBuilder.Model
 {
     /// <summary>
     /// Static class holding model data for Asset Bundle Browser tool. Data in Model is read from DataSource, but is not pushed.  
@@ -24,7 +24,7 @@ namespace AssetBundleBrowser.AssetBundleModel
         const string k_NewVariantBaseName = "newvariant";
         internal static /*const*/ Color k_LightGrey = Color.grey * 1.5f;
 
-        private static ABDataSource s_DataSource;
+        private static DataSource.DataSource s_DataSource;
         private static BundleFolderConcreteInfo s_RootLevelBundles = new BundleFolderConcreteInfo("", null);
         private static List<ABMoveData> s_MoveData = new List<ABMoveData>();
         private static List<BundleInfo> s_BundlesToUpdate = new List<BundleInfo>();
@@ -48,13 +48,13 @@ namespace AssetBundleBrowser.AssetBundleModel
         ///  AssetDatabase.
         ///  
         /// </summary>
-        public static ABDataSource DataSource
+        public static DataSource.DataSource DataSource
         {
             get
             {
                 if (s_DataSource == null)
                 {
-                    s_DataSource = new AssetDatabaseABDataSource ();
+                    s_DataSource = new OriginDataSource ();
                 }
                 return s_DataSource;
             }
@@ -90,22 +90,24 @@ namespace AssetBundleBrowser.AssetBundleModel
             return shouldRepaint;
         }
 
-        internal static void ForceReloadData(TreeView tree)
+        internal static void ForceReloadData()
         {
             s_InErrorState = false;
+            
             Rebuild();
-            tree.Reload();
+            //tree.Reload();
+
             bool doneUpdating = s_BundlesToUpdate.Count == 0;
 
-            EditorUtility.DisplayProgressBar("Updating Bundles", "", 0);
+            //EditorUtility.DisplayProgressBar("Updating Bundles", "", 0);
             int fullBundleCount = s_BundlesToUpdate.Count;
             while (!doneUpdating && !s_InErrorState)
             {
                 int currCount = s_BundlesToUpdate.Count;
-                EditorUtility.DisplayProgressBar("Updating Bundles", s_BundlesToUpdate[currCount-1].displayName, (float)(fullBundleCount- currCount) / (float)fullBundleCount);
+                //EditorUtility.DisplayProgressBar("Updating Bundles", s_BundlesToUpdate[currCount-1].displayName, (float)(fullBundleCount- currCount) / (float)fullBundleCount);
                 doneUpdating = Update();
             }
-            EditorUtility.ClearProgressBar();
+            //EditorUtility.ClearProgressBar();
         }
         
         /// <summary>
@@ -395,25 +397,30 @@ namespace AssetBundleBrowser.AssetBundleModel
             return name;
         }
 
-        internal static BundleTreeItem CreateBundleTreeView()
+        //internal static BundleTreeItem CreateBundleTreeView()
+        //{
+        //    return s_RootLevelBundles.CreateTreeView(-1);
+        //}
+
+        public static BundleInfo GetRootBundle()
         {
-            return s_RootLevelBundles.CreateTreeView(-1);
+            return s_RootLevelBundles;
         }
 
-        internal static AssetTreeItem CreateAssetListTreeView(IEnumerable<AssetBundleModel.BundleInfo> selectedBundles)
-        {
-            var root = new AssetTreeItem();
-            if (selectedBundles != null)
-            {
-                foreach (var bundle in selectedBundles)
-                {
-                    bundle.AddAssetsToNode(root);
-                }
-            }
-            return root;
-        }
+        //internal static AssetTreeItem CreateAssetListTreeView(IEnumerable<BundleInfo> selectedBundles)
+        //{
+        //    var root = new AssetTreeItem();
+        //    if (selectedBundles != null)
+        //    {
+        //        foreach (var bundle in selectedBundles)
+        //        {
+        //            bundle.AddAssetsToNode(root);
+        //        }
+        //    }
+        //    return root;
+        //}
 
-        internal static bool HandleBundleRename(BundleTreeItem item, string newName)
+        internal static bool HandleBundleRename(View.BundleTreeItem item, string newName)
         {
             var originalName = new BundleNameData(item.bundle.m_Name.fullNativeName);
 
@@ -791,11 +798,11 @@ namespace AssetBundleBrowser.AssetBundleModel
         {
             s_folderIcon = EditorGUIUtility.FindTexture("Folder Icon");
 
-            var packagePath = System.IO.Path.GetFullPath("Packages/com.unity.assetbundlebrowser");
+            var packagePath = System.IO.Path.GetFullPath("Packages/com.unity.assetbundlebuilder");
             if (System.IO.Directory.Exists(packagePath))
             {
-                s_bundleIcon = (Texture2D)AssetDatabase.LoadAssetAtPath("Packages/com.unity.assetbundlebrowser/Editor/Icons/ABundleBrowserIconY1756Basic.png", typeof(Texture2D));
-                s_sceneIcon = (Texture2D)AssetDatabase.LoadAssetAtPath("Packages/com.unity.assetbundlebrowser/Editor/Icons/ABundleBrowserIconY1756Scene.png", typeof(Texture2D));
+                s_bundleIcon = (Texture2D)AssetDatabase.LoadAssetAtPath("Packages/com.unity.assetbundlebuilder/Editor/Icons/ABundleBrowserIconY1756Basic.png", typeof(Texture2D));
+                s_sceneIcon = (Texture2D)AssetDatabase.LoadAssetAtPath("Packages/com.unity.assetbundlebuilder/Editor/Icons/ABundleBrowserIconY1756Scene.png", typeof(Texture2D));
             }
         }
     }

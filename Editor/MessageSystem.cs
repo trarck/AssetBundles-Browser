@@ -6,9 +6,9 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.IMGUI.Controls;
 
-namespace AssetBundleBrowser
+namespace AssetBundleBuilder
 {
-    internal class MessageSystem
+    public class MessageSystem
     {
         private static Texture2D s_ErrorIcon = null;
         private static Texture2D s_WarningIcon = null;
@@ -35,7 +35,7 @@ namespace AssetBundleBrowser
             DependencySceneConflict = 0x840000,
         }
 
-        internal class MessageState
+        public class MessageState
         {
             //I have an enum and a set of enums to make some logic cleaner.  
             // The enum has masks for Error/Warning/Info that won't ever be in the set
@@ -148,7 +148,8 @@ namespace AssetBundleBrowser
             s_WarningIcon = EditorGUIUtility.FindTexture("console.warnicon");
             s_InfoIcon = EditorGUIUtility.FindTexture("console.infoIcon");
         }
-        internal class Message
+
+        public class Message
         {
             internal Message(string msg, MessageType sev)
             {

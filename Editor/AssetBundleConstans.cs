@@ -1,4 +1,4 @@
-﻿namespace AssetBundleBrowser
+﻿namespace AssetBundleBuilder
 {
     public class AssetBundleConstans
     {

@@ -2,7 +2,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-namespace AssetBundleBrowser
+namespace AssetBundleBuilder
 {
     internal class MessageList
     {
@@ -10,7 +10,7 @@ namespace AssetBundleBrowser
 
         private GUIStyle[] m_Style = new GUIStyle[2];
 
-        IEnumerable<AssetBundleModel.AssetInfo> m_Selecteditems;
+        IEnumerable<Model.AssetInfo> m_Selecteditems;
         List<MessageSystem.Message> m_Messages;
 
         Vector2 m_Dimensions = new Vector2(0, 0);
@@ -71,7 +71,7 @@ namespace AssetBundleBrowser
             GUI.EndScrollView();
         }
 
-        internal void SetItems(IEnumerable<AssetBundleModel.AssetInfo> items)
+        internal void SetItems(IEnumerable<Model.AssetInfo> items)
         {
             m_Selecteditems = items;
             CollectMessages();

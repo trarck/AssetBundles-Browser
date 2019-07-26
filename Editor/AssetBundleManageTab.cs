@@ -2,9 +2,10 @@
 using UnityEditor.IMGUI.Controls;
 using UnityEngine;
 using System.Collections.Generic;
+using AssetBundleBuilder.Model;
+using AssetBundleBuilder.View;
 
-
-namespace AssetBundleBrowser
+namespace AssetBundleBuilder
 {
     [System.Serializable]
     internal class AssetBundleManageTab 
@@ -81,7 +82,7 @@ namespace AssetBundleBrowser
             {
                 s_UpdateDelay = t - 0.001f;
 
-                if(AssetBundleModel.Model.Update())
+                if(Model.Model.Update())
                 {
                     m_Parent.Repaint();
                 }
@@ -97,10 +98,11 @@ namespace AssetBundleBrowser
 
         internal void ForceReloadData()
         {
-            UpdateSelectedBundles(new List<AssetBundleModel.BundleInfo>());
-            SetSelectedItems(new List<AssetBundleModel.AssetInfo>());
+            UpdateSelectedBundles(new List<BundleInfo>());
+            SetSelectedItems(new List<AssetInfo>());
             m_BundleTree.SetSelection(new int[0]);
-            AssetBundleModel.Model.ForceReloadData(m_BundleTree);
+            Model.Model.ForceReloadData();
+            m_BundleTree.Reload();
             m_Parent.Repaint();
         }
 
@@ -139,7 +141,7 @@ namespace AssetBundleBrowser
             HandleVerticalResize();
 
 
-            if (AssetBundleModel.Model.BundleListIsEmpty())
+            if (Model.Model.BundleListIsEmpty())
             {
                 m_BundleTree.OnGUI(m_Position);
                 var style = new GUIStyle(GUI.skin.label);
@@ -147,7 +149,7 @@ namespace AssetBundleBrowser
                 style.wordWrap = true;
                 GUI.Label(
                     new Rect(m_Position.x + 1f, m_Position.y + 1f, m_Position.width - 2f, m_Position.height - 2f), 
-                    new GUIContent(AssetBundleModel.Model.GetEmptyMessage()),
+                    new GUIContent(Model.Model.GetEmptyMessage()),
                     style);
             }
             else
@@ -260,15 +262,15 @@ namespace AssetBundleBrowser
             }
         }
 
-        internal void UpdateSelectedBundles(IEnumerable<AssetBundleModel.BundleInfo> bundles)
+        internal void UpdateSelectedBundles(IEnumerable<Model.BundleInfo> bundles)
         {
-            AssetBundleModel.Model.AddBundlesToUpdate(bundles);
+            Model.Model.AddBundlesToUpdate(bundles);
             m_AssetList.SetSelectedBundles(bundles);
             m_DetailsList.SetItems(bundles);
             m_MessageList.SetItems(null);
         }
 
-        internal void SetSelectedItems(IEnumerable<AssetBundleModel.AssetInfo> items)
+        internal void SetSelectedItems(IEnumerable<AssetInfo> items)
         {
             m_MessageList.SetItems(items);
         }

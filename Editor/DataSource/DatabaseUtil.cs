@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using YH.AssetManager;
 using UnityEngine;
 
-namespace AssetBundleBrowser.AssetBundleDataSource
+namespace AssetBundleBuilder.DataSource
 {
     public class DatabaseUtil
     {
@@ -19,15 +19,15 @@ namespace AssetBundleBrowser.AssetBundleDataSource
 
             List<YH.AssetManager.AssetBundleInfo> all = new List<YH.AssetManager.AssetBundleInfo>();
 
-            if (AssetBundleModel.Model.BundleListIsEmpty())
+            if (Model.Model.BundleListIsEmpty())
             {
-                AssetBundleModel.Model.Rebuild();
+                Model.Model.Rebuild();
             }
 
             foreach (var assetBundleName in buildManifest.GetAllAssetBundles())
             {
-                AssetBundleModel.BundleDataInfo bundleInfo = AssetBundleModel.Model.FindBundle(new AssetBundleModel.BundleNameData(assetBundleName)) as AssetBundleModel.BundleDataInfo;
-                Debug.Log(AssetBundleModel.Model.FindBundle(new AssetBundleModel.BundleNameData(assetBundleName)));
+                Model.BundleDataInfo bundleInfo = Model.Model.FindBundle(new Model.BundleNameData(assetBundleName)) as Model.BundleDataInfo;
+                Debug.Log(Model.Model.FindBundle(new Model.BundleNameData(assetBundleName)));
                 if (bundleInfo != null)
                 {
                     YH.AssetManager.AssetBundleInfo assetBundleInfo = new YH.AssetManager.AssetBundleInfo();
@@ -38,7 +38,7 @@ namespace AssetBundleBrowser.AssetBundleDataSource
                     assetBundleInfo.dependencies = buildManifest.GetDirectDependencies(assetBundleName);
 
                     List<AssetInfo> assets = new List<AssetInfo>();
-                    foreach (AssetBundleModel.AssetInfo assetInfo in bundleInfo.GetConcretes())
+                    foreach (Model.AssetInfo assetInfo in bundleInfo.GetConcretes())
                     {
                         AssetInfo ai = new AssetInfo();
                         Debug.Log(assetInfo.displayName + "," + assetInfo.bundleName + "," + assetInfo.fullAssetName);

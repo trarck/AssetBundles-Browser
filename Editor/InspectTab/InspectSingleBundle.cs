@@ -2,7 +2,7 @@ using UnityEditor;
 using UnityEngine;
 using System.IO;
 
-namespace AssetBundleBrowser
+namespace AssetBundleBuilder
 {
     class SingleBundleInspector
     {

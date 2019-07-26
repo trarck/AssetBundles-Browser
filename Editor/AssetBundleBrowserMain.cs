@@ -4,9 +4,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using UnityEditor;
 using UnityEngine;
 
-[assembly: System.Runtime.CompilerServices.InternalsVisibleToAttribute("Unity.AssetBundleBrowser.Editor.Tests")]
-
-namespace AssetBundleBrowser
+namespace AssetBundleBuilder
 {
 
     public class AssetBundleBrowserMain : EditorWindow, IHasCustomMenu, ISerializationCallbackReceiver
@@ -64,7 +62,7 @@ namespace AssetBundleBrowser
 
         [SerializeField]
         internal bool multiDataSource = false;
-        List<AssetBundleDataSource.ABDataSource> m_DataSourceList = null;
+        List<DataSource.DataSource> m_DataSourceList = null;
         public virtual void AddItemsToMenu(GenericMenu menu)
         {
             if(menu != null)
@@ -99,10 +97,10 @@ namespace AssetBundleBrowser
         {
             //determine if we are "multi source" or not...
             multiDataSource = false;
-            m_DataSourceList = new List<AssetBundleDataSource.ABDataSource>();
-            foreach (var info in AssetBundleDataSource.ABDataSourceProviderUtility.CustomABDataSourceTypes)
+            m_DataSourceList = new List<DataSource.DataSource>();
+            foreach (var info in DataSource.DataSourceProviderUtility.CustomDataSourceTypes)
             {
-                m_DataSourceList.AddRange(info.GetMethod("CreateDataSources").Invoke(null, null) as List<AssetBundleDataSource.ABDataSource>);
+                m_DataSourceList.AddRange(info.GetMethod("CreateDataSources").Invoke(null, null) as List<DataSource.DataSource>);
             }
 
             if (m_DataSourceList.Count > 1)
@@ -128,7 +126,7 @@ namespace AssetBundleBrowser
 
                 if (m_DataSourceIndex >= m_DataSourceList.Count)
                     m_DataSourceIndex = 0;
-                AssetBundleModel.Model.DataSource = m_DataSourceList[m_DataSourceIndex];
+                Model.Model.DataSource = m_DataSourceList[m_DataSourceIndex];
             }
         }
         private void OnDisable()
@@ -232,7 +230,7 @@ namespace AssetBundleBrowser
                 {
                     GUILayout.Label("Bundle Data Source:");
                     GUILayout.FlexibleSpace();
-                    var c = new GUIContent(string.Format("{0} ({1})", AssetBundleModel.Model.DataSource.Name, AssetBundleModel.Model.DataSource.ProviderName), "Select Asset Bundle Set");
+                    var c = new GUIContent(string.Format("{0} ({1})", Model.Model.DataSource.Name, Model.Model.DataSource.ProviderName), "Select Asset Bundle Set");
                     if (GUILayout.Button(c , EditorStyles.toolbarPopup) )
                     {
                         GenericMenu menu = new GenericMenu();
@@ -250,7 +248,7 @@ namespace AssetBundleBrowser
                                 () =>
                                 {
                                     var thisDataSource = ds;
-                                    AssetBundleModel.Model.DataSource = thisDataSource;
+                                    Model.Model.DataSource = thisDataSource;
                                     m_Data.dataSource = thisDataSource.Name;
                                     m_ManageTab.ForceReloadData();
                                 }
@@ -262,7 +260,7 @@ namespace AssetBundleBrowser
                     }
 
                     GUILayout.FlexibleSpace();
-                    if (AssetBundleModel.Model.DataSource.IsReadOnly())
+                    if (Model.Model.DataSource.IsReadOnly())
                     {
                         GUIStyle tbLabel = new GUIStyle(EditorStyles.toolbar);
                         tbLabel.alignment = TextAnchor.MiddleRight;

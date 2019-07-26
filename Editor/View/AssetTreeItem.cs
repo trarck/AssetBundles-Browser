@@ -3,9 +3,9 @@ using UnityEditor;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.IMGUI.Controls;
-using AssetBundleBrowser.AssetBundleModel;
+using AssetBundleBuilder.Model;
 
-namespace AssetBundleBrowser.View
+namespace AssetBundleBuilder.View
 {
     internal sealed class AssetTreeItem : TreeViewItem
     {
@@ -66,6 +66,37 @@ namespace AssetBundleBrowser.View
             return contains;
         }
 
+        internal void AddAssets(BundleInfo bundleInfo)
+        {
+            //if (bundleInfo.HaveChildren())
+            //{
+            //    foreach (var child in bundleInfo.GetChildren())
+            //    {
+            //        AddAssets(child);
+            //    }
+            //}
+            //else
+            {
+                List<AssetInfo> assets = bundleInfo.GetConcretes();
+                if (assets != null)
+                {
+                    foreach (var asset in assets)
+                        AddChild(new AssetTreeItem(asset));
+                }
+
+                assets = bundleInfo.GetDependencies();
+                if (assets != null)
+                {
+                    foreach (var asset in assets)
+                    {
+                        if (!ContainsChild(asset))
+                            AddChild(new AssetTreeItem(asset));
+                    }
+                }
+            }
+
+            bundleInfo.dirty = false;
+        }
 
     }
 }

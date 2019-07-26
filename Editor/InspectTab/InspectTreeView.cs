@@ -3,7 +3,7 @@ using UnityEditor.IMGUI.Controls;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace AssetBundleBrowser
+namespace AssetBundleBuilder
 {
 	internal class InspectTreeItem : TreeViewItem
 	{

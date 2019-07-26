@@ -4,9 +4,9 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.IMGUI.Controls;
 
-namespace AssetBundleBrowser.AssetBundleModel
+namespace AssetBundleBuilder.Model
 {
-    internal class AssetInfo
+    public class AssetInfo
     {
         internal bool isScene { get; set; }
         internal bool isFolder { get; set; }
@@ -90,7 +90,7 @@ namespace AssetBundleBrowser.AssetBundleModel
             }
             if (IsMessageSet(MessageSystem.MessageFlag.AssetsDuplicatedInMultBundles))
             {
-                var bundleNames = AssetBundleModel.Model.CheckDependencyTracker(this);
+                var bundleNames = Model.CheckDependencyTracker(this);
                 string message = displayName + "\n" + "Is auto-included in multiple bundles:\n";
                 foreach(var bundleName in bundleNames)
                 {
