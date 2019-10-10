@@ -92,7 +92,7 @@ namespace AssetBundleBuilder
         }
         internal void OnEnable(EditorWindow parent)
         {
-            m_InspectTab = (parent as AssetBundleBrowserMain).m_InspectTab;
+            m_InspectTab = (parent as AssetBundleBuilderMain).m_InspectTab;
 
             //LoadData...
             var dataPath = System.IO.Path.GetFullPath(".");

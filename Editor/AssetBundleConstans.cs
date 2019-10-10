@@ -2,9 +2,9 @@
 {
     public class AssetBundleConstans
     {
-        public static string MainSetting = "Library/AssetBundleBrowserMain.dat";
-        public static string BuildTabSetting = "Library/AssetBundleBrowserBuild.dat";
-        public static string InspectTabSetting = "Library/AssetBundleBrowserInspect.dat";
+        public static string MainSetting = "Library/AssetBundleBuilderMain.dat";
+        public static string BuildTabSetting = "Library/AssetBundleBuilderBuild.dat";
+        public static string InspectTabSetting = "Library/AssetBundleBuilderInspect.dat";
         public static string JsonDatabaseFile = "AssetDatabase/AssetDatabase.json";
     }
 }

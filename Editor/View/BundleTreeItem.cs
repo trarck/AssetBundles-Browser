@@ -32,7 +32,7 @@ namespace AssetBundleBuilder.View
         {
             get
             {
-                return AssetBundleBrowserMain.instance.m_ManageTab.hasSearch ? bundle.m_Name.fullNativeName : bundle.displayName;
+                return AssetBundleBuilderMain.instance.m_ManageTab.hasSearch ? bundle.m_Name.fullNativeName : bundle.displayName;
             }
         }
 

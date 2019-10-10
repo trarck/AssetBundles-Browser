@@ -7,16 +7,16 @@ using UnityEngine;
 namespace AssetBundleBuilder
 {
 
-    public class AssetBundleBrowserMain : EditorWindow, IHasCustomMenu, ISerializationCallbackReceiver
+    public class AssetBundleBuilderMain : EditorWindow, IHasCustomMenu, ISerializationCallbackReceiver
     {
 
-        private static AssetBundleBrowserMain s_instance = null;
-        internal static AssetBundleBrowserMain instance
+        private static AssetBundleBuilderMain s_instance = null;
+        internal static AssetBundleBuilderMain instance
         {
             get
             {
                 if (s_instance == null)
-                    s_instance = GetWindow<AssetBundleBrowserMain>();
+                    s_instance = GetWindow<AssetBundleBuilderMain>();
                 return s_instance;
             }
         }
@@ -52,7 +52,7 @@ namespace AssetBundleBuilder
 
         MainData m_Data;
 
-        [MenuItem("Window/AssetBundle Browser", priority = 2050)]
+        [MenuItem("Window/AssetBundle Builder", priority = 2050)]
         static void ShowWindow()
         {
             s_instance = null;

@@ -164,7 +164,7 @@ namespace AssetBundleBuilder.View
                 }
             }
             
-            AssetBundleBrowserMain.instance.m_ManageTab.SetAssetListSelection( pathList );
+            AssetBundleBuilderMain.instance.m_ManageTab.SetAssetListSelection( pathList );
         }
 
         void AddDependentAssetsRecursive( TreeViewItem item, List<string> pathList )
