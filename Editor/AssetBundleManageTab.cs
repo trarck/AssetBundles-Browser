@@ -39,6 +39,7 @@ namespace AssetBundleBuilder
         private static float s_UpdateDelay = 0f;
 
         SearchField m_searchField;
+        int m_SearchHeight = 20;
 
         EditorWindow m_Parent = null;
 
@@ -154,17 +155,15 @@ namespace AssetBundleBuilder
             }
             else
             {
-                float searchHeight = 20f;
-
                 //Left half
-                OnGUISearchBar(new Rect(m_Position.x, m_Position.y, m_HorizontalSplitterRect.x, searchHeight));
+                OnGUISearchBar(new Rect(m_Position.x, m_Position.y, m_HorizontalSplitterRect.x, m_SearchHeight));
 
                 var bundleTreeRect = new Rect(
                     m_Position.x,
-                    m_Position.y+ searchHeight,
+                    m_Position.y+ m_SearchHeight,
                     m_HorizontalSplitterRect.x,
-                    m_VerticalSplitterRectLeft.y - m_Position.y);
-                
+                    m_VerticalSplitterRectLeft.y - m_Position.y-m_SearchHeight);
+
                 m_BundleTree.OnGUI(bundleTreeRect);
                 m_DetailsList.OnGUI(new Rect(
                     bundleTreeRect.x,
