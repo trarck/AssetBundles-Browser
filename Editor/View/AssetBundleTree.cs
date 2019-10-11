@@ -597,7 +597,7 @@ namespace AssetBundleBuilder.View
                 }
                 else
                 {
-                    hashCodes.Add(Import.ImportFile(assetPath, dragToNewSpaceRoot as BundleFolderConcreteInfo,false,false));
+                    hashCodes.Add(Import.ImportFile(assetPath, dragToNewSpaceRoot as BundleFolderConcreteInfo, Import.Format.FullPath));
                 }
             }
             Model.Model.ExecuteAssetMove();
@@ -698,7 +698,7 @@ namespace AssetBundleBuilder.View
             ImportFromFolder(assetPaths, folder);    
         }
 
-        public void ImportFromFolder()
+        public void ImportFromFolder(Import.Format format)
         {
             //translate to asset path
             List<string> assetPaths = new List<string>();
@@ -708,10 +708,10 @@ namespace AssetBundleBuilder.View
                 assetPaths.Add(objPath);
             }
 
-            ImportFromFolder(assetPaths, null);
+            ImportFromFolder(assetPaths, null, format);
         }
 
-        public void ImportFromFolder(List<string> assetPaths, BundleFolderConcreteInfo parent=null)
+        public void ImportFromFolder(List<string> assetPaths, BundleFolderConcreteInfo parent=null, Import.Format format=Import.Format.None)
         {
             //check parent folder.
             if (parent == null)
@@ -731,17 +731,16 @@ namespace AssetBundleBuilder.View
                 }
             }
 
-            //import from asset folder
             foreach (string assetPath in assetPaths)
             {
                 string fullPath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Application.dataPath), assetPath);
                 if (System.IO.Directory.Exists(fullPath))
                 {
-                    Import.ImportFolder(fullPath, parent, Import.Format.FullPath | Import.Format.WithExt);
+                    Import.ImportFolder(fullPath, parent, format);
                 }
                 else
                 {
-                    Import.ImportFile(assetPath, parent);
+                    Import.ImportFile(assetPath, parent,format);
                 }
             }
 

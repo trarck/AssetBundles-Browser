@@ -9,6 +9,7 @@ namespace AssetBundleBuilder.Model
     {
         public enum Format
         {
+            None=0,
             FullPath=1,
             ShortName=2,
             WithFolder=4,
@@ -18,7 +19,9 @@ namespace AssetBundleBuilder.Model
         public delegate string CreateBundleNameDelegate(string filePath, bool useFullPath, bool useExt);
         public static CreateBundleNameDelegate CreateBundleNameHandle=null;
 
-        internal static int ImportFile(string filePath, BundleFolderConcreteInfo parent,bool useFullname=false,bool useExt=false,bool force=true)
+        public static List<string> IgnoreFolderPrefixs = new List<string>() { "Assets" };
+
+        internal static int ImportFile(string filePath, BundleFolderConcreteInfo parent,Format format,bool force=true)
         {
             if (Path.IsPathRooted(filePath))
             {
@@ -29,7 +32,18 @@ namespace AssetBundleBuilder.Model
             {
                 return 0;
             }
+
+            if ((format & Format.WithFolder) == Format.WithFolder)
+            {
+                parent = Model.CreateOrGetBundleFolder(parent, filterFolderPrefix(Path.GetDirectoryName(filePath))) as BundleFolderConcreteInfo;
+            }
+
+            bool useFullname = (format & Format.FullPath) == Format.FullPath;
+            bool useExt = (format & Format.WithExt) == Format.WithExt;
+
             string bundleName = CreateBundleName(filePath, useFullname, useExt);
+
+
             if (!force)
             {
                 //check assets have bundle name
@@ -50,15 +64,15 @@ namespace AssetBundleBuilder.Model
             Model.MoveAssetToBundle(filePath, newBundle.m_Name.bundleName, newBundle.m_Name.variant);
             return newBundle.nameHashCode;
         }
-        public static int ImportFile(string filePath,bool useFullname = true, bool useExt = true, bool force = true)
+        public static int ImportFile(string filePath,Format format, bool force = true)
         {
-            return ImportFile(filePath, null, useFullname, useExt,force);
+            return ImportFile(filePath, null, format, force);
         }
-        public static int ImportFileToStringPath(string filePath,string parentPath, bool useFullname = true, bool useExt = true, bool force = true)
+        public static int ImportFileToStringPath(string filePath,string parentPath,Format format, bool force = true)
         {
             BundleNameData nameData = new BundleNameData(parentPath);
             BundleFolderConcreteInfo parentFolder = Model.FindBundle(nameData) as BundleFolderConcreteInfo;
-            return ImportFile(filePath, parentFolder, useFullname, useExt,force);
+            return ImportFile(filePath, parentFolder, format, force);
         }
 
         private struct ImportFolderInfo
@@ -92,16 +106,16 @@ namespace AssetBundleBuilder.Model
             {
                 dir = dirs.Pop();
 
-                if ((format & Format.WithFolder)==Format.WithFolder)
-                {
-                    parent = Model.CreateEmptyBundleFolder(dir.parent, dir.directory.Name) as BundleFolderConcreteInfo;
-                }
+                //if ((format & Format.WithFolder)==Format.WithFolder)
+                //{
+                //    parent = Model.CreateEmptyBundleFolder(dir.parent, dir.directory.Name) as BundleFolderConcreteInfo;
+                //}
 
                 foreach (FileInfo fi in dir.directory.GetFiles())
                 {
                     if (Path.GetExtension(fi.Name).ToLower() == ".meta")
                         continue;
-                    hashCode = ImportFile(fi.FullName, parent, (format & Format.FullPath) == Format.FullPath, (format & Format.WithExt) == Format.WithExt,force);
+                    hashCode = ImportFile(fi.FullName, parent, format,force);
                     if (hashCode > 0)
                     {
                         ids.Add(hashCode);
@@ -204,6 +218,31 @@ namespace AssetBundleBuilder.Model
                 }
                 return result.ToString();
             }
+        }
+
+        public static void AddIgnoreFolderPrefix(string prefix,bool first=true)
+        {
+            if (first)
+            {
+                IgnoreFolderPrefixs.Insert(0, prefix);
+            }
+            else
+            {
+                //the default is Assets,and in the last.so insert before it
+                IgnoreFolderPrefixs.Insert(IgnoreFolderPrefixs.Count - 1, prefix);
+            }
+        }
+
+        private static string filterFolderPrefix(string folderPath)
+        {
+            foreach (var ignore in IgnoreFolderPrefixs)
+            {
+                if (folderPath.StartsWith(ignore))
+                {
+                    return folderPath.Replace(ignore.EndsWith("/") ? ignore : ignore + "/", "");
+                }
+            }
+            return folderPath;
         }
     }
 }

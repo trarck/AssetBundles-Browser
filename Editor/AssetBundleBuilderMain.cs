@@ -25,6 +25,7 @@ namespace AssetBundleBuilder
 
         enum Mode
         {
+            Config,
             Browser,
             Builder,
             Inspect,
@@ -34,6 +35,9 @@ namespace AssetBundleBuilder
 
         [SerializeField]
         int m_DataSourceIndex;
+
+        [SerializeField]
+        internal AssetBundleConfigTab m_ConfigTab;
 
         [SerializeField]
         internal AssetBundleManageTab m_ManageTab;
@@ -78,12 +82,21 @@ namespace AssetBundleBuilder
             LoadData();
 
             Rect subPos = GetSubWindowArea();
+
+            if (m_ConfigTab == null)
+            {
+                m_ConfigTab = new AssetBundleConfigTab();
+            }
+            m_ConfigTab.OnEnable(subPos, this);
+
             if(m_ManageTab == null)
                 m_ManageTab = new AssetBundleManageTab();
             m_ManageTab.OnEnable(subPos, this);
+
             if(m_BuildTab == null)
                 m_BuildTab = new AssetBundleBuildTab();
             m_BuildTab.OnEnable(this);
+
             if (m_InspectTab == null)
                 m_InspectTab = new AssetBundleInspectTab();
             m_InspectTab.OnEnable(subPos);
@@ -159,6 +172,8 @@ namespace AssetBundleBuilder
         {
             switch (m_Mode)
             {
+                case Mode.Config:
+                    break;
                 case Mode.Builder:
                     break;
                 case Mode.Inspect:
@@ -176,6 +191,9 @@ namespace AssetBundleBuilder
 
             switch(m_Mode)
             {
+                case Mode.Config:
+                    m_ConfigTab.OnGUI();
+                    break;
                 case Mode.Builder:
                     m_BuildTab.OnGUI();
                     break;
@@ -196,6 +214,9 @@ namespace AssetBundleBuilder
             bool clicked = false;
             switch(m_Mode)
             {
+                case Mode.Config:
+                    GUILayout.Space(m_RefreshTexture.width + k_ToolbarPadding);
+                    break;
                 case Mode.Browser:
                     clicked = GUILayout.Button(m_ToolsTexture, GUILayout.Width(22), GUILayout.Height(22));
                     if (clicked)
@@ -217,7 +238,7 @@ namespace AssetBundleBuilder
 
             float toolbarWidth = position.width - k_ToolbarPadding * 4 - m_RefreshTexture.width;
             //string[] labels = new string[2] { "Configure", "Build"};
-            string[] labels = new string[3] { "Browse", "Build", "Inspect" };
+            string[] labels = new string[] {"Config", "Browse", "Build", "Inspect" };
             m_Mode = (Mode)GUILayout.Toolbar((int)m_Mode, labels, "LargeButton", GUILayout.Width(toolbarWidth) );
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();

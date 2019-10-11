@@ -289,7 +289,7 @@ namespace AssetBundleBuilder
         
         void ImportFromFolder()
         {
-            m_BundleTree.ImportFromFolder();
+            m_BundleTree.ImportFromFolder(Import.Format.WithFolder);
         }
     }
 }
