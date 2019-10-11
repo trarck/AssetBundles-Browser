@@ -293,10 +293,10 @@ namespace AssetBundleBuilder.Model
             return currInfo;
         }
 
-        private static BundleFolderConcreteInfo AddFoldersToBundle(BundleFolderInfo root, BundleNameData nameData)
+        internal static BundleFolderInfo AddFoldersToBundle(BundleFolderInfo parent, BundleNameData nameData)
         {
-            BundleInfo currInfo = root;
-            var folder = currInfo as BundleFolderConcreteInfo;
+            BundleInfo currInfo = null;
+            BundleFolderInfo folder = parent;
             var size = nameData.pathTokens.Count;
             for (var index = 0; index < size; index++)
             {
@@ -309,7 +309,7 @@ namespace AssetBundleBuilder.Model
                         folder.AddChild(currInfo);
                     }
 
-                    folder = currInfo as BundleFolderConcreteInfo;
+                    folder = currInfo as BundleFolderInfo;
                     if (folder == null)
                     {
                         s_InErrorState = true;
@@ -318,7 +318,7 @@ namespace AssetBundleBuilder.Model
                     }
                 }
             }
-            return currInfo as BundleFolderConcreteInfo;
+            return currInfo as BundleFolderInfo;
         }
 
         private static void LogFolderAndBundleNameConflict(string name)
@@ -420,9 +420,9 @@ namespace AssetBundleBuilder.Model
         //    return root;
         //}
 
-        internal static bool HandleBundleRename(View.BundleTreeItem item, string newName)
+        internal static bool HandleBundleRename(BundleInfo bundle, string newName)
         {
-            var originalName = new BundleNameData(item.bundle.m_Name.fullNativeName);
+            var originalName = new BundleNameData(bundle.m_Name.fullNativeName);
 
             var findDot = newName.LastIndexOf('.');
             var findSlash = newName.LastIndexOf('/');
@@ -430,12 +430,12 @@ namespace AssetBundleBuilder.Model
             if (findDot == 0 || findSlash == 0 || findBSlash == 0)
                 return false; //can't start a bundle with a / or .
 
-            bool result = item.bundle.HandleRename(newName, 0);
+            bool result = bundle.HandleRename(newName, 0);
 
-            if (findDot > 0 || findSlash > 0 || findBSlash > 0)
-            {
-                item.bundle.parent.HandleChildRename(newName, string.Empty);
-            }
+            //if (findDot > 0 || findSlash > 0 || findBSlash > 0)
+            //{
+            //    bundle.parent.HandleChildRename(originalName.fullNativeName, newName);
+            //}
 
             ExecuteAssetMove();
 

@@ -79,17 +79,11 @@ namespace AssetBundleBuilder.Model
             else
                 m_PathTokens.Clear();
 
-            int indexOfSlash = name.IndexOf('/');
-            int previousIndex = 0;
-            while(indexOfSlash != -1)
-            {
-                m_PathTokens.Add(name.Substring(previousIndex, (indexOfSlash - previousIndex)));
-                previousIndex = indexOfSlash + 1;
-                indexOfSlash = name.IndexOf('/', previousIndex);
-            }
-            SetShortName(name.Substring(previousIndex));
+            string shortName = GetPathNames(name,ref m_PathTokens);
+            SetShortName(shortName);
             GenerateFullName();
         }
+
         private void SetShortName(string inputName)
         {
             m_ShortName = inputName;
@@ -107,11 +101,16 @@ namespace AssetBundleBuilder.Model
         {
             if(indexFromBack == 0)
             {
-                 SetShortName(newToken);
+                List<string> paths = new List<string>();
+                string shortName = GetPathNames(newToken, ref paths);
+                m_PathTokens.AddRange(paths);
+                SetShortName(shortName);
             }
-            else if(indexFromBack-1 < m_PathTokens.Count)
+            else if(indexFromBack <=m_PathTokens.Count)
             {
-                m_PathTokens[m_PathTokens.Count - indexFromBack] = newToken;
+                int index = m_PathTokens.Count - indexFromBack;
+                m_PathTokens.RemoveAt(index);
+                m_PathTokens.InsertRange(index, newToken.Split('/'));
             }
             GenerateFullName();
         }
@@ -128,11 +127,24 @@ namespace AssetBundleBuilder.Model
             m_FullNativeName = m_FullBundleName;
             m_FullNativeName += System.String.IsNullOrEmpty(m_VariantName) ? "" : "." + m_VariantName;
         }
+
+        static internal string GetPathNames(string name,ref List<string> pathTokens)
+        {
+            int indexOfSlash = name.IndexOf('/');
+            int previousIndex = 0;
+            while (indexOfSlash != -1)
+            {
+                pathTokens.Add(name.Substring(previousIndex, (indexOfSlash - previousIndex)));
+                previousIndex = indexOfSlash + 1;
+                indexOfSlash = name.IndexOf('/', previousIndex);
+            }
+            return name.Substring(previousIndex);
+        }
     }
 
     public abstract class BundleInfo
     {
-        protected BundleFolderInfo m_Parent;
+        internal BundleFolderInfo m_Parent;
         protected bool m_DoneUpdating;
         protected bool m_Dirty;
         internal BundleNameData m_Name;
@@ -856,7 +868,18 @@ namespace AssetBundleBuilder.Model
             {
                 m_Children.Remove(oldName);
                 if (!System.String.IsNullOrEmpty(newName))
-                    m_Children.Add(newName, info);
+                {
+                    BundleNameData nameData = new BundleNameData(newName);
+                    BundleFolderInfo bundleFolderInfo = ModelUtils.CreateBundleFolders(this, nameData);
+                    if (bundleFolderInfo != null)
+                    {
+                        bundleFolderInfo.AddChild(info);
+                    }
+                    else
+                    {
+                        m_Children.Add(newName, info);
+                    }
+                }
             }
             return true;
         }
@@ -932,7 +955,9 @@ namespace AssetBundleBuilder.Model
         internal override void AddChild(BundleInfo info)
         {
             m_Children.Add(info.displayName, info);
+            info.m_Parent = this;
         }
+
         //internal override BundleTreeItem CreateTreeView(int depth)
         //{
         //    RefreshMessages();

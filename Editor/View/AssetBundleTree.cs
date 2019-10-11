@@ -69,7 +69,7 @@ namespace AssetBundleBuilder.View
                 args.acceptedRename = true;
 
                 BundleTreeItem renamedItem = FindItem(args.itemID, rootItem) as BundleTreeItem;
-                args.acceptedRename = Model.Model.HandleBundleRename(renamedItem, args.newName);
+                args.acceptedRename = Model.Model.HandleBundleRename(renamedItem.bundle, args.newName);
                 ReloadAndSelect(renamedItem.bundle.nameHashCode, false);
             }
             else
@@ -223,7 +223,7 @@ namespace AssetBundleBuilder.View
         {
             Model.BundleFolderConcreteInfo folder = null;
             var selectedNodes = context as List<BundleTreeItem>;
-            if (selectedNodes != null && selectedNodes.Count > 0)
+            if (selectedNodes != null && selectedNodes.Count > 0 && selectedNodes[0]!=null)
             {
                 folder = selectedNodes[0].bundle as Model.BundleFolderConcreteInfo;
             }
@@ -259,7 +259,7 @@ namespace AssetBundleBuilder.View
         {
             BundleFolderConcreteInfo folder = null;
             var selectedNodes = context as List<BundleTreeItem>;
-            if (selectedNodes != null && selectedNodes.Count > 0)
+            if (selectedNodes != null && selectedNodes.Count > 0 && selectedNodes[0]!=null)
             {
                 folder = selectedNodes[0].bundle as BundleFolderConcreteInfo;
             }
