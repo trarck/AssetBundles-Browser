@@ -138,7 +138,9 @@ namespace AssetBundleBuilder.View
 
             menu.AddItem(new GUIContent("Reload all data"), false, ForceReloadData, selectedNodes);
 
-            menu.AddItem(new GUIContent("Import from folder"), false, ImportFromFolder, selectedNodes);
+            menu.AddItem(new GUIContent("Import with short name"), false, ImportWithShortName, selectedNodes);
+            menu.AddItem(new GUIContent("Import with full name"), false, ImportWithFullName, selectedNodes);
+            menu.AddItem(new GUIContent("Import with folder"), false, ImportWithFolder, selectedNodes);
 
             menu.ShowAsContext();
         }
@@ -366,6 +368,7 @@ namespace AssetBundleBuilder.View
             }
         }
 
+        #region Drag
         class DragAndDropData
         {
             internal bool hasBundleFolder = false;
@@ -584,20 +587,27 @@ namespace AssetBundleBuilder.View
             Model.Model.ExecuteAssetMove();
             ReloadAndSelect(hashCodes);
         }
+
         private void DragPathsAsManyBundlesEx()
         {
             List<int> hashCodes = new List<int>();
+            Import.Format format = Import.Format.ShortName;
+            if(m_Controller.assetBundleNameWithExt)
+            {
+                format |= Import.Format.WithExt;
+            }
+
             foreach (var assetPath in dragToNewSpacePaths)
             {
                 string fullPath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Application.dataPath), assetPath);
                 if (System.IO.Directory.Exists(fullPath))
                 {
                     hashCodes.AddRange(Import.ImportFolder(fullPath, dragToNewSpaceRoot as BundleFolderConcreteInfo,
-                        Import.Format.ShortName));
+                        format));
                 }
                 else
                 {
-                    hashCodes.Add(Import.ImportFile(assetPath, dragToNewSpaceRoot as BundleFolderConcreteInfo, Import.Format.FullPath));
+                    hashCodes.Add(Import.ImportFile(assetPath, dragToNewSpaceRoot as BundleFolderConcreteInfo, format));
                 }
             }
             Model.Model.ExecuteAssetMove();
@@ -646,6 +656,7 @@ namespace AssetBundleBuilder.View
         {
             return true;
         }
+        #endregion
 
         internal void Refresh()
         {
@@ -671,7 +682,24 @@ namespace AssetBundleBuilder.View
             SelectionChanged(hashCodes);
         }
 
-        void ImportFromFolder(object context)
+        #region Import
+
+        void ImportWithShortName(object context)
+        {
+            ImportAssets(context, Import.Format.ShortName);
+        }
+
+        void ImportWithFullName(object context)
+        {
+            ImportAssets(context, Import.Format.FullPath);
+        }
+
+        void ImportWithFolder(object context)
+        {
+            ImportAssets(context, Import.Format.WithFolder);
+        }
+
+        void ImportAssets(object context,Import.Format format)
         {
             BundleFolderConcreteInfo folder = null;
 
@@ -680,12 +708,6 @@ namespace AssetBundleBuilder.View
             {
                 folder = selectedNodes[0].bundle as BundleFolderConcreteInfo;
             }
-
-            //AssetBundleModel.Import.CreateBundleNameHandle = delegate (string filePath, bool useFullPath, bool useExt)
-            //{
-            //    return filePath.Replace('/', '_').Replace('\\', '_').Replace('.', '^').ToLower();
-            //};
-
             //translate to asset path
             List<string> assetPaths = new List<string>();
             foreach (UnityEngine.Object obj in Selection.objects)
@@ -695,10 +717,10 @@ namespace AssetBundleBuilder.View
                 assetPaths.Add(objPath);
             }
 
-            ImportFromFolder(assetPaths, folder);    
+            ImportAssets(assetPaths, folder,format);    
         }
 
-        public void ImportFromFolder(Import.Format format)
+        public void ImportAssets(Import.Format format)
         {
             //translate to asset path
             List<string> assetPaths = new List<string>();
@@ -708,10 +730,10 @@ namespace AssetBundleBuilder.View
                 assetPaths.Add(objPath);
             }
 
-            ImportFromFolder(assetPaths, null, format);
+            ImportAssets(assetPaths, null, format);
         }
 
-        public void ImportFromFolder(List<string> assetPaths, BundleFolderConcreteInfo parent=null, Import.Format format=Import.Format.None)
+        public void ImportAssets(List<string> assetPaths, BundleFolderConcreteInfo parent=null, Import.Format format=Import.Format.None)
         {
             //check parent folder.
             if (parent == null)
@@ -750,5 +772,7 @@ namespace AssetBundleBuilder.View
             //refresh bundle list tree
             Refresh();
         }
+
+        #endregion
     }
 }

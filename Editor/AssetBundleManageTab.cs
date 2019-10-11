@@ -35,6 +35,7 @@ namespace AssetBundleBuilder
         float m_VerticalSplitterPercentRight;
         [SerializeField]
         float m_VerticalSplitterPercentLeft;
+
         const float k_SplitterWidth = 3f;
         private static float s_UpdateDelay = 0f;
 
@@ -42,6 +43,9 @@ namespace AssetBundleBuilder
         int m_SearchHeight = 20;
 
         EditorWindow m_Parent = null;
+
+        [SerializeField]
+        bool m_AssetBundleNameWithExt=false;
 
         internal AssetBundleManageTab()
         {
@@ -278,18 +282,65 @@ namespace AssetBundleBuilder
         {
             m_AssetList.SetSelection( assets );
         }
+
         internal void ShowToolsMenu()
         {
             GenericMenu menu = new GenericMenu();
 
-            menu.AddItem(new GUIContent("Import from folder"), false, ImportFromFolder);
+            menu.AddItem(new GUIContent("BundleName " +(m_AssetBundleNameWithExt?"With":"Without")+" Ext"), false, DoWithExt);
+
+            menu.AddItem(new GUIContent("Import with short name"), false, ImportWithShortName);
+            menu.AddItem(new GUIContent("Import with full name"), false, ImportWithFullName);
+            menu.AddItem(new GUIContent("Import with folder"), false, ImportWithFolder);
 
             menu.ShowAsContext();
         }
-        
-        void ImportFromFolder()
+
+        void DoWithExt()
         {
-            m_BundleTree.ImportFromFolder(Import.Format.WithFolder);
+            m_AssetBundleNameWithExt = !m_AssetBundleNameWithExt;
+        }
+        
+        void ImportWithShortName()
+        {
+            Import.Format format = Import.Format.ShortName;
+            if (m_AssetBundleNameWithExt)
+            {
+                format |= Import.Format.WithExt;
+            }
+            m_BundleTree.ImportAssets(format);
+        }
+
+        void ImportWithFullName()
+        {
+            Import.Format format = Import.Format.FullPath;
+            if (m_AssetBundleNameWithExt)
+            {
+                format |= Import.Format.WithExt;
+            }
+            m_BundleTree.ImportAssets(format);
+        }
+
+        void ImportWithFolder()
+        {
+            Import.Format format = Import.Format.WithFolder;
+            if (m_AssetBundleNameWithExt)
+            {
+                format |= Import.Format.WithExt;
+            }
+            m_BundleTree.ImportAssets(format);
+        }
+
+        public bool assetBundleNameWithExt
+        {
+            get
+            {
+                return m_AssetBundleNameWithExt;
+            }
+            set
+            {
+                m_AssetBundleNameWithExt = value;
+            }
         }
     }
 }
