@@ -18,6 +18,7 @@ namespace AssetBundleBuilder
         [SerializeField]
         private ConfigTabData m_UserData;
 
+        //文件夹前缀忽略列表
         ReorderableList m_IgnoreFolderPrefixList;
 
         internal AssetBundleConfigTab()
