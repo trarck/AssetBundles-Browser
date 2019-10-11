@@ -776,7 +776,7 @@ namespace AssetBundleBuilder.Model
         {
             return m_Children.Values;
         }
-        internal abstract void AddChild(BundleInfo info);
+        internal abstract void AddChild(BundleInfo info,string key=null);
 
         internal override bool HandleRename(string newName, int reverseDepth)
         {
@@ -873,7 +873,7 @@ namespace AssetBundleBuilder.Model
                     BundleFolderInfo bundleFolderInfo = ModelUtils.CreateBundleFolders(this, nameData);
                     if (bundleFolderInfo != null)
                     {
-                        bundleFolderInfo.AddChild(info);
+                        bundleFolderInfo.AddChild(info, nameData.shortName);
                     }
                     else
                     {
@@ -952,9 +952,9 @@ namespace AssetBundleBuilder.Model
         {
         }
 
-        internal override void AddChild(BundleInfo info)
+        internal override void AddChild(BundleInfo info,string key)
         {
-            m_Children.Add(info.displayName, info);
+            m_Children.Add(string.IsNullOrEmpty(key)?info.displayName:key, info);
             info.m_Parent = this;
         }
 
@@ -970,6 +970,12 @@ namespace AssetBundleBuilder.Model
         //}
         internal override void HandleReparent(string parentName, BundleFolderInfo newParent = null)
         {
+            if (parentName.StartsWith(m_Name.bundleName))
+            {
+                //can't reparent to child
+                return;
+            }
+
             string newName = System.String.IsNullOrEmpty(parentName) ? "" : parentName + '/';
             newName += displayName;
             if (newName == m_Name.bundleName)
@@ -1008,9 +1014,10 @@ namespace AssetBundleBuilder.Model
         internal BundleVariantFolderInfo(string name, BundleFolderInfo parent) : base(name, parent)
         {
         }
-        internal override void AddChild(BundleInfo info)
+        internal override void AddChild(BundleInfo info,string key=null)
         {
-            m_Children.Add(info.m_Name.variant, info);
+            m_Children.Add(string.IsNullOrEmpty(key) ? info.m_Name.variant : key, info);
+            info.m_Parent = this;
         }
         private bool m_validated;
         internal override void Update()
