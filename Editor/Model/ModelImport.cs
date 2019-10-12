@@ -7,25 +7,13 @@ namespace AssetBundleBuilder.Model
 
     public static class Import
     {
-        public enum Format
-        {
-            None=0,
-            FullPath=1,
-            ShortName=2,
-            WithFolder=4,
-            WithExt=8
-        }
 
-        public delegate string CreateBundleNameDelegate(string filePath, bool useFullPath, bool useExt);
-        public static CreateBundleNameDelegate CreateBundleNameHandle=null;
 
-        public static List<string> IgnoreFolderPrefixs = new List<string>() { "Assets" };
-
-        internal static int ImportFile(string filePath, BundleFolderConcreteInfo parent,Format format,bool force=true)
+        internal static int ImportFile(string filePath, BundleFolderConcreteInfo parent,Setting.Format format,bool force=true)
         {
             if (Path.IsPathRooted(filePath))
             {
-                filePath = Relative(Path.GetDirectoryName(Application.dataPath), filePath);
+                filePath = ModelUtils.Relative(Path.GetDirectoryName(Application.dataPath), filePath);
             }
 
             if (!Model.ValidateAsset(filePath))
@@ -33,15 +21,15 @@ namespace AssetBundleBuilder.Model
                 return 0;
             }
 
-            if ((format & Format.WithFolder) == Format.WithFolder)
+            if ((format & Setting.Format.WithFolder) == Setting.Format.WithFolder)
             {
-                parent = Model.CreateOrGetBundleFolder(parent, filterFolderPrefix(Path.GetDirectoryName(filePath))) as BundleFolderConcreteInfo;
+                parent = Model.CreateOrGetBundleFolder(parent, Setting.FilterFolderPrefix(Path.GetDirectoryName(filePath))) as BundleFolderConcreteInfo;
             }
 
-            bool useFullname = (format & Format.FullPath) == Format.FullPath;
-            bool useExt = (format & Format.WithExt) == Format.WithExt;
+            bool useFullname = (format & Setting.Format.FullPath) == Setting.Format.FullPath;
+            bool useExt = (format & Setting.Format.WithExt) == Setting.Format.WithExt;
 
-            string bundleName = CreateBundleName(filePath, useFullname, useExt);
+            string bundleName = Setting.CreateBundleName(filePath, useFullname, useExt);
 
 
             if (!force)
@@ -64,11 +52,11 @@ namespace AssetBundleBuilder.Model
             Model.MoveAssetToBundle(filePath, newBundle.m_Name.bundleName, newBundle.m_Name.variant);
             return newBundle.nameHashCode;
         }
-        public static int ImportFile(string filePath,Format format, bool force = true)
+        public static int ImportFile(string filePath, Setting.Format format, bool force = true)
         {
             return ImportFile(filePath, null, format, force);
         }
-        public static int ImportFileToStringPath(string filePath,string parentPath,Format format, bool force = true)
+        public static int ImportFileToStringPath(string filePath,string parentPath, Setting.Format format, bool force = true)
         {
             BundleNameData nameData = new BundleNameData(parentPath);
             BundleFolderConcreteInfo parentFolder = Model.FindBundle(nameData) as BundleFolderConcreteInfo;
@@ -86,7 +74,7 @@ namespace AssetBundleBuilder.Model
             public BundleFolderConcreteInfo parent;
         }
 
-        internal static List<int> ImportFolder(string folderPath, BundleFolderConcreteInfo parent, Format format, bool force = true)
+        internal static List<int> ImportFolder(string folderPath, BundleFolderConcreteInfo parent, Setting.Format format, bool force = true)
         {
             List<int> ids = new List<int>();
 
@@ -133,116 +121,16 @@ namespace AssetBundleBuilder.Model
 
             return ids;
         }
-        public static List<int> ImportFolder(string folderPath, Format format = Format.FullPath, bool force = true)
+        public static List<int> ImportFolder(string folderPath, Setting.Format format = Setting.Format.FullPath, bool force = true)
         {
             return ImportFolder(folderPath, null,format,force);
         }
 
-        public static List<int> ImportFolderToStringPath(string folderPath,string parentPath, Format format = Format.FullPath, bool force = true)
+        public static List<int> ImportFolderToStringPath(string folderPath,string parentPath, Setting.Format format = Setting.Format.FullPath, bool force = true)
         {
             BundleNameData nameData = new BundleNameData(parentPath);
             BundleFolderConcreteInfo parentFolder =Model.FindBundle(nameData) as BundleFolderConcreteInfo;
             return ImportFolder(folderPath, parentFolder, format,force);
-        }
-
-        private static string CreateBundleName(string filePath,bool useFullPath,bool useExt)
-        {
-            if (CreateBundleNameHandle != null)
-            {
-                return CreateBundleNameHandle(filePath, useFullPath, useExt);
-            }
-            if (useFullPath)
-            {
-                return filePath.Replace('/', '_').Replace('\\', '_').Replace('.','_').ToLower();
-            }
-            else if(useExt)
-            {
-                return Path.GetFileName(filePath).Replace('.', '_').ToLower();
-            }
-            else
-            {
-                return Path.GetFileNameWithoutExtension(filePath).ToLower();
-            }
-        }
-
-        public static string Relative(string fromPath, string toPath)
-        {
-            fromPath = fromPath.Replace("\\", "/");
-            toPath = toPath.Replace("\\", "/");
-
-            if (fromPath[fromPath.Length - 1] == '/')
-            {
-                fromPath = fromPath.Substring(0, fromPath.Length - 1);
-            }
-
-            if (toPath[toPath.Length - 1] == '/')
-            {
-                toPath = toPath.Substring(0, toPath.Length - 1);
-            }
-
-            string[] froms = fromPath.Split('/');
-            string[] tos = toPath.Split('/');
-
-            int i = 0;
-            //look for same part
-            for (; i < froms.Length; ++i)
-            {
-                if (froms[i] != tos[i])
-                {
-                    break;
-                }
-            }
-
-            if (i == 0)
-            {
-                //just windows. eg.fromPath=c:\a\b\c,toPath=d:\e\f\g
-                //if linux the first is empty always same. eg. fromPath=/a/b/c,toPath=/d/e/f
-                return toPath;
-            }
-            else
-            {
-                System.Text.StringBuilder result = new System.Text.StringBuilder();
-
-                for (int j = i; j < froms.Length; ++j)
-                {
-                    result.Append("../");
-                }
-
-                for (int j = i; j < tos.Length; ++j)
-                {
-                    result.Append(tos[j]);
-                    if (j < tos.Length - 1)
-                    {
-                        result.Append("/");
-                    }
-                }
-                return result.ToString();
-            }
-        }
-
-        public static void AddIgnoreFolderPrefix(string prefix,bool first=true)
-        {
-            if (first)
-            {
-                IgnoreFolderPrefixs.Insert(0, prefix);
-            }
-            else
-            {
-                //the default is Assets,and in the last.so insert before it
-                IgnoreFolderPrefixs.Insert(IgnoreFolderPrefixs.Count - 1, prefix);
-            }
-        }
-
-        private static string filterFolderPrefix(string folderPath)
-        {
-            foreach (var ignore in IgnoreFolderPrefixs)
-            {
-                if (folderPath.StartsWith(ignore))
-                {
-                    return folderPath.Replace(ignore.EndsWith("/") ? ignore : ignore + "/", "");
-                }
-            }
-            return folderPath;
         }
     }
 }

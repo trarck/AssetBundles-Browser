@@ -303,30 +303,30 @@ namespace AssetBundleBuilder
         
         void ImportWithShortName()
         {
-            Import.Format format = Import.Format.ShortName;
+            Setting.Format format = Setting.Format.ShortName;
             if (m_AssetBundleNameWithExt)
             {
-                format |= Import.Format.WithExt;
+                format |= Setting.Format.WithExt;
             }
             m_BundleTree.ImportAssets(format);
         }
 
         void ImportWithFullName()
         {
-            Import.Format format = Import.Format.FullPath;
+            Setting.Format format = Setting.Format.FullPath;
             if (m_AssetBundleNameWithExt)
             {
-                format |= Import.Format.WithExt;
+                format |= Setting.Format.WithExt;
             }
             m_BundleTree.ImportAssets(format);
         }
 
         void ImportWithFolder()
         {
-            Import.Format format = Import.Format.WithFolder;
+            Setting.Format format = Setting.Format.WithFolder;
             if (m_AssetBundleNameWithExt)
             {
-                format |= Import.Format.WithExt;
+                format |= Setting.Format.WithExt;
             }
             m_BundleTree.ImportAssets(format);
         }

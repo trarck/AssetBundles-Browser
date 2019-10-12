@@ -591,10 +591,10 @@ namespace AssetBundleBuilder.View
         private void DragPathsAsManyBundlesEx()
         {
             List<int> hashCodes = new List<int>();
-            Import.Format format = Import.Format.ShortName;
+            Setting.Format format = Setting.Format.ShortName;
             if(m_Controller.assetBundleNameWithExt)
             {
-                format |= Import.Format.WithExt;
+                format |= Setting.Format.WithExt;
             }
 
             foreach (var assetPath in dragToNewSpacePaths)
@@ -686,20 +686,20 @@ namespace AssetBundleBuilder.View
 
         void ImportWithShortName(object context)
         {
-            ImportAssets(context, Import.Format.ShortName);
+            ImportAssets(context, Setting.Format.ShortName);
         }
 
         void ImportWithFullName(object context)
         {
-            ImportAssets(context, Import.Format.FullPath);
+            ImportAssets(context, Setting.Format.FullPath);
         }
 
         void ImportWithFolder(object context)
         {
-            ImportAssets(context, Import.Format.WithFolder);
+            ImportAssets(context, Setting.Format.WithFolder);
         }
 
-        void ImportAssets(object context,Import.Format format)
+        void ImportAssets(object context, Setting.Format format)
         {
             BundleFolderConcreteInfo folder = null;
 
@@ -720,7 +720,7 @@ namespace AssetBundleBuilder.View
             ImportAssets(assetPaths, folder,format);    
         }
 
-        public void ImportAssets(Import.Format format)
+        public void ImportAssets(Setting.Format format)
         {
             //translate to asset path
             List<string> assetPaths = new List<string>();
@@ -733,7 +733,7 @@ namespace AssetBundleBuilder.View
             ImportAssets(assetPaths, null, format);
         }
 
-        public void ImportAssets(List<string> assetPaths, BundleFolderConcreteInfo parent=null, Import.Format format=Import.Format.None)
+        public void ImportAssets(List<string> assetPaths, BundleFolderConcreteInfo parent=null, Setting.Format format= Setting.Format.None)
         {
             //check parent folder.
             if (parent == null)

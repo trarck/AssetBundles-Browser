@@ -7,5 +7,6 @@
         public static string BuildTabSetting = "Library/AssetBundleBuilderBuild.dat";
         public static string InspectTabSetting = "Library/AssetBundleBuilderInspect.dat";
         public static string JsonDatabaseFile = "AssetDatabase/AssetDatabase.json";
+        public static string AssetsDataFile = "AssetDatabase/AssetsInfo.json";
     }
 }

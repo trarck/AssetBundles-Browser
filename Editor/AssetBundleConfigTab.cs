@@ -66,7 +66,7 @@ namespace AssetBundleBuilder
 
         void CreateIgnoreFolderPrefixList()
         {
-            m_IgnoreFolderPrefixList = new ReorderableList(Model.Import.IgnoreFolderPrefixs, typeof(string), true, true, true, true);
+            m_IgnoreFolderPrefixList = new ReorderableList(Model.Setting.IgnoreFolderPrefixs, typeof(string), true, true, true, true);
             m_IgnoreFolderPrefixList.drawHeaderCallback += (Rect rect) =>
             {
                 GUI.Label(rect, "IgnoreFolderPrefixs");
@@ -74,7 +74,7 @@ namespace AssetBundleBuilder
 
             m_IgnoreFolderPrefixList.drawElementCallback += (Rect rect, int index, bool isActive, bool isFocused) =>
             {
-                Model.Import.IgnoreFolderPrefixs[index]=GUI.TextField(rect, Model.Import.IgnoreFolderPrefixs[index]);
+                Model.Setting.IgnoreFolderPrefixs[index]=GUI.TextField(rect, Model.Setting.IgnoreFolderPrefixs[index]);
             };
 
             m_IgnoreFolderPrefixList.onRemoveCallback += (ReorderableList list) =>
