@@ -331,6 +331,11 @@ namespace AssetBundleBuilder
             m_BundleTree.ImportAssets(format);
         }
 
+        public void ShowAutoImportWindow()
+        {
+            AutoImportWindow.ShowWindow();
+        }
+
         public bool assetBundleNameWithExt
         {
             get

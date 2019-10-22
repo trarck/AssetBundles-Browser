@@ -218,7 +218,12 @@ namespace AssetBundleBuilder
                     GUILayout.Space(m_RefreshTexture.width + k_ToolbarPadding);
                     break;
                 case Mode.Browser:
-                    clicked = GUILayout.Button(m_ToolsTexture, GUILayout.Width(22), GUILayout.Height(22));
+                    if (GUILayout.Button("Auto",GUILayout.Height(22)))
+                    {
+                        m_ManageTab.ShowAutoImportWindow();
+                    }
+
+                    clicked = GUILayout.Button(m_ToolsTexture,GUILayout.Width(22), GUILayout.Height(22));
                     if (clicked)
                         m_ManageTab.ShowToolsMenu();
 
