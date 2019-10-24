@@ -11,14 +11,14 @@ namespace AssetBundleBuilder
 {
     public class AutoImportWindow : EditorWindow
     {
-        [SerializeField]
+        [System.Serializable]
         public class ImportInfo
         {
             public string path;
             public string pattern;
         }
 
-        [SerializeField]
+        [System.Serializable]
         public class ImportData
         {
             public List<ImportInfo> infos;
@@ -39,17 +39,17 @@ namespace AssetBundleBuilder
 
         private void OnEnable()
         {
-            CreateAssetFolderList();
-
             m_FormatGUI = new View.EnumGUI<Model.Setting.Format>();
-            m_FormatGUI.Init("Format",true,true);
+            m_FormatGUI.Init("Format", true, true);
 
             LoadData();
+
+            CreateAssetFolderList();
         }
 
         private void OnDisable()
         {
-
+            SaveData();
         }
 
         void CreateAssetFolderList()
