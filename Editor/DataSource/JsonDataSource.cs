@@ -93,11 +93,13 @@ namespace AssetBundleBuilder.DataSource
 
                 var oldBundleName = item.bundleName;
 
-                //无论如何都要把上次的asset从bundle中移除。
-                m_Bundles[oldBundleName].Remove(assetPath);
-
                 if (string.IsNullOrEmpty(bundleName))
                 {
+                    //把asset从bundle中移除。
+                    if (m_Bundles.ContainsKey(oldBundleName))
+                    {
+                        m_Bundles[oldBundleName].Remove(assetPath);
+                    }
                     //asset的bundle name为空，则表示删除asset.
                     m_Assets.Remove(assetPath);
                 }
@@ -105,6 +107,12 @@ namespace AssetBundleBuilder.DataSource
                 {
                     if (oldBundleName != bundleName)
                     {
+                        //把asset从bundle中移除。
+                        if (m_Bundles.ContainsKey(oldBundleName))
+                        {
+                            m_Bundles[oldBundleName].Remove(assetPath);
+                        }
+
                         item.bundleName = bundleName;
 
                         if (!m_Bundles.ContainsKey(bundleName))

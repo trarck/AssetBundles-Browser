@@ -257,9 +257,28 @@ namespace AssetBundleBuilder.Model
             return AddBundleToFolder(folder, nameData);
         }
 
+        internal static BundleInfo CreateOrGetBundle(BundleFolderInfo folder = null, string name = null)
+        {
+            if ((folder as BundleVariantFolderInfo) != null)
+                return CreateOrGetVariant(folder as BundleVariantFolderInfo,name);
+
+            folder = (folder == null) ? s_RootLevelBundles : folder;
+            BundleNameData nameData;
+            nameData = new BundleNameData(folder.m_Name.bundleName, name);
+            return AddBundleToFolder(folder, nameData);
+        }
+
         internal static BundleInfo CreateEmptyVariant(BundleVariantFolderInfo folder)
         {
             string name = GetUniqueName(folder, k_NewVariantBaseName);
+            string variantName = folder.m_Name.bundleName + "." + name;
+            BundleNameData nameData = new BundleNameData(variantName);
+            return AddBundleToFolder(folder.parent, nameData);
+        }
+
+        internal static BundleInfo CreateOrGetVariant(BundleVariantFolderInfo folder,string name)
+        {
+            name =string.IsNullOrEmpty(name)?k_NewVariantBaseName:name;
             string variantName = folder.m_Name.bundleName + "." + name;
             BundleNameData nameData = new BundleNameData(variantName);
             return AddBundleToFolder(folder.parent, nameData);
@@ -344,18 +363,18 @@ namespace AssetBundleBuilder.Model
             LogError(message);
         }
 
-        private static BundleInfo AddBundleToFolder(BundleFolderInfo root, BundleNameData nameData)
+        private static BundleInfo AddBundleToFolder(BundleFolderInfo folder, BundleNameData nameData)
         {
-            BundleInfo currInfo = root.GetChild(nameData.shortName);
+            BundleInfo currInfo = folder.GetChild(nameData.shortName);
             if (!System.String.IsNullOrEmpty(nameData.variant))
             {
                 if(currInfo == null)
                 {
-                    currInfo = new BundleVariantFolderInfo(nameData.bundleName, root);
-                    root.AddChild(currInfo);
+                    currInfo = new BundleVariantFolderInfo(nameData.bundleName, folder);
+                    folder.AddChild(currInfo);
                 }
-                var folder = currInfo as BundleVariantFolderInfo;
-                if (folder == null)
+                var variantFolder = currInfo as BundleVariantFolderInfo;
+                if (variantFolder == null)
                 {
                     var message = "Bundle named " + nameData.shortName;
                     message += " exists both as a standard bundle, and a bundle with variants.  ";
@@ -367,11 +386,11 @@ namespace AssetBundleBuilder.Model
                 }
                 
                 
-                currInfo = folder.GetChild(nameData.variant);
+                currInfo = variantFolder.GetChild(nameData.variant);
                 if (currInfo == null)
                 {
-                    currInfo = new BundleVariantDataInfo(nameData.fullNativeName, folder);
-                    folder.AddChild(currInfo);
+                    currInfo = new BundleVariantDataInfo(nameData.fullNativeName, variantFolder);
+                    variantFolder.AddChild(currInfo);
                 }
                 
             }
@@ -379,8 +398,8 @@ namespace AssetBundleBuilder.Model
             {
                 if (currInfo == null)
                 {
-                    currInfo = new BundleDataInfo(nameData.fullNativeName, root);
-                    root.AddChild(currInfo);
+                    currInfo = new BundleDataInfo(nameData.fullNativeName, folder);
+                    folder.AddChild(currInfo);
                 }
                 else
                 {

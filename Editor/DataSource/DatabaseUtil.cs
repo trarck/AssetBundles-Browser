@@ -8,11 +8,6 @@ namespace AssetBundleBuilder.DataSource
 {
     public class DatabaseUtil
     {
-         public static void ClearTempManifest(string outDir)
-        {
-            YH.FileSystemUtil.RemoveDirectoryFiles(outDir, @".*\.manifest");
-        }
-
         public static void SaveBundleManifest(AssetBundleManifest buildManifest, string outDir)
         {
             BundleManifest bundleManifest = new BundleManifest();

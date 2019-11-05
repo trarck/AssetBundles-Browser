@@ -600,7 +600,7 @@ namespace AssetBundleBuilder.Model
             }
 
             string bundleName = Setting.CreateBundleName(mainAsset, forma);
-            var newBundle = Model.CreateEmptyBundle(parent, bundleName);
+            var newBundle = Model.CreateOrGetBundle(parent, bundleName);
             foreach (var assetPath in node.assets)
             {
                 Model.MoveAssetToBundle(assetPath, newBundle.m_Name.bundleName, newBundle.m_Name.variant);

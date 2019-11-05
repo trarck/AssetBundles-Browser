@@ -62,6 +62,7 @@ namespace AssetBundleBuilder.Model
 
         public static string FilterFolderPrefix(string folderPath)
         {
+            folderPath = folderPath.Replace("\\", "/");
             foreach (var ignore in IgnoreFolderPrefixs)
             {
                 if (folderPath.StartsWith(ignore))

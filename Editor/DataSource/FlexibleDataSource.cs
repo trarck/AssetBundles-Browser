@@ -30,6 +30,18 @@ namespace AssetBundleBuilder.DataSource
                     bundles.Remove(bundle);
                 }
             }
+
+            public Bundle GetBundle(string bundleName)
+            {
+                foreach(var bundle in bundles)
+                {
+                    if (bundle.name == bundleName)
+                    {
+                        return bundle;
+                    }
+                }
+                return null;
+            }
         }
 
         [Serializable]
@@ -147,34 +159,55 @@ namespace AssetBundleBuilder.DataSource
 
         public void SetAssetBundleNameAndVariant (string assetPath, string bundleName, string variantName) {
 
-            if(string.IsNullOrEmpty(bundleName) || string.IsNullOrEmpty(assetPath))
+            if(string.IsNullOrEmpty(assetPath))
             {
                 return;
             }
 
-            Bundle bundle=null;
-            string fullName = GetBundleFullName(bundleName, variantName);
-            if(!m_Bundles.TryGetValue(fullName, out bundle))
-            {
-                bundle = new Bundle();
-                bundle.name = bundleName;
-                bundle.variantName = variantName;
-            }
-
+            Bundle bundle = null;
             Asset asset = null;
-            if (!m_Assets.TryGetValue(assetPath, out asset))
+            bool haveAsset=m_Assets.TryGetValue(assetPath, out asset);
+
+            if (string.IsNullOrEmpty(bundleName) && haveAsset)
             {
-                asset = new Asset();
-                asset.path = assetPath;
-                asset.bundles = new List<Bundle>();
-
-                m_Assets[assetPath] = asset;
+                //remove asset from bundle
+                bundle = asset.GetBundle(bundleName);
+                if (bundle != null)
+                {
+                    bundle.RemoveAsset(assetPath);
+                }
+                else
+                {
+                    //do noting
+                    return;
+                }
             }
+            else
+            {
 
-            bundle.AddAsset(asset.path);
+                //add asset to bunld
 
-            asset.AddBundle(bundle);
+                string fullName = GetBundleFullName(bundleName, variantName);
+                if (!m_Bundles.TryGetValue(fullName, out bundle))
+                {
+                    bundle = new Bundle();
+                    bundle.name = bundleName;
+                    bundle.variantName = variantName;
+                }
 
+                if (!haveAsset)
+                {
+                    asset = new Asset();
+                    asset.path = assetPath;
+                    asset.bundles = new List<Bundle>();
+
+                    m_Assets[assetPath] = asset;
+                }
+
+                bundle.AddAsset(asset.path);
+
+                asset.AddBundle(bundle);
+            }
             Save();
         }
 
