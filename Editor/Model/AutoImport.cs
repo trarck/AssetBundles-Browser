@@ -2,6 +2,7 @@
 using System.IO;
 using UnityEngine;
 using UnityEditor;
+using static AssetBundleBuilder.Model.Optimizer;
 
 namespace AssetBundleBuilder.Model
 {
@@ -35,7 +36,8 @@ namespace AssetBundleBuilder.Model
 
         public void ImportFile(string filePath)
         {
-            m_Optimizer.LoadAsset(filePath);
+            Node assetNode=m_Optimizer.LoadAsset(filePath);
+            assetNode.SetStandalone(true);
         }
 
         public void ImportFolder(string folderPath, string pattern = null)

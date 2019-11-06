@@ -115,11 +115,19 @@ namespace AssetBundleBuilder.Model
                 return m_Standalone;
             }
 
-            public bool canMerge
+            public bool CanMerge
             {
                 get
                 {
-                    return !m_Standalone;
+                    return !m_Standalone && !IsScene;
+                }
+            }
+
+            public bool IsScene
+            {
+                get
+                {
+                    return mainAsset.Contains(".unity");
                 }
             }
 
@@ -408,12 +416,16 @@ namespace AssetBundleBuilder.Model
 
             foreach (var node in assets)
             {
-                if (node.refers.Count == 1 && node.canMerge)
+                if (node.refers.Count == 1 && node.CanMerge)
                 {
-                    merged = true;
                     var iter = node.refers.GetEnumerator();
                     iter.MoveNext();
-                    MergeNode(iter.Current, node);
+                    //检查目标是不是Scene。Scene所在的AssetBundle,不能包含其它资源
+                    if (!iter.Current.IsScene)
+                    {
+                        merged = true;
+                        MergeNode(iter.Current, node);
+                    }
                 }
             }
             return merged;
@@ -431,7 +443,7 @@ namespace AssetBundleBuilder.Model
 
             foreach (var node in assets)
             {
-                if (node.canMerge)
+                if (node.CanMerge)
                 {
                     int hash = node.refersHashCode;
                     List<Node> items = null;
@@ -601,9 +613,28 @@ namespace AssetBundleBuilder.Model
 
             string bundleName = Setting.CreateBundleName(mainAsset, forma);
             var newBundle = Model.CreateOrGetBundle(parent, bundleName);
-            foreach (var assetPath in node.assets)
+            BundleDataInfo dataBundle=newBundle as BundleDataInfo;
+            if (dataBundle != null && !dataBundle.IsEmpty())
             {
-                Model.MoveAssetToBundle(assetPath, newBundle.m_Name.bundleName, newBundle.m_Name.variant);
+                Dictionary<string, bool> signMap = new Dictionary<string, bool>();
+                foreach(var assetInfo in dataBundle.GetConcretes())
+                {
+                    signMap[assetInfo.fullAssetName] = true;
+                }
+                foreach (var assetPath in node.assets)
+                {
+                    if (!signMap.ContainsKey(assetPath))
+                    {
+                        Model.MoveAssetToBundle(assetPath, newBundle.m_Name.bundleName, newBundle.m_Name.variant);
+                    }
+                }
+            }
+            else
+            {
+                foreach (var assetPath in node.assets)
+                {
+                    Model.MoveAssetToBundle(assetPath, newBundle.m_Name.bundleName, newBundle.m_Name.variant);
+                }
             }
             return newBundle;
         }

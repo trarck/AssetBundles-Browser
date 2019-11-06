@@ -16,45 +16,25 @@ namespace AssetBundleBuilder
         private Vector2 m_ScrollPosition;
 
         [SerializeField]
-        private ConfigTabData m_UserData;
+        private ConfigTabData m_ConfigData;
 
         //文件夹前缀忽略列表
         ReorderableList m_IgnoreFolderPrefixList;
 
         internal AssetBundleConfigTab()
         {
-            m_UserData = new ConfigTabData();
+            m_ConfigData = new ConfigTabData();
         }
 
         internal void OnDisable()
         {
-            var dataPath = System.IO.Path.GetFullPath(".");
-            dataPath = dataPath.Replace("\\", "/");
-            dataPath += AssetBundleConstans.ConfigTabSetting;
-
-            BinaryFormatter bf = new BinaryFormatter();
-            FileStream file = File.Create(dataPath);
-
-            bf.Serialize(file, m_UserData);
-            file.Close();
-
+            SaveData();
         }
+
         internal void OnEnable(Rect pos, EditorWindow parent)
         {
             //LoadData...
-            var dataPath = System.IO.Path.GetFullPath(".");
-            dataPath = dataPath.Replace("\\", "/");
-            dataPath += AssetBundleConstans.ConfigTabSetting;
-
-            if (File.Exists(dataPath))
-            {
-                BinaryFormatter bf = new BinaryFormatter();
-                FileStream file = File.Open(dataPath, FileMode.Open);
-                var data = bf.Deserialize(file) as ConfigTabData;
-                if (data != null)
-                    m_UserData = data;
-                file.Close();
-            }
+            LoadData();
 
             CreateObjects();
         }
@@ -80,6 +60,7 @@ namespace AssetBundleBuilder
             m_IgnoreFolderPrefixList.onRemoveCallback += (ReorderableList list) =>
             {
                 list.list.RemoveAt(list.index);
+                SaveData();
             };
 
             m_IgnoreFolderPrefixList.onAddCallback += (ReorderableList list) =>
@@ -92,6 +73,7 @@ namespace AssetBundleBuilder
                 {
                     list.list.Add("");
                 }
+                SaveData();
             };
         }
 
@@ -102,6 +84,11 @@ namespace AssetBundleBuilder
             m_IgnoreFolderPrefixList.DoLayoutList();
 
             EditorGUILayout.EndScrollView();
+
+            if (GUILayout.Button("Save"))
+            {
+                SaveData();
+            }
         }
 
 
@@ -118,11 +105,48 @@ namespace AssetBundleBuilder
             //    //EditorUserBuildSettings.SetPlatformSettings(EditorUserBuildSettings.activeBuildTarget.ToString(), "AssetBundleOutputPath", m_OutputPath);
             //}
         }
+
+        void LoadData()
+        {
+            var dataPath = System.IO.Path.GetFullPath(".");
+            dataPath = dataPath.Replace("\\", "/");
+            dataPath =Path.Combine(dataPath, AssetBundleConstans.ConfigTabSetting);
+
+            if (File.Exists(dataPath))
+            {
+                BinaryFormatter bf = new BinaryFormatter();
+                FileStream file = File.Open(dataPath, FileMode.Open);
+                var data = bf.Deserialize(file) as ConfigTabData;
+                if (data != null)
+                    m_ConfigData = data;
+                file.Close();
+                Model.Setting.IgnoreFolderPrefixs.Clear();
+                Model.Setting.IgnoreFolderPrefixs.AddRange(m_ConfigData.ignoreFolderPrefixs);
+            }
+        }
+
+        void SaveData()
+        {
+            var dataPath = Path.GetFullPath(".");
+            dataPath = dataPath.Replace("\\", "/");
+            dataPath = Path.Combine(dataPath, AssetBundleConstans.ConfigTabSetting);
+
+            if (!Directory.Exists(Path.GetDirectoryName(dataPath)))
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(dataPath));
+            }
+
+            BinaryFormatter bf = new BinaryFormatter();
+            FileStream file = File.Create(dataPath);
+            m_ConfigData.ignoreFolderPrefixs = Model.Setting.IgnoreFolderPrefixs.ToArray();
+            bf.Serialize(file, m_ConfigData);
+            file.Close();
+        }
        
         [System.Serializable]
         internal class ConfigTabData
         {
-
+            public string[] ignoreFolderPrefixs;
         }
     }
 }
