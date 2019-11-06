@@ -94,7 +94,7 @@ namespace AssetBundleBuilder.DataSource
             if (buildManifest == null)
                 return false;
 
-            DatabaseUtil.SaveBundleManifest(buildManifest, info.outputDirectory);
+            DatabaseUtil.SaveBundleManifest(buildManifest, info.outputDirectory,this);
 
             foreach (var assetBundleName in buildManifest.GetAllAssetBundles())
             {
