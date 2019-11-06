@@ -303,6 +303,11 @@ namespace AssetBundleBuilder.Model
         internal static BundleFolderInfo CreateOrGetBundleFolder(BundleFolderConcreteInfo folder, string newName)
         {
             folder = (folder == null) ? s_RootLevelBundles : folder;
+            if (string.IsNullOrEmpty(newName))
+            {
+                return folder;
+            }
+
             string name = newName + "/dummy";
             BundleNameData nameData = new BundleNameData(folder.m_Name.bundleName, name);
             return AddFoldersToBundle(s_RootLevelBundles, nameData);

@@ -608,7 +608,7 @@ namespace AssetBundleBuilder.Model
             BundleFolderInfo parent = null;
             if ((forma & Setting.Format.WithFolder) == Setting.Format.WithFolder)
             {
-                parent = Model.CreateOrGetBundleFolder(null, Setting.FilterFolderPrefix(Path.GetDirectoryName(mainAsset))) as BundleFolderConcreteInfo;
+                parent = Model.CreateOrGetBundleFolder(null, Setting.GetBundleFolderName(Path.GetDirectoryName(mainAsset))) as BundleFolderConcreteInfo;
             }
 
             string bundleName = Setting.CreateBundleName(mainAsset, forma);

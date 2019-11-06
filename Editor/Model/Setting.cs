@@ -60,14 +60,26 @@ namespace AssetBundleBuilder.Model
             }
         }
 
+        public static string GetBundleFolderName(string folderPath)
+        {
+            //TODO:Support custom name
+            return FilterFolderPrefix(folderPath);
+        }
+
         public static string FilterFolderPrefix(string folderPath)
         {
-            folderPath = folderPath.Replace("\\", "/");
+            folderPath = folderPath.Replace("\\", "/").ToLower();
             foreach (var ignore in IgnoreFolderPrefixs)
             {
-                if (folderPath.StartsWith(ignore))
+                string lowerIgnore = ignore.ToLower();
+                if (folderPath.StartsWith(lowerIgnore))
                 {
-                    return folderPath.Replace(ignore.EndsWith("/") ? ignore : ignore + "/", "");
+                    folderPath= folderPath.Replace(lowerIgnore, "");
+                    if (folderPath.StartsWith("/"))
+                    {
+                        folderPath = folderPath.Substring(1);
+                    }
+                    return folderPath;
                 }
             }
             return folderPath;

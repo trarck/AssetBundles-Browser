@@ -23,7 +23,7 @@ namespace AssetBundleBuilder.Model
 
             if ((format & Setting.Format.WithFolder) == Setting.Format.WithFolder)
             {
-                parent = Model.CreateOrGetBundleFolder(parent, Setting.FilterFolderPrefix(Path.GetDirectoryName(filePath))) as BundleFolderConcreteInfo;
+                parent = Model.CreateOrGetBundleFolder(parent, Setting.GetBundleFolderName(Path.GetDirectoryName(filePath))) as BundleFolderConcreteInfo;
             }
 
             bool useFullname = (format & Setting.Format.FullPath) == Setting.Format.FullPath;
