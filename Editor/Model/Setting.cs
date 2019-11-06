@@ -37,7 +37,7 @@ namespace AssetBundleBuilder.Model
             {
                 return filePath.Replace('/', '_').Replace('\\', '_').Replace('.','_').ToLower();
             }
-            else if(useExt)
+            else if(useExt || filePath.Contains(".unity"))//Scene always use ext
             {
                 return Path.GetFileName(filePath).Replace('.', '_').ToLower();
             }
