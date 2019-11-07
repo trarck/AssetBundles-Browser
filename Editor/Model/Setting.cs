@@ -47,34 +47,21 @@ namespace AssetBundleBuilder.Model
             }
         }
 
-        public static void AddIgnoreFolderPrefix(string prefix,bool first=true)
-        {
-            if (first)
-            {
-                IgnoreFolderPrefixs.Insert(0, prefix);
-            }
-            else
-            {
-                //the default is Assets,and in the last.so insert before it
-                IgnoreFolderPrefixs.Insert(IgnoreFolderPrefixs.Count - 1, prefix);
-            }
-        }
-
         public static string GetBundleFolderName(string folderPath)
         {
             //TODO:Support custom name
-            return FilterFolderPrefix(folderPath);
+            return ClearFolderPrefix(folderPath);
         }
 
-        public static string FilterFolderPrefix(string folderPath)
+        public static string ClearFolderPrefix(string folderPath)
         {
             folderPath = folderPath.Replace("\\", "/").ToLower();
-            foreach (var ignore in IgnoreFolderPrefixs)
+            foreach (var clear in Config.BuilderConfig.Instance.data.bundlePathPrefixClears)
             {
-                string lowerIgnore = ignore.ToLower();
-                if (folderPath.StartsWith(lowerIgnore))
+                string lowerClear = clear.ToLower();
+                if (folderPath.StartsWith(lowerClear))
                 {
-                    folderPath= folderPath.Replace(lowerIgnore, "");
+                    folderPath= folderPath.Replace(lowerClear, "");
                     if (folderPath.StartsWith("/"))
                     {
                         folderPath = folderPath.Substring(1);

@@ -9,22 +9,10 @@ using UnityEditorInternal;
 
 namespace AssetBundleBuilder
 {
+    using Config;
+
     public class AutoImportWindow : EditorWindow
     {
-        [System.Serializable]
-        public class ImportInfo
-        {
-            public string path;
-            public string pattern;
-        }
-
-        [System.Serializable]
-        public class ImportData
-        {
-            public List<ImportInfo> infos;
-            public List<string> formatSelects;
-        }
-
         List<ImportInfo> m_ImportInfos=new List<ImportInfo>();
 
         ReorderableList m_AssetFolderList;
@@ -131,8 +119,10 @@ namespace AssetBundleBuilder
             Model.AutoImport autoImport = new Model.AutoImport();
             autoImport.format = format;
 
+            float i = 0;
             foreach (var importInfo in m_ImportInfos)
             {
+                EditorUtility.DisplayProgressBar("AutoImport", "import "+importInfo.path, ++i/m_ImportInfos.Count);
                 if (Directory.Exists(importInfo.path))
                 {
                     autoImport.ImportFolder(importInfo.path, importInfo.pattern);
@@ -141,40 +131,28 @@ namespace AssetBundleBuilder
                 {
                     autoImport.ImportFile(importInfo.path);
                 }
-            }
+            }          
 
+            EditorUtility.DisplayProgressBar("AutoImport", "GenerateBundles ",0);
             autoImport.GenerateBundles();
-
             
+            EditorUtility.ClearProgressBar();
 
             AssetBundleBuilderMain.instance.m_ManageTab.ForceReloadData();
         }
 
         void LoadData()
         {
-            var dataPath = Path.GetFullPath(".");
-            var dataFile = Path.Combine(dataPath, AssetBundleConstans.ImportDataFile);
 
-            if (File.Exists(dataFile))
-            {
-                string content = File.ReadAllText(dataFile);
-                ImportData importData = JsonUtility.FromJson<ImportData>(content);
-
-                m_ImportInfos = importData.infos != null ? importData.infos : new List<ImportInfo>();
-                m_FormatGUI.SetSelects(importData.formatSelects);
-            }
+            m_ImportInfos = BuilderConfig.Instance.data.importConfig.infos;
+            m_FormatGUI.SetSelects(BuilderConfig.Instance.data.importConfig.formatSelects);
         }
 
         void SaveData()
         {
-            ImportData importData = new ImportData();
-            importData.infos = m_ImportInfos;
-            importData.formatSelects = m_FormatGUI.GetSelects();
-
-            var dataPath = Path.GetFullPath(".");
-            var dataFile = Path.Combine(dataPath, AssetBundleConstans.ImportDataFile);
-            var content = JsonUtility.ToJson(importData);
-            File.WriteAllText(dataFile, content);
+            BuilderConfig.Instance.data.importConfig.infos = m_ImportInfos;
+            BuilderConfig.Instance.data.importConfig.formatSelects= m_FormatGUI.GetSelects();
+            BuilderConfig.Instance.Save();
         }
     }
 }

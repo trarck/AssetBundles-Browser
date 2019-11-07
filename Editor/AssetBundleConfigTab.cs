@@ -46,7 +46,7 @@ namespace AssetBundleBuilder
 
         void CreateIgnoreFolderPrefixList()
         {
-            m_IgnoreFolderPrefixList = new ReorderableList(Model.Setting.IgnoreFolderPrefixs, typeof(string), true, true, true, true);
+            m_IgnoreFolderPrefixList = new ReorderableList(Config.BuilderConfig.Instance.data.bundlePathPrefixClears, typeof(string), true, true, true, true);
             m_IgnoreFolderPrefixList.drawHeaderCallback += (Rect rect) =>
             {
                 GUI.Label(rect, "IgnoreFolderPrefixs");
@@ -54,7 +54,7 @@ namespace AssetBundleBuilder
 
             m_IgnoreFolderPrefixList.drawElementCallback += (Rect rect, int index, bool isActive, bool isFocused) =>
             {
-                Model.Setting.IgnoreFolderPrefixs[index]=GUI.TextField(rect, Model.Setting.IgnoreFolderPrefixs[index]);
+                Config.BuilderConfig.Instance.data.bundlePathPrefixClears[index]=GUI.TextField(rect, Config.BuilderConfig.Instance.data.bundlePathPrefixClears[index]);
             };
 
             m_IgnoreFolderPrefixList.onRemoveCallback += (ReorderableList list) =>
@@ -108,39 +108,12 @@ namespace AssetBundleBuilder
 
         void LoadData()
         {
-            var dataPath = System.IO.Path.GetFullPath(".");
-            dataPath = dataPath.Replace("\\", "/");
-            dataPath =Path.Combine(dataPath, AssetBundleConstans.ConfigTabSetting);
-
-            if (File.Exists(dataPath))
-            {
-                BinaryFormatter bf = new BinaryFormatter();
-                FileStream file = File.Open(dataPath, FileMode.Open);
-                var data = bf.Deserialize(file) as ConfigTabData;
-                if (data != null)
-                    m_ConfigData = data;
-                file.Close();
-                Model.Setting.IgnoreFolderPrefixs.Clear();
-                Model.Setting.IgnoreFolderPrefixs.AddRange(m_ConfigData.ignoreFolderPrefixs);
-            }
+            
         }
 
         void SaveData()
         {
-            var dataPath = Path.GetFullPath(".");
-            dataPath = dataPath.Replace("\\", "/");
-            dataPath = Path.Combine(dataPath, AssetBundleConstans.ConfigTabSetting);
-
-            if (!Directory.Exists(Path.GetDirectoryName(dataPath)))
-            {
-                Directory.CreateDirectory(Path.GetDirectoryName(dataPath));
-            }
-
-            BinaryFormatter bf = new BinaryFormatter();
-            FileStream file = File.Create(dataPath);
-            m_ConfigData.ignoreFolderPrefixs = Model.Setting.IgnoreFolderPrefixs.ToArray();
-            bf.Serialize(file, m_ConfigData);
-            file.Close();
+            Config.BuilderConfig.Instance.Save();
         }
        
         [System.Serializable]
