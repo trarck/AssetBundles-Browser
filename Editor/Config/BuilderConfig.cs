@@ -86,6 +86,10 @@ namespace AssetBundleBuilder.Config
                 string content = File.ReadAllText(fullpath);
                 ConfigData configData = JsonUtility.FromJson<ConfigData>(content);
                 m_Data = configData;
+                if (m_Data.bundlePathPrefixClears == null)
+                {
+                    m_Data.bundlePathPrefixClears = new List<string>();
+                }
             }
             else
             {

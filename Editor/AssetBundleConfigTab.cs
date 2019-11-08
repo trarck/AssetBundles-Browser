@@ -85,10 +85,16 @@ namespace AssetBundleBuilder
 
             EditorGUILayout.EndScrollView();
 
+            EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Button("Load"))
+            {
+                LoadData();
+            }
             if (GUILayout.Button("Save"))
             {
                 SaveData();
             }
+            EditorGUILayout.EndHorizontal();
         }
 
 
@@ -108,7 +114,7 @@ namespace AssetBundleBuilder
 
         void LoadData()
         {
-            
+            Config.BuilderConfig.Instance.Load();
         }
 
         void SaveData()

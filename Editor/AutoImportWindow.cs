@@ -143,8 +143,8 @@ namespace AssetBundleBuilder
 
         void LoadData()
         {
-
-            m_ImportInfos = BuilderConfig.Instance.data.importConfig.infos;
+            BuilderConfig.Instance.Load();
+           m_ImportInfos = BuilderConfig.Instance.data.importConfig.infos;
             m_FormatGUI.SetSelects(BuilderConfig.Instance.data.importConfig.formatSelects);
         }
 
