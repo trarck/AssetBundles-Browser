@@ -191,7 +191,7 @@ namespace AssetBundleBuilder.Model
                 string ext = Path.GetExtension(assetPath);
                 switch (ext.ToLower())
                 {
-                    case ".scene":
+                    case ".unity":
                         m_AssetType = AssetType.Scene;
                         break;
                     case ".shader":
