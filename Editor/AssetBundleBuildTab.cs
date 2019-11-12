@@ -5,6 +5,7 @@ using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 
 using AssetBundleBuilder.DataSource;
+using System.Text.RegularExpressions;
 
 namespace AssetBundleBuilder
 {
@@ -364,14 +365,20 @@ namespace AssetBundleBuilder
                 CopyAssetBundles(m_UserData.m_OutputPath, m_streamingPath);
         }
 
-        private static void CopyAssetBundles(string sourceDirName, string destDirName)
+        private void CopyAssetBundles(string sourceDirName, string destDirName)
         {
             //copy all asset bundle not manifest and builtin manifest
-            DirectoryCopy(sourceDirName, destDirName, true, "(?<!\\.manifest|"+m_UserData.m_BuildTarget.ToString+")$");
+            DirectoryCopy(sourceDirName, destDirName, true, "(?<!\\.manifest|"+m_UserData.m_BuildTarget.ToString()+")$");
             //copy info file
             File.Copy(Path.Combine(sourceDirName, "all.manifest"), Path.Combine(destDirName, "all.manifest"), true);
         }
-        
+
+        struct StackInfo
+        {
+            public DirectoryInfo dir;
+            public string relativePath;
+        }
+
         private static void DirectoryCopy(string sourceDirName, string destDirName, bool copySubDirs, string pattern)
         {
             bool haveFilter = !string.IsNullOrEmpty(pattern);
@@ -399,7 +406,7 @@ namespace AssetBundleBuilder
                 while (visitStack.Count > 0)
                 {
                     fol = visitStack.Pop();
-                    string outPath = Combine(destDirName, fol.relativePath);
+                    string outPath = Path.Combine(destDirName, fol.relativePath);
                     if (!Directory.Exists(outPath))
                     {
                         Directory.CreateDirectory(outPath);
@@ -409,7 +416,7 @@ namespace AssetBundleBuilder
                     {
                         if (!haveFilter || reg.IsMatch(f.Name))
                         {
-                            string outFile = Combine(outPath, f.Name);
+                            string outFile = Path.Combine(outPath, f.Name);
                             File.Copy(f.FullName, outFile,true);
                         }
                     }
@@ -422,7 +429,7 @@ namespace AssetBundleBuilder
                             visitStack.Push(new StackInfo()
                             {
                                 dir = d,
-                                relativePath = Combine(fol.relativePath, d.Name)
+                                relativePath = Path.Combine(fol.relativePath, d.Name)
                             });
                         }
                     }
