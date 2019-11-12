@@ -9,6 +9,14 @@ namespace AssetBundleBuilder.Model
     {
         public class Node
         {
+            public enum AssetType
+            {
+                Normal,
+                Scene,
+                Shader,
+                ShaderVariantCollection
+            }
+
             //主路径
             public string mainAsset;
             //资源
@@ -25,6 +33,7 @@ namespace AssetBundleBuilder.Model
             protected bool m_Standalone = false;
 
             int m_RefersHashCode = 0;
+            AssetType m_AssetType;
 
             public Node(string asset)
             {
@@ -33,6 +42,7 @@ namespace AssetBundleBuilder.Model
                 dependencies = new HashSet<Node>();
                 mainAsset = asset;
                 assets.Add(asset);
+                AnalyzeAssetType(asset);
             }
 
             public void AddDependency(Node dep)
@@ -127,7 +137,23 @@ namespace AssetBundleBuilder.Model
             {
                 get
                 {
-                    return mainAsset.Contains(".unity");
+                    return m_AssetType == AssetType.Scene; //mainAsset.Contains(".unity");
+                }
+            }
+
+            public bool IsShader
+            {
+                get
+                {
+                    return m_AssetType == AssetType.Shader;
+                }
+            }
+
+            public bool IsShaderVariantCollection
+            {
+                get
+                {
+                    return m_AssetType == AssetType.ShaderVariantCollection;
                 }
             }
 
@@ -156,6 +182,27 @@ namespace AssetBundleBuilder.Model
                 set
                 {
                     m_RefersHashCode = value;
+                }
+            }
+
+            protected void AnalyzeAssetType(string assetPath)
+            {
+                //现根据扩展名判断
+                string ext = Path.GetExtension(assetPath);
+                switch (ext.ToLower())
+                {
+                    case ".scene":
+                        m_AssetType = AssetType.Scene;
+                        break;
+                    case ".shader":
+                        m_AssetType = AssetType.Shader;
+                        break;
+                    case ".shadervariants":
+                        m_AssetType = AssetType.ShaderVariantCollection;
+                        break;
+                    default:
+                        m_AssetType = AssetType.Normal;
+                        break;
                 }
             }
         }
@@ -207,7 +254,7 @@ namespace AssetBundleBuilder.Model
             return m_AssetsMap.ContainsKey(assetName);
         }
 
-        public Node MergeNode(Node to, Node from)
+        public Node MergeNode(Node from, Node to)
         {
             //合并资源
             foreach (var asset in from.assets)
@@ -406,6 +453,27 @@ namespace AssetBundleBuilder.Model
 
         #region Combine
         /// <summary>
+        /// ShaderVariantCollection用到的shader要打在一个assetbundle里。
+        /// </summary>
+        protected void MergeShaderToShaderVariantCollection()
+        {
+            HashSet<Node> assets = GetAssets();
+            List<Node> deps = new List<Node>();
+            foreach (var node in assets)
+            {
+                if (node.IsShaderVariantCollection)
+                {
+                    deps.Clear();
+                    deps.AddRange(node.dependencies);
+                    foreach(var dep in deps)
+                    {
+                        MergeNode(dep,node);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
         /// 合并只有一个引用的项
         /// </summary>
         /// <returns></returns>
@@ -424,7 +492,7 @@ namespace AssetBundleBuilder.Model
                     if (!iter.Current.IsScene)
                     {
                         merged = true;
-                        MergeNode(iter.Current, node);
+                        MergeNode(node, iter.Current);
                     }
                 }
             }
@@ -462,7 +530,7 @@ namespace AssetBundleBuilder.Model
                 {
                     for (int i = 1; i < iter.Value.Count; ++i)
                     {
-                        MergeNode(iter.Value[0], iter.Value[i]);
+                        MergeNode(iter.Value[i], iter.Value[0]);
                     }
                 }
             }
@@ -472,6 +540,9 @@ namespace AssetBundleBuilder.Model
         //拼合资源
         public void Combine()
         {
+            //只要执行一次就可以了。
+            MergeShaderToShaderVariantCollection();
+
             int k = 0;
             do
             {
