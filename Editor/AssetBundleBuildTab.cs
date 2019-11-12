@@ -361,31 +361,88 @@ namespace AssetBundleBuilder
             AssetDatabase.Refresh(ImportAssetOptions.ForceUpdate);
 
             if(m_CopyToStreaming.state)
-                DirectoryCopy(m_UserData.m_OutputPath, m_streamingPath);
+                CopyAssetBundles(m_UserData.m_OutputPath, m_streamingPath);
         }
 
-        private static void DirectoryCopy(string sourceDirName, string destDirName)
+        private static void CopyAssetBundles(string sourceDirName, string destDirName)
         {
+            //copy all asset bundle not manifest and builtin manifest
+            DirectoryCopy(sourceDirName, destDirName, true, "(?<!\\.manifest|"+m_UserData.m_BuildTarget.ToString+")$");
+            //copy info file
+            File.Copy(Path.Combine(sourceDirName, "all.manifest"), Path.Combine(destDirName, "all.manifest"), true);
+        }
+        
+        private static void DirectoryCopy(string sourceDirName, string destDirName, bool copySubDirs, string pattern)
+        {
+            bool haveFilter = !string.IsNullOrEmpty(pattern);
+            Regex reg = haveFilter ? new Regex(pattern, RegexOptions.IgnoreCase) : null;
+            
             // If the destination directory doesn't exist, create it.
             if (!Directory.Exists(destDirName))
             {
                 Directory.CreateDirectory(destDirName);
             }
 
-            foreach (string folderPath in Directory.GetDirectories(sourceDirName, "*", SearchOption.AllDirectories))
+            if (copySubDirs)
             {
-                if (!Directory.Exists(folderPath.Replace(sourceDirName, destDirName)))
-                    Directory.CreateDirectory(folderPath.Replace(sourceDirName, destDirName));
-            }
+                StackInfo root;
+                Stack<StackInfo> visitStack = new Stack<StackInfo>();
+                StackInfo fol;
 
-            foreach (string filePath in Directory.GetFiles(sourceDirName, "*.*", SearchOption.AllDirectories))
+                root = new StackInfo(){
+                    dir=new DirectoryInfo(sourceDirName),
+                   relativePath="",
+                };
+
+                visitStack.Push(root);
+
+                while (visitStack.Count > 0)
+                {
+                    fol = visitStack.Pop();
+                    string outPath = Combine(destDirName, fol.relativePath);
+                    if (!Directory.Exists(outPath))
+                    {
+                        Directory.CreateDirectory(outPath);
+                    }
+
+                    foreach (FileInfo f in fol.dir.GetFiles())
+                    {
+                        if (!haveFilter || reg.IsMatch(f.Name))
+                        {
+                            string outFile = Combine(outPath, f.Name);
+                            File.Copy(f.FullName, outFile,true);
+                        }
+                    }
+
+                    DirectoryInfo[] subs = fol.dir.GetDirectories();
+                    if (subs.Length > 0)
+                    {
+                        foreach (DirectoryInfo d in subs)
+                        {
+                            visitStack.Push(new StackInfo()
+                            {
+                                dir = d,
+                                relativePath = Combine(fol.relativePath, d.Name)
+                            });
+                        }
+                    }
+                }
+            }
+            else
             {
-                var fileDirName = Path.GetDirectoryName(filePath).Replace("\\", "/");
-                var fileName = Path.GetFileName(filePath);
-                string newFilePath = Path.Combine(fileDirName.Replace(sourceDirName, destDirName), fileName);
+                DirectoryInfo dir = new DirectoryInfo(sourceDirName);
 
-                File.Copy(filePath, newFilePath, true);
-            }
+                // Get the files in the directory and copy them to the new location.
+                FileInfo[] files = dir.GetFiles();
+                foreach (FileInfo file in files)
+                {
+                    if (!haveFilter || reg.IsMatch(file.Name))
+                    {
+                        string temppath = Path.Combine(destDirName, file.Name);
+                        file.CopyTo(temppath, true);
+                    }
+                }
+            }            
         }
 
         private void BrowseForFolder()
