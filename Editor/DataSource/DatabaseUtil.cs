@@ -1,7 +1,7 @@
 ﻿using System.IO;
 using System.Collections.Generic;
 
-using YH.AssetManager;
+using YH.AssetManage;
 using UnityEngine;
 
 namespace AssetBundleBuilder.DataSource
@@ -26,7 +26,7 @@ namespace AssetBundleBuilder.DataSource
                 FileInfo bundleInfo = new FileInfo(Path.Combine(outDir,assetBundleName));
                 if (bundleInfo != null)
                 {
-                    YH.AssetManager.AssetBundleInfo assetBundleInfo = new YH.AssetManager.AssetBundleInfo();
+                    YH.AssetManage.AssetBundleInfo assetBundleInfo = new YH.AssetManage.AssetBundleInfo();
                     assetBundleInfo.fullName = bundleNameData.fullNativeName;
                     assetBundleInfo.shortName = bundleNameData.shortName;
                     assetBundleInfo.size = (int)bundleInfo.Length;
