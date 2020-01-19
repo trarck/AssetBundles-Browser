@@ -23,7 +23,7 @@ namespace AssetBundleBuilder
 
         internal const float kButtonWidth = 150;
 
-        enum Mode
+        public enum Mode
         {
             Config,
             Browser,
@@ -338,6 +338,14 @@ namespace AssetBundleBuilder
         public class MainData
         {
             public string dataSource;
+        }
+
+        public Mode mode
+        {
+            get
+            {
+                return m_Mode;
+            }
         }
     }
 }

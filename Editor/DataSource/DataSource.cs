@@ -44,6 +44,8 @@ namespace AssetBundleBuilder.DataSource
             set { m_onBuild = value; }
         }
         private Action<string> m_onBuild;
+        //资源的版本号
+        public string version;
     }
 
     /// <summary>

@@ -137,8 +137,10 @@ namespace AssetBundleBuilder
             autoImport.GenerateBundles();
             
             EditorUtility.ClearProgressBar();
-
-            AssetBundleBuilderMain.instance.m_ManageTab.ForceReloadData();
+            if (AssetBundleBuilderMain.instance.mode == AssetBundleBuilderMain.Mode.Browser)
+            {
+                AssetBundleBuilderMain.instance.m_ManageTab.ForceReloadData();
+            }
         }
 
         void LoadData()

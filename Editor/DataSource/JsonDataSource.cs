@@ -202,7 +202,7 @@ namespace AssetBundleBuilder.DataSource
             //不能消除Manifest，否则无法增量构建。可以在最终目录把Manifest删除
             //DatabaseUtil.ClearTempManifest(info.outputDirectory);
 
-            DatabaseUtil.SaveBundleManifest(buildManifest, info.outputDirectory,this);
+            DatabaseUtil.SaveBundleManifest(buildManifest, info,this);
 
             foreach (var assetBundleName in buildManifest.GetAllAssetBundles())
             {

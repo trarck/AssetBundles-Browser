@@ -8,9 +8,10 @@ namespace AssetBundleBuilder.DataSource
 {
     public class DatabaseUtil
     {
-        public static void SaveBundleManifest(AssetBundleManifest buildManifest, string outDir,DataSource dataSource)
+        public static void SaveBundleManifest(AssetBundleManifest buildManifest, BuildInfo buildInfo,DataSource dataSource)
         {
             BundleManifest bundleManifest = new BundleManifest();
+            bundleManifest.version = buildInfo.version;
 
             List<AssetBundleInfo> all = new List<AssetBundleInfo>();
 
@@ -23,7 +24,7 @@ namespace AssetBundleBuilder.DataSource
             {
                 Model.BundleNameData bundleNameData = new Model.BundleNameData(assetBundleName);
                 //Model.BundleDataInfo bundleInfo = Model.Model.FindBundle(bundleNameData) as Model.BundleDataInfo;
-                FileInfo bundleInfo = new FileInfo(Path.Combine(outDir,assetBundleName));
+                FileInfo bundleInfo = new FileInfo(Path.Combine(buildInfo.outputDirectory, assetBundleName));
                 if (bundleInfo != null)
                 {
                     YH.AssetManage.AssetBundleInfo assetBundleInfo = new YH.AssetManage.AssetBundleInfo();
@@ -53,7 +54,7 @@ namespace AssetBundleBuilder.DataSource
 
             string content = JsonUtility.ToJson(bundleManifest);
 
-            File.WriteAllText(Path.Combine(outDir, "all.manifest"), content);
+            File.WriteAllText(Path.Combine(buildInfo.outputDirectory, "all.manifest"), content);
         }
     }
 }

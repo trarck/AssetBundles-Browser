@@ -22,7 +22,6 @@ namespace AssetBundleBuilder
         [SerializeField]
         private Vector2 m_ScrollPosition;
 
-
         class ToggleData
         {
             internal ToggleData(bool s, 
@@ -167,6 +166,11 @@ namespace AssetBundleBuilder
             {
                 ResetPathToDefault();
             }
+
+            if (string.IsNullOrEmpty(m_UserData.m_AssetVersion))
+            {
+                m_UserData.m_AssetVersion = Application.version;
+            }
         }
 
         internal void OnGUI()
@@ -217,8 +221,12 @@ namespace AssetBundleBuilder
                 //if (string.IsNullOrEmpty(m_OutputPath))
                 //    m_OutputPath = EditorUserBuildSettings.GetPlatformSettings(EditorUserBuildSettings.activeBuildTarget.ToString(), "AssetBundleOutputPath");
                 GUILayout.EndHorizontal();
+
+                //asset version
+                m_UserData.m_AssetVersion = EditorGUILayout.TextField("Asset Version ", m_UserData.m_AssetVersion);
                 EditorGUILayout.Space();
 
+                //clear
                 newState = GUILayout.Toggle(
                     m_ForceRebuild.state,
                     m_ForceRebuild.content);
@@ -230,6 +238,7 @@ namespace AssetBundleBuilder
                         m_UserData.m_OnToggles.Remove(m_ForceRebuild.content.text);
                     m_ForceRebuild.state = newState;
                 }
+                //copy to streaming
                 newState = GUILayout.Toggle(
                     m_CopyToStreaming.state,
                     m_CopyToStreaming.content);
@@ -242,6 +251,7 @@ namespace AssetBundleBuilder
                     m_CopyToStreaming.state = newState;
                 }
             }
+
 
             // advanced options
             using (new EditorGUI.DisabledScope (!Model.Model.DataSource.CanSpecifyBuildOptions)) {
@@ -349,6 +359,7 @@ namespace AssetBundleBuilder
             buildInfo.outputDirectory = m_UserData.m_OutputPath;
             buildInfo.options = opt;
             buildInfo.buildTarget = (BuildTarget)m_UserData.m_BuildTarget;
+            buildInfo.version = m_UserData.m_AssetVersion;
             buildInfo.onBuild = (assetBundleName) =>
             {
                 if (m_InspectTab == null)
@@ -519,6 +530,7 @@ namespace AssetBundleBuilder
             internal CompressOptions m_Compression = CompressOptions.StandardCompression;
             internal string m_OutputPath = string.Empty;
             internal bool m_UseDefaultPath = true;
+            internal string m_AssetVersion;
         }
     }
 
