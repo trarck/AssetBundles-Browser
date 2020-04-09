@@ -7,213 +7,13 @@ namespace AssetBundleBuilder.Model
 {
     public class Optimizer
     {
-        public class Node
-        {
-            public enum AssetType
-            {
-                Normal,
-                Scene,
-                Shader,
-                ShaderVariantCollection
-            }
-
-            //主路径
-            public string mainAsset;
-            //资源
-            public HashSet<string> assets;
-            //直接引用者
-            public HashSet<Node> refers;
-            //直接依赖
-            public HashSet<Node> dependencies;
-            //单独的.是--独立加载，需要主动加载的资源。否--依赖加载，不会主动加载。
-            //一般prefab，场景需要手动加载，一些贴图和音乐也需要手动加载。
-            //fbx基本是依赖加载，大部分材质也是依赖加载。
-            //具体还是需要根据项目来定。
-            //一般情况调用LoadFromFolder的资源都是独立的，调用LoadDependencies是依赖的。
-            protected bool m_Standalone = false;
-
-            int m_RefersHashCode = 0;
-            AssetType m_AssetType;
-
-            public Node(string asset)
-            {
-                assets = new HashSet<string>();
-                refers = new HashSet<Node>();
-                dependencies = new HashSet<Node>();
-                mainAsset = asset;
-                assets.Add(asset);
-                AnalyzeAssetType(asset);
-            }
-
-            public void AddDependency(Node dep)
-            {
-                if (dep != this)
-                {
-                    dependencies.Add(dep);
-                    //dep.refers.Add(this);
-                }
-            }
-
-            public void RemoveDependency(Node dep)
-            {
-                if (dep != this)
-                {
-                    dependencies.Remove(dep);
-                    //dep.refers.Remove(this);
-                }
-            }
-
-            public void AddRefer(Node refer)
-            {
-                if (refer != this)
-                {
-                    if (refers.Add(refer))
-                    {
-                        ClearRefersHashCode();
-                    }
-                }
-            }
-
-            public void RemoveRefer(Node refer)
-            {
-                if (refer != this)
-                {
-                    if (refers.Remove(refer))
-                    {
-                        ClearRefersHashCode();
-                    }
-                }
-            }
-
-            public void Link(Node dep)
-            {
-                if (dep != this)
-                {
-                    dependencies.Add(dep);
-                    if (dep.refers.Add(this))
-                    {
-                        dep.ClearRefersHashCode();
-                    }
-                }
-            }
-
-            public void Break(Node dep)
-            {
-                if (dep != this)
-                {
-                    dependencies.Remove(dep);
-                    if (dep.refers.Remove(this))
-                    {
-                        dep.ClearRefersHashCode();
-                    }
-                }
-            }
-
-            //如果已经设置为ture，则不能再改false。
-            //由于默认为false，通常只需要设置为true的时候调用。
-
-            public void SetStandalone(bool val)
-            {
-                if (!m_Standalone)
-                {
-                    m_Standalone = val;
-                }
-            }
-
-            public bool IsStandalone()
-            {
-                return m_Standalone;
-            }
-
-            public bool CanMerge
-            {
-                get
-                {
-                    return !m_Standalone && !IsScene;
-                }
-            }
-
-            public bool IsScene
-            {
-                get
-                {
-                    return m_AssetType == AssetType.Scene; //mainAsset.Contains(".unity");
-                }
-            }
-
-            public bool IsShader
-            {
-                get
-                {
-                    return m_AssetType == AssetType.Shader;
-                }
-            }
-
-            public bool IsShaderVariantCollection
-            {
-                get
-                {
-                    return m_AssetType == AssetType.ShaderVariantCollection;
-                }
-            }
-
-            public void ClearRefersHashCode()
-            {
-                m_RefersHashCode = 0;
-            }
-
-            public int refersHashCode
-            {
-                get
-                {
-                    if (m_RefersHashCode == 0)
-                    {
-                        System.Text.StringBuilder sb = new System.Text.StringBuilder();
-                        foreach (var refer in refers)
-                        {
-                            sb.Append(refer.mainAsset).Append("-");
-                        }
-
-                        m_RefersHashCode = sb.ToString().GetHashCode();
-                    }
-
-                    return m_RefersHashCode;
-                }
-                set
-                {
-                    m_RefersHashCode = value;
-                }
-            }
-
-            protected void AnalyzeAssetType(string assetPath)
-            {
-                //现根据扩展名判断
-                string ext = Path.GetExtension(assetPath);
-                switch (ext.ToLower())
-                {
-                    case ".unity":
-                        m_AssetType = AssetType.Scene;
-                        break;
-                    case ".shader":
-                        m_AssetType = AssetType.Shader;
-                        break;
-                    case ".shadervariants":
-                        m_AssetType = AssetType.ShaderVariantCollection;
-                        break;
-                    default:
-                        m_AssetType = AssetType.Normal;
-                        break;
-                }
-            }
-        }
-
         //List<Node> m_Assets=new List<Node>();
         //这里的node允许重复。有些资源可能被合并到一起。
-        Dictionary<string, Node> m_AssetsMap = new Dictionary<string, Node>();
+        Dictionary<string, BundleNode> m_AssetsMap = new Dictionary<string, BundleNode>();
 
         #region Node
 
-        public void AddNode(Node node)
+        public void AddNode(BundleNode node)
         {
             //m_Assets.Add(node);
             foreach (var assetName in node.assets)
@@ -222,14 +22,14 @@ namespace AssetBundleBuilder.Model
             }
         }
 
-        public Node GetNode(string assetName)
+        public BundleNode GetNode(string assetName)
         {
-            Node node = null;
+            BundleNode node = null;
             m_AssetsMap.TryGetValue(assetName, out node);
             return node;
         }
 
-        public void RemoveNode(Node node)
+        public void RemoveNode(BundleNode node)
         {
             foreach (var assetName in node.assets)
             {
@@ -241,7 +41,7 @@ namespace AssetBundleBuilder.Model
 
         }
 
-        public void ReplaceNode(Node from, Node to)
+        public void ReplaceNode(BundleNode from, BundleNode to)
         {
             foreach (var assetName in from.assets)
             {
@@ -254,7 +54,7 @@ namespace AssetBundleBuilder.Model
             return m_AssetsMap.ContainsKey(assetName);
         }
 
-        public Node MergeNode(Node from, Node to)
+        public BundleNode MergeNode(BundleNode from, BundleNode to)
         {
             //合并资源
             foreach (var asset in from.assets)
@@ -302,9 +102,9 @@ namespace AssetBundleBuilder.Model
         }
 
         //m_AssetsMap里可能被合并之后会有重复的node，这里去除重复
-        public HashSet<Node> GetAssets()
+        public HashSet<BundleNode> GetAssets()
         {
-            HashSet<Node> assets = new HashSet<Node>();
+            HashSet<BundleNode> assets = new HashSet<BundleNode>();
             foreach (var iter in m_AssetsMap)
             {
                 assets.Add(iter.Value);
@@ -313,11 +113,11 @@ namespace AssetBundleBuilder.Model
         }
 
         //通过Asset列表构建AssetsMap，以便支持增量导入。
-        public void SetAssets(HashSet<Node> assets)
+        public void SetAssets(HashSet<BundleNode> assets)
         {
             if (m_AssetsMap == null)
             {
-                m_AssetsMap = new Dictionary<string, Node>();
+                m_AssetsMap = new Dictionary<string, BundleNode>();
             }
             else
             {
@@ -340,7 +140,7 @@ namespace AssetBundleBuilder.Model
         /// 加载依赖项
         /// </summary>
         /// <param name="node"></param>
-        public void LoadDependencies(Node node)
+        public void LoadDependencies(BundleNode node)
         {
             List<string> deps = new List<string>();
             foreach (var asset in node.assets)
@@ -351,7 +151,7 @@ namespace AssetBundleBuilder.Model
 
             foreach (var dep in deps)
             {
-                Node depNode = LoadAsset(dep, true);
+                BundleNode depNode = LoadAsset(dep, true);
                 if (depNode != null)
                 {
                     node.AddDependency(depNode);
@@ -366,7 +166,7 @@ namespace AssetBundleBuilder.Model
         /// <param name="assetPath"></param>
         /// <param name="loadDependency"></param>
         /// <returns></returns>
-        public Node LoadAsset(string assetPath, bool loadDependency = true)
+        public BundleNode LoadAsset(string assetPath, bool loadDependency = true)
         {
             if (IgnoreAsset(assetPath))
             {
@@ -378,10 +178,10 @@ namespace AssetBundleBuilder.Model
                 assetPath = ModelUtils.Relative(Path.GetDirectoryName(Application.dataPath), assetPath);
             }
 
-            Node node = GetNode(assetPath);
+            BundleNode node = GetNode(assetPath);
             if (node == null)
             {
-                node = new Node(assetPath);
+                node = new BundleNode(assetPath);
                 //一定要先添加，后加载Dependencies。否则就会因为循环引用而无限循环。
                 AddNode(node);
                 if (loadDependency)
@@ -426,7 +226,7 @@ namespace AssetBundleBuilder.Model
                 {
                     if (!haveFilter || reg.IsMatch(fi.FullName))
                     {
-                        Node node = LoadAsset(fi.FullName);
+                        BundleNode node = LoadAsset(fi.FullName);
                         if (node != null)
                         {
                             node.SetStandalone(true);
@@ -457,8 +257,8 @@ namespace AssetBundleBuilder.Model
         /// </summary>
         protected void MergeShaderToShaderVariantCollection()
         {
-            HashSet<Node> assets = GetAssets();
-            List<Node> deps = new List<Node>();
+            HashSet<BundleNode> assets = GetAssets();
+            List<BundleNode> deps = new List<BundleNode>();
             foreach (var node in assets)
             {
                 if (node.IsShaderVariantCollection)
@@ -480,7 +280,7 @@ namespace AssetBundleBuilder.Model
         protected bool MergeOneReferAssets()
         {
             bool merged = false;
-            HashSet<Node> assets = GetAssets();
+            HashSet<BundleNode> assets = GetAssets();
 
             foreach (var node in assets)
             {
@@ -506,18 +306,18 @@ namespace AssetBundleBuilder.Model
         protected bool MergeSameReferAssets()
         {
             bool merged = false;
-            HashSet<Node> assets = GetAssets();
-            Dictionary<int, List<Node>> sameRefers = new Dictionary<int, List<Node>>();
+            HashSet<BundleNode> assets = GetAssets();
+            Dictionary<int, List<BundleNode>> sameRefers = new Dictionary<int, List<BundleNode>>();
 
             foreach (var node in assets)
             {
                 if (node.CanMerge)
                 {
                     int hash = node.refersHashCode;
-                    List<Node> items = null;
+                    List<BundleNode> items = null;
                     if (!sameRefers.TryGetValue(hash, out items))
                     {
-                        items = new List<Node>();
+                        items = new List<BundleNode>();
                         sameRefers[hash] = items;
                     }
                     items.Add(node);
@@ -583,7 +383,7 @@ namespace AssetBundleBuilder.Model
         {
             //crate asset infos
             List<NodeInfo> assetInfos = new List<NodeInfo>();
-            HashSet<Node> assets = GetAssets();
+            HashSet<BundleNode> assets = GetAssets();
             foreach (var node in assets)
             {
                 NodeInfo nodeInfo = new NodeInfo()
@@ -614,7 +414,7 @@ namespace AssetBundleBuilder.Model
             //create node info
             foreach (var nodeInfo in data.assets)
             {
-                Node node = new Node(nodeInfo.mainAsset);
+                BundleNode node = new BundleNode(nodeInfo.mainAsset);
                 node.SetStandalone(nodeInfo.standalone);
                 node.refersHashCode = nodeInfo.refersHashCode;
 
@@ -629,12 +429,12 @@ namespace AssetBundleBuilder.Model
             //build dependencies and refers
             foreach (var nodeInfo in data.assets)
             {
-                Node node = GetNode(nodeInfo.mainAsset);
+                BundleNode node = GetNode(nodeInfo.mainAsset);
                 if (node != null)
                 {
                     foreach (var dep in nodeInfo.dependencies)
                     {
-                        Node depNode = GetNode(dep);
+                        BundleNode depNode = GetNode(dep);
                         if (depNode != null)
                         {
                             node.dependencies.Add(depNode);
@@ -672,7 +472,7 @@ namespace AssetBundleBuilder.Model
         #endregion
 
         #region Bundle
-        protected BundleInfo CreateBundleInfo(Node node, Setting.Format forma)
+        protected BundleInfo CreateBundleInfo(BundleNode node, Setting.Format forma)
         {
             string mainAsset = node.mainAsset;
 
@@ -713,7 +513,7 @@ namespace AssetBundleBuilder.Model
         public List<BundleInfo> GenerateBundles(Setting.Format format)
         {
             List<BundleInfo> bundleInfos = new List<BundleInfo>();
-            HashSet<Optimizer.Node> assets = GetAssets();
+            HashSet<BundleNode> assets = GetAssets();
             foreach (var node in assets)
             {
                 BundleInfo bundleInfo = CreateBundleInfo(node, format);
