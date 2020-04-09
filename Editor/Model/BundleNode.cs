@@ -32,17 +32,21 @@ namespace AssetBundleBuilder.Model
         //一般情况调用LoadFromFolder的资源都是独立的，调用LoadDependencies是依赖的。
         protected bool m_Standalone = false;
 
-        int m_RefersHashCode = 0;
-        AssetType m_AssetType;
+        protected int m_RefersHashCode = 0;
+        protected AssetType m_AssetType;
 
-        public BundleNode(string asset)
+        public BundleNode()
         {
             assets = new HashSet<string>();
             refers = new HashSet<BundleNode>();
             dependencies = new HashSet<BundleNode>();
+        }
+
+        public BundleNode(string asset):this()
+        {
             mainAsset = asset;
             assets.Add(asset);
-            AnalyzeAssetType(asset);
+            assetType=AnalyzeAssetType(asset);
         }
 
         public void AddDependency(BundleNode dep)
@@ -184,25 +188,40 @@ namespace AssetBundleBuilder.Model
                 m_RefersHashCode = value;
             }
         }
-
-        protected void AnalyzeAssetType(string assetPath)
+        
+        public static AssetType AnalyzeAssetType(string assetPath)
         {
+            AssetType assetType = AssetType.Normal;
+
             //现根据扩展名判断
             string ext = Path.GetExtension(assetPath);
             switch (ext.ToLower())
             {
                 case ".unity":
-                    m_AssetType = AssetType.Scene;
+                    assetType = AssetType.Scene;
                     break;
                 case ".shader":
-                    m_AssetType = AssetType.Shader;
+                    assetType = AssetType.Shader;
                     break;
                 case ".shadervariants":
-                    m_AssetType = AssetType.ShaderVariantCollection;
+                    assetType = AssetType.ShaderVariantCollection;
                     break;
                 default:
-                    m_AssetType = AssetType.Normal;
+                    assetType = AssetType.Normal;
                     break;
+            }
+            return assetType;
+        }
+
+        public AssetType assetType
+        {
+            get
+            {
+                return m_AssetType;
+            }
+            set
+            {
+                m_AssetType = value;
             }
         }
     }
