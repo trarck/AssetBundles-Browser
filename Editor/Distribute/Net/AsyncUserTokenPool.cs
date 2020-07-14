@@ -6,24 +6,24 @@ using UnityEngine;
 
 namespace SocketAsyncServer
 {    
-    internal class SocketAsyncEventArgsPool
+    internal class AsyncUserTokenPool
     {        
         //just for assigning an ID so we can watch our objects while testing.
         private int m_NextTokenId = 0;
         
         // Pool of reusable SocketAsyncEventArgs objects.        
-        Stack<SocketAsyncEventArgs> m_Pool;
+        Stack<AsyncUserToken> m_Pool;
         
         // initializes the object pool to the specified size.
         // "capacity" = Maximum number of SocketAsyncEventArgs objects
-        internal SocketAsyncEventArgsPool(int capacity)
+        internal AsyncUserTokenPool(int capacity)
         {
 
 #if NET_DEBUG
-                Debug.Log("SocketAsyncEventArgsPool constructor");
+                Debug.Log("AsyncUserTokenPool constructor");
 #endif
 
-            m_Pool = new Stack<SocketAsyncEventArgs>(capacity);
+            m_Pool = new Stack<AsyncUserToken>(capacity);
         }
 
         // The number of SocketAsyncEventArgs instances in the pool.         
@@ -40,7 +40,7 @@ namespace SocketAsyncServer
 
         // Removes a SocketAsyncEventArgs instance from the pool.
         // returns SocketAsyncEventArgs removed from the pool.
-        internal SocketAsyncEventArgs Pop()
+        internal AsyncUserToken Pop()
         {
             lock (m_Pool)
             {
@@ -50,7 +50,7 @@ namespace SocketAsyncServer
 
         // Add a SocketAsyncEventArg instance to the pool. 
         // "item" = SocketAsyncEventArgs instance to add to the pool.
-        internal void Push(SocketAsyncEventArgs item)
+        internal void Push(AsyncUserToken item)
         {
             if (item == null) 
             { 

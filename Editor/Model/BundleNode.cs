@@ -16,7 +16,8 @@ namespace AssetBundleBuilder.Model
             Shader,
             ShaderVariantCollection
         }
-
+        //bundle name
+        public string name;
         //主路径
         public string mainAsset;
         //资源
@@ -33,8 +34,9 @@ namespace AssetBundleBuilder.Model
         protected bool m_Standalone = false;
 
         protected int m_RefersHashCode = 0;
-        protected AssetType m_AssetType;
 
+        protected AssetType m_AssetType;
+        
         public BundleNode()
         {
             assets = new HashSet<string>();

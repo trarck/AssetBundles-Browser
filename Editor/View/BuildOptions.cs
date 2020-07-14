@@ -1,16 +1,14 @@
-using UnityEditor;
+﻿using System.Collections.Generic;
 using UnityEngine;
-using System.Collections.Generic;
-using System.IO;
+using UnityEditor;
 using System.Runtime.Serialization.Formatters.Binary;
-
+using System.IO;
 using AssetBundleBuilder.DataSource;
 using System.Text.RegularExpressions;
 
-namespace AssetBundleBuilder
+namespace AssetBundleBuilder.View
 {
-    [System.Serializable]
-    internal class AssetBundleBuildTab
+    internal class BuildOptions
     {
         private string m_streamingPath = "Assets/StreamingAssets";
 
@@ -22,8 +20,8 @@ namespace AssetBundleBuilder
 
         class ToggleData
         {
-            internal ToggleData(bool s, 
-                string title, 
+            internal ToggleData(bool s,
+                string title,
                 string tooltip,
                 List<string> onToggles,
                 BuildAssetBundleOptions opt = BuildAssetBundleOptions.None)
@@ -67,7 +65,7 @@ namespace AssetBundleBuilder
         int[] m_CompressionValues = { 0, 1, 2 };
 
 
-        internal AssetBundleBuildTab()
+        internal BuildOptions()
         {
             m_AdvancedSettings = false;
             m_UserData = new BuildTabData();
@@ -77,7 +75,7 @@ namespace AssetBundleBuilder
 
         internal void OnDisable()
         {
-            var dataPath = System.IO.Path.GetFullPath(".");
+            var dataPath = Path.GetFullPath(".");
             dataPath = dataPath.Replace("\\", "/");
             dataPath += "/Library/AssetBundleBrowserBuild.dat";
 
@@ -86,14 +84,14 @@ namespace AssetBundleBuilder
 
             bf.Serialize(file, m_UserData);
             file.Close();
-
         }
+
         internal void OnEnable(EditorWindow parent)
         {
             m_InspectTab = (parent as AssetBundleBuilderMain).m_InspectTab;
 
             //LoadData...
-            var dataPath = System.IO.Path.GetFullPath(".");
+            var dataPath = Path.GetFullPath(".");
             dataPath = dataPath.Replace("\\", "/");
             dataPath += "/Library/AssetBundleBrowserBuild.dat";
 
@@ -106,7 +104,7 @@ namespace AssetBundleBuilder
                     m_UserData = data;
                 file.Close();
             }
-            
+
             m_ToggleData = new List<ToggleData>();
             m_ToggleData.Add(new ToggleData(
                 false,
@@ -160,7 +158,7 @@ namespace AssetBundleBuilder
             m_TargetContent = new GUIContent("Build Target", "Choose target platform to build for.");
             m_CompressionContent = new GUIContent("Compression", "Choose no compress, standard (LZMA), or chunk based (LZ4)");
 
-            if(m_UserData.m_UseDefaultPath)
+            if (m_UserData.m_UseDefaultPath)
             {
                 ResetPathToDefault();
             }
@@ -183,12 +181,13 @@ namespace AssetBundleBuilder
             GUILayout.BeginVertical();
 
             // build target
-            using (new EditorGUI.DisabledScope (!Model.Model.DataSource.CanSpecifyBuildTarget)) {
+            using (new EditorGUI.DisabledScope(!Model.Model.DataSource.CanSpecifyBuildTarget))
+            {
                 ValidBuildTarget tgt = (ValidBuildTarget)EditorGUILayout.EnumPopup(m_TargetContent, m_UserData.m_BuildTarget);
                 if (tgt != m_UserData.m_BuildTarget)
                 {
                     m_UserData.m_BuildTarget = tgt;
-                    if(m_UserData.m_UseDefaultPath)
+                    if (m_UserData.m_UseDefaultPath)
                     {
                         m_UserData.m_OutputPath = "AssetBundles/";
                         m_UserData.m_OutputPath += m_UserData.m_BuildTarget.ToString();
@@ -199,7 +198,8 @@ namespace AssetBundleBuilder
 
 
             ////output path
-            using (new EditorGUI.DisabledScope (!Model.Model.DataSource.CanSpecifyBuildOutputDirectory)) {
+            using (new EditorGUI.DisabledScope(!Model.Model.DataSource.CanSpecifyBuildOutputDirectory))
+            {
                 EditorGUILayout.Space();
                 GUILayout.BeginHorizontal();
                 var newPath = EditorGUILayout.TextField("Output Path", m_UserData.m_OutputPath);
@@ -252,15 +252,16 @@ namespace AssetBundleBuilder
 
 
             // advanced options
-            using (new EditorGUI.DisabledScope (!Model.Model.DataSource.CanSpecifyBuildOptions)) {
+            using (new EditorGUI.DisabledScope(!Model.Model.DataSource.CanSpecifyBuildOptions))
+            {
                 EditorGUILayout.Space();
                 m_AdvancedSettings = EditorGUILayout.Foldout(m_AdvancedSettings, "Advanced Settings");
-                if(m_AdvancedSettings)
+                if (m_AdvancedSettings)
                 {
                     var indent = EditorGUI.indentLevel;
                     EditorGUI.indentLevel = 1;
                     CompressOptions cmp = (CompressOptions)EditorGUILayout.IntPopup(
-                        m_CompressionContent, 
+                        m_CompressionContent,
                         (int)m_UserData.m_Compression,
                         m_CompressionOptions,
                         m_CompressionValues);
@@ -291,7 +292,7 @@ namespace AssetBundleBuilder
 
             // build.
             EditorGUILayout.Space();
-            if (GUILayout.Button("Build") )
+            if (GUILayout.Button("Build"))
             {
                 EditorApplication.delayCall += ExecuteBuild;
             }
@@ -309,7 +310,8 @@ namespace AssetBundleBuilder
 
         private void ExecuteBuild()
         {
-            if (Model.Model.DataSource.CanSpecifyBuildOutputDirectory) {
+            if (Model.Model.DataSource.CanSpecifyBuildOutputDirectory)
+            {
                 if (string.IsNullOrEmpty(m_UserData.m_OutputPath))
                     BrowseForFolder();
 
@@ -333,8 +335,8 @@ namespace AssetBundleBuilder
                                 Directory.Delete(m_UserData.m_OutputPath, true);
 
                             if (m_CopyToStreaming.state)
-                            if (Directory.Exists(m_streamingPath))
-                                Directory.Delete(m_streamingPath, true);
+                                if (Directory.Exists(m_streamingPath))
+                                    Directory.Delete(m_streamingPath, true);
                         }
                         catch (System.Exception e)
                         {
@@ -348,7 +350,8 @@ namespace AssetBundleBuilder
 
             BuildAssetBundleOptions opt = BuildAssetBundleOptions.None;
 
-            if (Model.Model.DataSource.CanSpecifyBuildOptions) {
+            if (Model.Model.DataSource.CanSpecifyBuildOptions)
+            {
                 if (m_UserData.m_Compression == CompressOptions.Uncompressed)
                     opt |= BuildAssetBundleOptions.UncompressedAssetBundle;
                 else if (m_UserData.m_Compression == CompressOptions.ChunkBasedCompression)
@@ -374,18 +377,18 @@ namespace AssetBundleBuilder
                 m_InspectTab.RefreshBundles();
             };
 
-            Model.Model.DataSource.BuildAssetBundles (buildInfo);
+            Model.Model.DataSource.BuildAssetBundles(buildInfo);
 
             AssetDatabase.Refresh(ImportAssetOptions.ForceUpdate);
 
-            if(m_CopyToStreaming.state)
+            if (m_CopyToStreaming.state)
                 CopyAssetBundles(m_UserData.m_OutputPath, m_streamingPath);
         }
 
         private void CopyAssetBundles(string sourceDirName, string destDirName)
         {
             //copy all asset bundle not manifest and builtin manifest
-            DirectoryCopy(sourceDirName, destDirName, true, "(?<!\\.manifest|"+m_UserData.m_BuildTarget.ToString()+")$");
+            DirectoryCopy(sourceDirName, destDirName, true, "(?<!\\.manifest|" + m_UserData.m_BuildTarget.ToString() + ")$");
             //copy info file
             File.Copy(Path.Combine(sourceDirName, "all.manifest"), Path.Combine(destDirName, "all.manifest"), true);
         }
@@ -400,7 +403,7 @@ namespace AssetBundleBuilder
         {
             bool haveFilter = !string.IsNullOrEmpty(pattern);
             Regex reg = haveFilter ? new Regex(pattern, RegexOptions.IgnoreCase) : null;
-            
+
             // If the destination directory doesn't exist, create it.
             if (!Directory.Exists(destDirName))
             {
@@ -413,9 +416,10 @@ namespace AssetBundleBuilder
                 Stack<StackInfo> visitStack = new Stack<StackInfo>();
                 StackInfo fol;
 
-                root = new StackInfo(){
-                    dir=new DirectoryInfo(sourceDirName),
-                   relativePath="",
+                root = new StackInfo()
+                {
+                    dir = new DirectoryInfo(sourceDirName),
+                    relativePath = "",
                 };
 
                 visitStack.Push(root);
@@ -434,7 +438,7 @@ namespace AssetBundleBuilder
                         if (!haveFilter || reg.IsMatch(f.Name))
                         {
                             string outFile = Path.Combine(outPath, f.Name);
-                            File.Copy(f.FullName, outFile,true);
+                            File.Copy(f.FullName, outFile, true);
                         }
                     }
 
@@ -466,7 +470,7 @@ namespace AssetBundleBuilder
                         file.CopyTo(temppath, true);
                     }
                 }
-            }            
+            }
         }
 
         private void BrowseForFolder()
@@ -478,7 +482,7 @@ namespace AssetBundleBuilder
                 var gamePath = System.IO.Path.GetFullPath(".");
                 gamePath = gamePath.Replace("\\", "/");
                 if (newPath.StartsWith(gamePath) && newPath.Length > gamePath.Length)
-                    newPath = newPath.Remove(0, gamePath.Length+1);
+                    newPath = newPath.Remove(0, gamePath.Length + 1);
                 m_UserData.m_OutputPath = newPath;
                 //EditorUserBuildSettings.SetPlatformSettings(EditorUserBuildSettings.activeBuildTarget.ToString(), "AssetBundleOutputPath", m_OutputPath);
             }
@@ -543,11 +547,11 @@ namespace AssetBundleBuilder
         {
             Distribute.BundleGroup bundleGroup = new Distribute.BundleGroup();
             bundleGroup.BuildRelationShip();
-            List<List<Distribute.DeepNode>> layers= bundleGroup.Group();
-            for(int i = 0; i < layers.Count; ++i)
+            List<List<Distribute.DeepNode>> layers = bundleGroup.Group();
+            for (int i = 0; i < layers.Count; ++i)
             {
-                Debug.LogFormat("Layers:{0} items({1}):[", i,layers[i].Count);
-                foreach(var n in layers[i])
+                Debug.LogFormat("Layers:{0} items({1}):[", i, layers[i].Count);
+                foreach (var n in layers[i])
                 {
                     Debug.LogFormat("---{0}", n.name);
                 }
@@ -555,6 +559,5 @@ namespace AssetBundleBuilder
             }
             //distribute.ShowInfos();
         }
-    }
-
+    } 
 }
