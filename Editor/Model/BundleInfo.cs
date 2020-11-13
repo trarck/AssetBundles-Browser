@@ -746,7 +746,7 @@ namespace AssetBundleBuilder.Model
         }
     }
 
-    public abstract class BundleFolderInfo : BundleInfo
+    public class BundleFolderInfo : BundleInfo
     {
         protected Dictionary<string, BundleInfo> m_Children;
 
@@ -776,9 +776,13 @@ namespace AssetBundleBuilder.Model
         {
             return m_Children.Values;
         }
-        internal abstract void AddChild(BundleInfo info,string key=null);
+		internal virtual void AddChild(BundleInfo info, string key = null)
+		{
+			m_Children.Add(string.IsNullOrEmpty(key) ? info.displayName : key, info);
+			info.m_Parent = this;
+		}
 
-        internal override bool HandleRename(string newName, int reverseDepth)
+		internal override bool HandleRename(string newName, int reverseDepth)
         {
             if (!base.HandleRename(newName, reverseDepth))
                 return false;
@@ -884,7 +888,40 @@ namespace AssetBundleBuilder.Model
             return true;
         }
 
-        internal override void Update()
+		internal override void HandleReparent(string parentName, BundleFolderInfo newParent = null)
+		{
+			if (parentName.StartsWith(m_Name.bundleName))
+			{
+				//can't reparent to child
+				return;
+			}
+
+			string newName = System.String.IsNullOrEmpty(parentName) ? "" : parentName + '/';
+			newName += displayName;
+			if (newName == m_Name.bundleName)
+				return;
+
+			if (newParent != null && newParent.GetChild(newName) != null)
+			{
+				Model.LogWarning("An item named '" + newName + "' already exists at this level in hierarchy.  If your desire is to merge bundles, drag one on top of the other.");
+				return;
+			}
+
+			foreach (var child in m_Children)
+			{
+				child.Value.HandleReparent(newName);
+			}
+
+			if (newParent != null)
+			{
+				m_Parent.HandleChildRename(m_Name.shortName, string.Empty);
+				m_Parent = newParent;
+				m_Parent.AddChild(this);
+			}
+			m_Name.SetBundleName(newName, m_Name.variant);
+		}
+
+		internal override void Update()
         {
             m_Dirty = false;
             m_DoneUpdating = true;
@@ -940,7 +977,12 @@ namespace AssetBundleBuilder.Model
             }
             return assets;
         }
-    }
+
+		internal override Texture2D GetIcon()
+		{
+			return Model.GetFolderIcon();
+		}
+	}
 
     public class BundleFolderConcreteInfo : BundleFolderInfo
     {

@@ -36,43 +36,51 @@ namespace AssetBundleBuilder.View
             }
         }
 
-        //internal void AddAssetsToNode(AssetTreeItem node)
-        //{
-        //    if (m_Bundle.HaveChildren())
-        //    {
-        //        foreach(var child in children)
-        //        {
-        //            BundleTreeItem bundleTreeItem = (BundleTreeItem)child;
-        //            if (bundleTreeItem!=null)
-        //            {
-        //                bundleTreeItem.AddAssetsToNode(node);
-        //            }
-        //        }
-        //    }
-        //    else
-        //    {
-        //        List<AssetInfo> assets = m_Bundle.GetConcretes();
-        //        if (assets != null)
-        //        {
-        //            foreach (var asset in assets)
-        //                node.AddChild(new AssetTreeItem(asset));
-        //        }
+		public override bool hasChildren
+		{
+			get
+			{
+				return m_Bundle != null && m_Bundle.HaveChildren();
+			}
+		}
 
-        //        assets = m_Bundle.GetDependencies();
-        //        if (assets != null)
-        //        {
-        //            foreach (var asset in assets)
-        //            {
-        //                if (!node.ContainsChild(asset))
-        //                    node.AddChild(new AssetTreeItem(asset));
-        //            }
-        //        }
-        //    }
+		//internal void AddAssetsToNode(AssetTreeItem node)
+		//{
+		//    if (m_Bundle.HaveChildren())
+		//    {
+		//        foreach(var child in children)
+		//        {
+		//            BundleTreeItem bundleTreeItem = (BundleTreeItem)child;
+		//            if (bundleTreeItem!=null)
+		//            {
+		//                bundleTreeItem.AddAssetsToNode(node);
+		//            }
+		//        }
+		//    }
+		//    else
+		//    {
+		//        List<AssetInfo> assets = m_Bundle.GetConcretes();
+		//        if (assets != null)
+		//        {
+		//            foreach (var asset in assets)
+		//                node.AddChild(new AssetTreeItem(asset));
+		//        }
 
-        //    m_Bundle.dirty = false;
-        //}
+		//        assets = m_Bundle.GetDependencies();
+		//        if (assets != null)
+		//        {
+		//            foreach (var asset in assets)
+		//            {
+		//                if (!node.ContainsChild(asset))
+		//                    node.AddChild(new AssetTreeItem(asset));
+		//            }
+		//        }
+		//    }
 
-        public static BundleTreeItem Create(BundleInfo b, int depth)
+		//    m_Bundle.dirty = false;
+		//}
+
+		public static BundleTreeItem Create(BundleInfo b, int depth)
         {
             if (!b.HaveChildren())
             {
