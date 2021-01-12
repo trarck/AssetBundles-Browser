@@ -9,7 +9,56 @@ namespace AssetBundleBuilder.DataSource
 
         private static List<Type> s_customNodes;
 
-        internal static List<Type> CustomDataSourceTypes {
+		internal static DataSource GetDataSource(Type type, bool useFirst = false)
+		{
+			List<DataSource> dataSources = null;
+
+			foreach (var info in DataSourceProviderUtility.CustomDataSourceTypes)
+			{
+				if (info == type)
+				{
+					dataSources = info.GetMethod("CreateDataSources").Invoke(null, null) as List<DataSource>;
+					if (dataSources != null && dataSources.Count > 0)
+					{
+						return dataSources[0];
+					}
+				}
+			}
+
+			if (useFirst)
+			{
+				if (DataSourceProviderUtility.CustomDataSourceTypes.Count > 0)
+				{
+					dataSources = DataSourceProviderUtility.CustomDataSourceTypes[0]
+						.GetMethod("CreateDataSources").Invoke(null, null) as List<DataSource>;
+
+					if (dataSources != null && dataSources.Count > 0)
+					{
+						return dataSources[0];
+					}
+				}
+			}
+
+			return null;
+		}
+
+		internal static DataSource GetDataSource(string typeStr)
+		{
+			Type type = null;
+			var x = AppDomain.CurrentDomain.GetAssemblies();
+			foreach (var assembly in x)
+			{
+				type = assembly.GetType(typeStr);
+				if (type != null)
+				{
+					break;
+				}
+			}
+
+			return GetDataSource(type);
+		}
+
+		internal static List<Type> CustomDataSourceTypes {
             get {
                 if(s_customNodes == null) {
                     s_customNodes = BuildCustomDataSourceList();
@@ -17,6 +66,8 @@ namespace AssetBundleBuilder.DataSource
                 return s_customNodes;
             }
         }
+
+		
 
         private static List<Type> BuildCustomDataSourceList()
         {

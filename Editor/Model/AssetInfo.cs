@@ -8,24 +8,43 @@ namespace AssetBundleBuilder.Model
 {
     public class AssetInfo
     {
-        internal bool isScene { get; set; }
-        internal bool isFolder { get; set; }
-        internal long fileSize;
-
-        private HashSet<string> m_Parents;
-        private string m_AssetName;
+		private string m_AssetName;
         private string m_DisplayName;
         private string m_BundleName;
-        private MessageSystem.MessageState m_AssetMessages = new MessageSystem.MessageState();
+		private long m_FileSize = -1;
 
-        internal AssetInfo(string inName, string bundleName="")
-        {
-            fullAssetName = inName;
-            m_BundleName = bundleName;
-            m_Parents = new HashSet<string>();
-            isScene = false;
-            isFolder = false;
-        }
+		private HashSet<AssetInfo> m_Refers;
+		HashSet<AssetInfo> m_Dependencies = null;
+		HashSet<AssetInfo> m_AllDependencies = null;
+
+		private MessageSystem.MessageState m_AssetMessages = new MessageSystem.MessageState();
+		internal bool isScene
+		{
+			get; set;
+		}
+		internal bool isFolder
+		{
+			get; set;
+		}
+		internal long fileSize
+		{
+			get
+			{
+				if (m_FileSize == -1)
+				{
+					System.IO.FileInfo fileInfo = new System.IO.FileInfo(m_AssetName);
+					if (fileInfo.Exists)
+					{
+						m_FileSize = fileInfo.Length;
+					}
+					else
+					{
+						m_FileSize = 0;
+					}
+				}
+				return m_FileSize;
+			}
+		}
 
         internal string fullAssetName
         {
@@ -34,13 +53,6 @@ namespace AssetBundleBuilder.Model
             {
                 m_AssetName = value;
                 m_DisplayName = System.IO.Path.GetFileNameWithoutExtension(m_AssetName);
-
-                //TODO - maybe there's a way to ask the AssetDatabase for this size info.
-                System.IO.FileInfo fileInfo = new System.IO.FileInfo(m_AssetName);
-                if (fileInfo.Exists)
-                    fileSize = fileInfo.Length;
-                else
-                    fileSize = 0;
             }
         }
         internal string displayName
@@ -50,15 +62,45 @@ namespace AssetBundleBuilder.Model
         internal string bundleName
         { get { return System.String.IsNullOrEmpty(m_BundleName) ? "auto" : m_BundleName; } }
         
-        internal Color GetColor()
-        {
-            if (System.String.IsNullOrEmpty(m_BundleName))
-                return Model.k_LightGrey;
-            else
-                return Color.white;
-        }
+		internal HashSet<AssetInfo> dependencies
+		{
+			get
+			{
+				if (m_Dependencies == null)
+				{
+					m_Dependencies = new HashSet<AssetInfo>();
+				}
+				return m_Dependencies;
+			}
+			set
+			{
+				m_Dependencies = value;
+			}
+		}
 
-        internal bool IsMessageSet(MessageSystem.MessageFlag flag)
+		internal HashSet<AssetInfo> allDependencies
+		{
+			get
+			{
+				return m_AllDependencies;
+			}
+			set
+			{
+				m_AllDependencies = value;
+			}
+		}
+
+		internal AssetInfo(string inName, string bundleName = "")
+		{
+			fullAssetName = inName;
+			m_BundleName = bundleName;
+			m_Refers = new HashSet<AssetInfo>();
+			isScene = false;
+			isFolder = false;
+		}
+
+		#region Message
+		internal bool IsMessageSet(MessageSystem.MessageFlag flag)
         {
             return m_AssetMessages.IsSet(flag);
         }
@@ -100,11 +142,11 @@ namespace AssetBundleBuilder.Model
                 messages.Add(new MessageSystem.Message(message, MessageType.Warning));
             }
 
-            if (System.String.IsNullOrEmpty(m_BundleName) && m_Parents.Count > 0)
+            if (System.String.IsNullOrEmpty(m_BundleName) && m_Refers.Count > 0)
             {
                 //TODO - refine the parent list to only include those in the current asset list
                 var message = displayName + "\n" + "Is auto included in bundle(s) due to parent(s): \n";
-                foreach (var parent in m_Parents)
+                foreach (var parent in m_Refers)
                 {
                     message += parent + ", ";
                 }
@@ -112,10 +154,10 @@ namespace AssetBundleBuilder.Model
                 messages.Add(new MessageSystem.Message(message, MessageType.Info));
             }            
 
-            if (m_dependencies != null && m_dependencies.Count > 0)
+            if (m_Dependencies != null && m_Dependencies.Count > 0)
             {
                 var message = string.Empty;
-                var sortedDependencies = m_dependencies.OrderBy(d => d.bundleName);
+                var sortedDependencies = m_Dependencies.OrderBy(d => d.bundleName);
                 foreach (var dependent in sortedDependencies)
                 {
                     if (dependent.bundleName != bundleName)
@@ -135,29 +177,27 @@ namespace AssetBundleBuilder.Model
 
             return messages;
         }
-        internal void AddParent(string name)
-        {
-            m_Parents.Add(name);
-        }
-        internal void RemoveParent(string name)
-        {
-            m_Parents.Remove(name);
-        }
 
-        internal string GetSizeString()
-        {
-            if (fileSize == 0)
-                return "--";
-            return EditorUtility.FormatBytes(fileSize);
-        }
+		#endregion
 
-        List<AssetInfo> m_dependencies = null;
-        internal List<AssetInfo> GetDependencies()
+		internal void AddRefer(AssetInfo referInfo)
+		{
+			m_Refers.Add(referInfo);
+			referInfo.dependencies.Add(this);
+		}
+
+		internal void RemoveRefer(AssetInfo referInfo)
+		{
+			m_Refers.Remove(referInfo);
+			referInfo.dependencies.Remove(this);
+		}
+
+        internal HashSet<AssetInfo> RefreshDependencies()
         {
             //TODO - not sure this refreshes enough. need to build tests around that.
-            if (m_dependencies == null)
+            if (m_Dependencies == null)
             {
-                m_dependencies = new List<AssetInfo>();
+				m_Dependencies = new HashSet<AssetInfo>();
                 if (AssetDatabase.IsValidFolder(m_AssetName))
                 {
                     //if we have a folder, its dependencies were already pulled in through alternate means.  no need to GatherFoldersAndFiles
@@ -165,20 +205,19 @@ namespace AssetBundleBuilder.Model
                 }
                 else
                 {
-                    foreach (var dep in AssetDatabase.GetDependencies(m_AssetName, true))
-                    {
-                        if (dep != m_AssetName)
-                        {
-                            var asset = Model.CreateAsset(dep, this);
-                            if (asset != null)
-                                m_dependencies.Add(asset);
-                        }
-                    }
-                }
+					
+				}
             }
-            return m_dependencies;
+            return m_Dependencies;
         }
 
-    }
+		internal string GetSizeString()
+		{
+			if (fileSize == 0)
+				return "--";
+			return EditorUtility.FormatBytes(fileSize);
+		}
+
+	}
 
 }

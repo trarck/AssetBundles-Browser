@@ -717,7 +717,7 @@ namespace AssetBundleBuilder.Model
                     info = new AssetInfo(name, string.Empty);
                     s_GlobalAssetList.Add(name, info);
                 }
-                info.AddParent(parent.displayName);
+                //info.AddRefer(parent.displayName);
                 return info;
             }
 

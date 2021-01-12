@@ -9,7 +9,9 @@ namespace AssetBundleBuilder.View
 {
     internal sealed class AssetTreeItem : TreeViewItem
     {
-        private AssetInfo m_asset;
+		internal static /*const*/ Color k_LightGrey = Color.grey * 1.5f;
+
+		private AssetInfo m_asset;
         internal AssetInfo asset
         {
             get { return m_asset; }
@@ -29,8 +31,11 @@ namespace AssetBundleBuilder.View
             {
                 if (m_color.a == 0.0f && m_asset != null)
                 {
-                    m_color = m_asset.GetColor();
-                }
+					if (string.IsNullOrEmpty(m_asset.bundleName))
+						m_color = k_LightGrey;
+					else
+						m_color =  Color.white;
+				}
                 return m_color;
             }
             set { m_color = value; }

@@ -476,7 +476,7 @@ namespace AssetBundleBuilder.Model
             if (asset == null)
                 return;
 
-            var deps = asset.GetDependencies();
+            var deps = asset.RefreshDependencies();
             if (deps == null)
                 return;
 
