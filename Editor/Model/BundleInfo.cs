@@ -140,7 +140,27 @@ namespace AssetBundleBuilder.Model
             }
             return name.Substring(previousIndex);
         }
-    }
+
+		static internal List<string> GetPathTokens(string path)
+		{
+			List<string> pathTokens = new List<string>();
+
+			int indexOfSlash = path.IndexOf('/');
+			int previousIndex = 0;
+			while (indexOfSlash != -1)
+			{
+				pathTokens.Add(path.Substring(previousIndex, (indexOfSlash - previousIndex)));
+				previousIndex = indexOfSlash + 1;
+				indexOfSlash = path.IndexOf('/', previousIndex);
+			}
+			string left= path.Substring(previousIndex).Trim();
+			if (!string.IsNullOrEmpty(left))
+			{
+				pathTokens.Add(left);
+			}
+			return pathTokens;
+		}
+	}
 
     public abstract class BundleInfo
     {

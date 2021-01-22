@@ -152,7 +152,7 @@ namespace AssetBundleBuilder.Model
 				parent.AddChild(bundleInfo);
 
 				//full path map
-				string bundlePath = parent.m_Name.fullNativeName + "/" + bundleInfo.displayName;
+				string bundlePath = string.IsNullOrEmpty(parent.m_Name.fullNativeName) ? bundleInfo.displayName : (parent.m_Name.fullNativeName + "/" + bundleInfo.displayName);
 				m_Bundles[bundlePath] = bundleInfo;
 			}
 		}
@@ -185,16 +185,16 @@ namespace AssetBundleBuilder.Model
 
 			BundleNameData bundleNameData = new BundleNameData(bundlePath);
 
-			parent = GetBundleFolder(bundleNameData.pathTokens, bundleNameData.pathTokens.Count - 1, parent);
+			parent = GetBundleFolder(bundleNameData.pathTokens, bundleNameData.pathTokens.Count, parent);
 
-			string bundleName = bundleNameData.pathTokens[bundleNameData.pathTokens.Count - 1];
+			string bundleName = bundleNameData.shortName;
 
 			bundleName = GetUniqueName(bundleName, parent);
 
 			return CreateBundleDataByName(bundleName, parent);
 		}
 
-		public BundleFolderInfo CreateBundleFolderByName(string folderName, BundleFolderInfo parent)
+		public BundleFolderInfo CreateBundleFolderByName(string folderName, BundleFolderInfo parent=null)
 		{
 			if (parent == null)
 			{
@@ -208,7 +208,7 @@ namespace AssetBundleBuilder.Model
 			return bundleInfo;
 		}
 
-		public BundleFolderInfo CreateBundleFolderByPath(string folderPath, BundleFolderInfo parent)
+		public BundleFolderInfo CreateBundleFolderByPath(string folderPath, BundleFolderInfo parent=null)
 		{
 			if (string.IsNullOrEmpty(folderPath))
 			{
@@ -220,11 +220,11 @@ namespace AssetBundleBuilder.Model
 				parent = m_Root;
 			}
 
-			BundleNameData bundleNameData = new BundleNameData(folderPath);
+			List<string> pathTokens= BundleNameData.GetPathTokens(folderPath);
 
-			parent = GetBundleFolder(bundleNameData.pathTokens, bundleNameData.pathTokens.Count - 1, parent);
+			parent = GetBundleFolder(pathTokens, pathTokens.Count-1 , parent);
 
-			string bundleName = bundleNameData.pathTokens[bundleNameData.pathTokens.Count - 1];
+			string bundleName = pathTokens[pathTokens.Count - 1];
 
 			bundleName = GetUniqueName(bundleName, parent);
 
@@ -238,8 +238,8 @@ namespace AssetBundleBuilder.Model
 				return m_Bundles[folderPath] as BundleFolderInfo;
 			}
 
-			BundleNameData bundleNameData = new BundleNameData(folderPath);
-			return GetBundleFolder(bundleNameData.pathTokens, bundleNameData.pathTokens.Count, parent);
+			List<string> pathTokens = BundleNameData.GetPathTokens(folderPath);
+			return GetBundleFolder(pathTokens, pathTokens.Count, parent);
 		}
 
 		private BundleFolderInfo GetBundleFolder(List<string> pathTokens, int deep, BundleFolderInfo parent)
