@@ -565,7 +565,16 @@ namespace AssetBundleBuilder.Model
         }
 
         internal bool isSceneBundle
-        { get { return m_IsSceneBundle; } }
+        {
+            get
+            {
+                return m_IsSceneBundle;
+            }
+            set
+            {
+                m_IsSceneBundle = value;
+            }
+        }
 
         //internal override BundleTreeItem CreateTreeView(int depth)
         //{

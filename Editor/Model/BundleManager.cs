@@ -80,6 +80,18 @@ namespace AssetBundleBuilder.Model
 			}
 		}
 
+		public void CreateBundlesFromDataSource()
+		{
+			string[] bundlePaths = dataSource.GetAllAssetBundleNames();
+
+			foreach (var bundlePath in bundlePaths)
+			{
+				BundleDataInfo bundleDataInfo = CreateBundleDataByPath(bundlePath, m_Root);
+				string[] assets = dataSource.GetAssetPathsFromAssetBundle(bundlePath);
+
+			}
+		}
+
 		#region Bundle
 		public BundleInfo GetBundle(string bundlePath)
 		{
@@ -279,22 +291,15 @@ namespace AssetBundleBuilder.Model
 			return newName;
 		}
 
-		public void SetupBundleInfos()
+		public void RefreshBundleAssets(BundleDataInfo bundleDataInfo)
 		{
-			string[] bundlePaths = dataSource.GetAllAssetBundleNames();
-
-			foreach (var bundlePath in bundlePaths)
-			{
-				BundleDataInfo bundleDataInfo = CreateBundleDataByPath(bundlePath,m_Root);
-				string[] assets = dataSource.GetAssetPathsFromAssetBundle(bundlePath);
-
-			}
+			string[] assets = dataSource.GetAssetPathsFromAssetBundle(bundleDataInfo.m_Name.fullNativeName);
 		}
 
 		#endregion Bundle
 
 		#region Asset
-		public AssetInfo GetAssetInfo(string assetPath)
+		public AssetInfo GetAsset(string assetPath)
 		{
 			AssetInfo assetInfo = null;
 			m_Assets.TryGetValue(assetPath, out assetInfo);
@@ -313,7 +318,11 @@ namespace AssetBundleBuilder.Model
 			return assetInfo;
 		}
 
-		internal void GatherAssetDependencies(AssetInfo assetInfo)
+		/// <summary>
+		/// 刷新资源的直接依赖
+		/// </summary>
+		/// <param name="assetInfo"></param>
+		internal void RefreshAssetDependencies(AssetInfo assetInfo)
 		{
 			if (!AssetDatabase.IsValidFolder(assetInfo.fullAssetName))
 			{
@@ -323,7 +332,7 @@ namespace AssetBundleBuilder.Model
 				{
 					if (dep != assetInfo.fullAssetName)
 					{
-						AssetInfo depAsset = GetAssetInfo(dep);
+						AssetInfo depAsset = GetAsset(dep);
 						if (depAsset == null)
 						{
 							depAsset = CreateAsset(dep);
@@ -332,27 +341,72 @@ namespace AssetBundleBuilder.Model
 						depAsset.AddRefer(assetInfo);
 					}
 				}
-
-
-				////all
-				//assetInfo.allDependencies.Clear();
-				//foreach (var dep in AssetDatabase.GetDependencies(assetInfo.fullAssetName, true))
-				//{
-				//	if (dep != assetInfo.fullAssetName)
-				//	{
-				//		AssetInfo depAsset = GetAssetInfo(dep);
-				//		if (depAsset == null)
-				//		{
-				//			depAsset = CreateAsset(dep);
-				//		}
-
-				//		depAsset.AddRefer(assetInfo);
-
-				//		assetInfo.allDependencies.Add(depAsset);
-				//	}
-				//}
 			}
 		}
+
+		/// <summary>
+		/// 刷新资源的所有依赖
+		/// 通过直接依赖，循环遍历获取所有依赖。
+		/// 注意：要在 RefreshAssetDependencies 之后才能执行这个方法
+		/// TODO::测试通过unity的直接获取所有依赖和通过遍历的速度
+		/// </summary>
+		/// <param name="assetInfo"></param>
+		internal void RefreshAssetAllDependencies(AssetInfo assetInfo)
+		{
+			if (!AssetDatabase.IsValidFolder(assetInfo.fullAssetName))
+			{
+				//clear all deps
+				assetInfo.allDependencies.Clear();
+
+				Stack<AssetInfo> assetsStack = new Stack<AssetInfo>();
+				HashSet<AssetInfo> visitedInfos = new HashSet<AssetInfo>();
+				
+				assetsStack.Push(assetInfo);
+
+				while (assetsStack.Count > 0)
+				{
+					AssetInfo ai = assetsStack.Pop();
+					if (visitedInfos.Contains(ai))
+					{
+						continue;
+					}
+
+					visitedInfos.Add(ai);
+
+					if (ai.dependencies != null && ai.dependencies.Count > 0)
+					{
+						foreach (var dep in ai.dependencies)
+						{
+							assetInfo.allDependencies.Add(dep);
+							assetsStack.Push(dep);
+						}
+					}
+				}
+			}
+		}
+
+		internal void RefreshAssetAllDependencies2(AssetInfo assetInfo)
+		{
+			if (!AssetDatabase.IsValidFolder(assetInfo.fullAssetName))
+			{
+				//dep
+				assetInfo.allDependencies.Clear();
+				foreach (var dep in AssetDatabase.GetDependencies(assetInfo.fullAssetName, true))
+				{
+					if (dep != assetInfo.fullAssetName)
+					{
+						AssetInfo depAsset = GetAsset(dep);
+						if (depAsset == null)
+						{
+							depAsset = CreateAsset(dep);
+						}
+
+						assetInfo.allDependencies.Add(depAsset);
+					}
+				}
+			}
+		}
+
 		#endregion Asset
 
 		public DataSource.DataSource dataSource
