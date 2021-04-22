@@ -407,6 +407,28 @@ namespace AssetBundleBuilder.Model
 			}
 		}
 
+		/// <summary>
+		/// 更新所有资源的直接依赖
+		/// </summary>
+		public void RefreshAllAssetDependencies()
+		{
+			foreach (var iter in m_Assets)
+			{
+				RefreshAssetDependencies(iter.Value);
+			}
+		}
+
+		/// <summary>
+		/// 更新所有资源的所有依赖
+		/// </summary>
+		public void RefreshAllAssetAllDependencies()
+		{
+			foreach (var iter in m_Assets)
+			{
+				RefreshAssetAllDependencies(iter.Value);
+			}
+		}
+
 		#endregion Asset
 
 		public DataSource.DataSource dataSource
