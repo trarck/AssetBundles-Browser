@@ -4,13 +4,14 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.IMGUI.Controls;
 
-namespace AssetBundleBuilder.Model
+namespace AssetBundleBuilder.Editor
 {
     public class AssetNode
     {
 		private string m_AssetName;
         private string m_DisplayName;
 		private long m_FileSize = -1;
+		private string m_RealFilePath = null;
 
 		private HashSet<AssetNode> m_Refers;
         private HashSet<AssetNode> m_Dependencies = null;
@@ -101,6 +102,14 @@ namespace AssetBundleBuilder.Model
 		public AssetNode(string assetName)
 		{
 			fullAssetName = assetName;
+			m_Refers = new HashSet<AssetNode>();
+			isScene = false;
+		}
+
+		public AssetNode(string assetName, string filePath)
+		{
+			fullAssetName = assetName;
+			m_RealFilePath = filePath;
 			m_Refers = new HashSet<AssetNode>();
 			isScene = false;
 		}
