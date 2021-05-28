@@ -1,5 +1,5 @@
 {
-    "name": "TestAsb",
+    "name": "BuilderTests",
     "references": [
         "Unity.AssetBundleBuilder.Editor"
     ],

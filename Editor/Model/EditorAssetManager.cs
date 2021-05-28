@@ -5,11 +5,20 @@ using System.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
 
-namespace AssetBundleBuilder.Editor
+namespace AssetBundleBuilder
 {
 	public class EditorAssetManager
 	{
-		Dictionary<string, AssetNode> m_Assets;
+		Dictionary<string, AssetNode> m_Assets=new Dictionary<string, AssetNode>();
+
+		public void Clean()
+		{
+			if (m_Assets != null)
+			{
+				m_Assets.Clear();
+			}
+		}
+
 		#region Asset
 		public AssetNode GetAsset(string assetPath)
 		{
@@ -23,9 +32,9 @@ namespace AssetBundleBuilder.Editor
 			string realPath = assetPath;
 			if (!Path.IsPathRooted(assetPath))
 			{
-				realPath = Path.Combine(EditorApplication.applicationPath, assetPath);
+				realPath = Path.Combine(Path.GetDirectoryName(Application.dataPath), assetPath);
 			}
-			AssetNode assetNode = new AssetNode(assetPath);
+			AssetNode assetNode = new AssetNode(assetPath,realPath);
 			m_Assets[assetPath] = assetNode;
 			return assetNode;
 		}

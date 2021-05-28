@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.IMGUI.Controls;
 
-namespace AssetBundleBuilder.Editor
+namespace AssetBundleBuilder
 {
     public class AssetNode
     {
