@@ -1,13 +1,10 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 using UnityEngine;
-using UnityEngine.TestTools;
 using AssetBundleBuilder.Model;
 
 namespace AssetBundleBuilder.Tests
 {
-    public class BundleManagerTests
+	public class BundleManagerTests
     {
 		BundleManager m_bundleManager = null;
 

@@ -1,6 +1,7 @@
 {
     "name": "BuilderTests",
     "references": [
+        "YHLib",
         "Unity.AssetBundleBuilder.Editor"
     ],
     "optionalUnityReferences": [

@@ -11,6 +11,18 @@ namespace AssetBundleBuilder
 	{
 		Dictionary<string, AssetNode> m_Assets=new Dictionary<string, AssetNode>();
 
+		public Dictionary<string, AssetNode> assets
+		{
+			get
+			{
+				return m_Assets;
+			}
+			set
+			{
+				m_Assets = value;
+			}
+		}
+
 		public void Clean()
 		{
 			if (m_Assets != null)
@@ -27,15 +39,30 @@ namespace AssetBundleBuilder
 			return assetNode;
 		}
 
-		public AssetNode CreateAsset(string assetPath)
+		public AssetNode CreateAssetNode(string assetPath)
 		{
 			string realPath = assetPath;
-			if (!Path.IsPathRooted(assetPath))
+			if (Path.IsPathRooted(assetPath))
 			{
-				realPath = Path.Combine(Path.GetDirectoryName(Application.dataPath), assetPath);
+				realPath = assetPath;
+				assetPath = FileSystem.Relative(FileSystem.applicationPath, assetPath);
 			}
-			AssetNode assetNode = new AssetNode(assetPath,realPath);
-			m_Assets[assetPath] = assetNode;
+			else
+			{
+				assetPath = FileSystem.AddAssetPrev(assetPath);
+				realPath = Path.Combine(FileSystem.applicationPath, assetPath);
+			}
+
+			assetPath = FileSystem.NormalizePath(assetPath);
+
+			AssetNode assetNode = new AssetNode(assetPath, realPath);
+			return assetNode;
+		}
+
+		public AssetNode CreateAsset(string assetPath)
+		{
+			AssetNode assetNode = CreateAssetNode(assetPath);
+			m_Assets[assetNode.fullAssetName] = assetNode;
 			return assetNode;
 		}
 
@@ -57,6 +84,7 @@ namespace AssetBundleBuilder
 						if (depAsset == null)
 						{
 							depAsset = CreateAsset(dep);
+							RefreshAssetDependencies(depAsset);
 						}
 
 						depAsset.AddRefer(assetNode);
@@ -75,7 +103,14 @@ namespace AssetBundleBuilder
 		internal void RefreshAssetAllDependencies(AssetNode assetNode)
 		{
 			//clear all deps
-			assetNode.allDependencies.Clear();
+			if (assetNode.allDependencies == null)
+			{
+				assetNode.allDependencies = new HashSet<AssetNode>();
+			}
+			else
+			{
+				assetNode.allDependencies.Clear();
+			}
 
 			Stack<AssetNode> assetsStack = new Stack<AssetNode>();
 			HashSet<AssetNode> visiteds = new HashSet<AssetNode>();
@@ -106,7 +141,15 @@ namespace AssetBundleBuilder
 		internal void RefreshAssetAllDependencies2(AssetNode assetNode)
 		{
 			//dep
-			assetNode.allDependencies.Clear();
+			if (assetNode.allDependencies == null)
+			{
+				assetNode.allDependencies = new HashSet<AssetNode>();
+			}
+			else
+			{
+				assetNode.allDependencies.Clear();
+			}
+
 			foreach (var dep in AssetDatabase.GetDependencies(assetNode.fullAssetName, true))
 			{
 				if (dep != assetNode.fullAssetName)
@@ -115,6 +158,7 @@ namespace AssetBundleBuilder
 					if (depAsset == null)
 					{
 						depAsset = CreateAsset(dep);
+						RefreshAssetAllDependencies2(depAsset);
 					}
 
 					assetNode.allDependencies.Add(depAsset);
@@ -127,9 +171,10 @@ namespace AssetBundleBuilder
 		/// </summary>
 		public void RefreshAllAssetDependencies()
 		{
-			foreach (var iter in m_Assets)
+			List<AssetNode> assets = new List<AssetNode>(m_Assets.Values);
+			foreach (var assetNode in assets)
 			{
-				RefreshAssetDependencies(iter.Value);
+				RefreshAssetDependencies(assetNode);
 			}
 		}
 
@@ -138,9 +183,19 @@ namespace AssetBundleBuilder
 		/// </summary>
 		public void RefreshAllAssetAllDependencies()
 		{
-			foreach (var iter in m_Assets)
+			List<AssetNode> assets = new List<AssetNode>(m_Assets.Values);
+			foreach (var assetNode in assets)
 			{
-				RefreshAssetAllDependencies(iter.Value);
+				RefreshAssetAllDependencies(assetNode);
+			}
+		}
+
+		public void RefreshAllAssetAllDependencies2()
+		{
+			List<AssetNode> assets = new List<AssetNode>(m_Assets.Values);
+			foreach (var assetNode in assets)
+			{
+				RefreshAssetAllDependencies2(assetNode);
 			}
 		}
 
