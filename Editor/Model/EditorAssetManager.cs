@@ -10,6 +10,8 @@ namespace AssetBundleBuilder
 	public class EditorAssetManager
 	{
 		Dictionary<string, AssetNode> m_Assets=new Dictionary<string, AssetNode>();
+		Dictionary<string, BundleNode> m_AssetBundles = new Dictionary<string, BundleNode>();
+		Dictionary<string, BundleNode> m_Bundles = new Dictionary<string, BundleNode>();
 
 		public Dictionary<string, AssetNode> assets
 		{
@@ -199,6 +201,107 @@ namespace AssetBundleBuilder
 			}
 		}
 
-		#endregion
+		#endregion //Asset
+
+		#region Asset Bundle
+
+		public void AddAssetBundle(BundleNode node)
+		{
+			//m_Assets.Add(node);
+			foreach (var assetName in node.assets)
+			{
+				m_AssetBundles[assetName] = node;
+			}
+		}
+
+		public BundleNode GetAssetBundle(string assetName)
+		{
+			BundleNode bundle = null;
+			m_AssetBundles.TryGetValue(assetName, out bundle);
+			return bundle;
+		}
+
+		public void RemoveAssetBundle(BundleNode bundle)
+		{
+			foreach (var assetName in bundle.assets)
+			{
+				if (m_AssetBundles.ContainsKey(assetName))
+				{
+					m_AssetBundles.Remove(assetName);
+				}
+			}
+		}
+
+		public bool AssetBundleExists(string assetName)
+		{
+			return m_AssetBundles.ContainsKey(assetName);
+		}
+
+		#endregion //Asset Bundle
+
+		#region Bundle
+
+		public BundleNode CreateBundleNode(string bundleName)
+		{
+			
+		}
+
+		public void ReplaceBundle(BundleNode from, BundleNode to)
+		{
+			foreach (var assetName in from.assets)
+			{
+				m_AssetBundles[assetName] = to;
+			}
+		}
+
+		public BundleNode MergeBundle(BundleNode from, BundleNode to)
+		{
+			//合并资源
+			foreach (var asset in from.assets)
+			{
+				to.assets.Add(asset);
+			}
+
+			//合并引用
+			foreach (var refer in from.refers)
+			{
+				if (refer != to)
+				{
+					to.AddRefer(refer);
+					refer.RemoveDependency(from);
+					refer.AddDependency(to);
+				}
+			}
+
+			//合并依赖
+			foreach (var dep in from.dependencies)
+			{
+				if (dep != to)
+				{
+					to.AddDependency(dep);
+					dep.RemoveRefer(from);
+					dep.AddRefer(to);
+				}
+			}
+
+			//如果from在to的refers或dependencies中(循环引用)，则移除。
+			if (to.refers.Contains(from))
+			{
+				to.RemoveRefer(from);
+			}
+
+			if (to.dependencies.Contains(from))
+			{
+				to.RemoveDependency(from);
+			}
+
+			//Repalce from assets.
+			ReplaceBundle(from, to);
+
+			return to;
+		}
+
+
+		#endregion //Bundle
 	}
 }
