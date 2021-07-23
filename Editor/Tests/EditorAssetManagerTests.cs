@@ -51,7 +51,7 @@ namespace AssetBundleBuilder.Tests
 
 		[Test]
 
-		public void CollectAssetDeps()
+		public void CollectAssetDepsTest()
 		{
 			string testAssets = "Assets/ArtResources/Tests";
 
@@ -88,7 +88,7 @@ namespace AssetBundleBuilder.Tests
 		}
 
 		[Test]
-		public void CollectAssetDeps2()
+		public void CollectAssetDeps2Test()
 		{
 			string testAssets = "Assets/ArtResources/Tests";
 
@@ -106,7 +106,7 @@ namespace AssetBundleBuilder.Tests
 					 AssetNode node=  m_AssetManager.CreateAssetNode(f);
 					 lock (locker)
 					 {
-						 m_AssetManager.assets[node.fullAssetName] = node;
+						 m_AssetManager.assets[node.assetPath] = node;
 					 }
 				 }
 			 });
@@ -119,7 +119,7 @@ namespace AssetBundleBuilder.Tests
 					AssetNode node = m_AssetManager.CreateAssetNode(f);
 					lock (locker)
 					{
-						m_AssetManager.assets[node.fullAssetName] = node;
+						m_AssetManager.assets[node.assetPath] = node;
 					}
 				}
 			});
@@ -132,7 +132,7 @@ namespace AssetBundleBuilder.Tests
 					AssetNode node = m_AssetManager.CreateAssetNode(f);
 					lock (locker)
 					{
-						m_AssetManager.assets[node.fullAssetName] = node;
+						m_AssetManager.assets[node.assetPath] = node;
 					}
 				}
 			});
@@ -159,7 +159,7 @@ namespace AssetBundleBuilder.Tests
 
 		[Test]
 
-		public void CollectAssetAllDeps()
+		public void CollectAssetAllDepsTest()
 		{
 			string testAssets = "Assets/ArtResources/Tests";
 
@@ -213,7 +213,7 @@ namespace AssetBundleBuilder.Tests
 
 		[Test]
 
-		public void CollectAssetAllDeps2()
+		public void CollectAssetAllDeps2Test()
 		{
 			string testAssets = "Assets/ArtResources/Tests";
 
@@ -267,13 +267,13 @@ namespace AssetBundleBuilder.Tests
 
 		private void ShowAssetNode(AssetNode node)
 		{
-			Debug.LogFormat("{0},{1},{2}", node.fullAssetName, node.dependencies.Count, node.allDependencies.Count);
+			Debug.LogFormat("{0},{1},{2}", node.assetPath, node.dependencies.Count, node.allDependencies.Count);
 			string s = "";
 			if (node.dependencies != null)
 			{
 				foreach (var dep in node.dependencies)
 				{
-					s+=string.Format("Dep:{0}\n", dep.fullAssetName);
+					s+=string.Format("Dep:{0}\n", dep.assetPath);
 				}
 			}
 
@@ -284,10 +284,184 @@ namespace AssetBundleBuilder.Tests
 			{
 				foreach (var dep in node.allDependencies)
 				{
-					s += string.Format("AllDep:{0}\n", dep.fullAssetName);
+					s += string.Format("AllDep:{0}\n", dep.assetPath);
 				}
 			}
 			Debug.Log(s);
+		}
+
+		[Test]
+		public void CreateBundleTest()
+		{
+			m_AssetManager.CreateBundle("MyBundle");
+			BundleNode bundleNode = m_AssetManager.GetBundle("MyBundle");
+			Assert.NotNull(bundleNode);
+		}
+
+		[Test]
+		public void AddAssetsToBundleTest()
+		{
+			m_AssetManager.CreateBundle("MyBundle");
+			BundleNode bundleNode = m_AssetManager.GetBundle("MyBundle");
+			Assert.NotNull(bundleNode);
+
+			string assetPath = "Assets/ArtResources/Prefabs/TestPrefab.prefab";
+			AssetNode assetNode = m_AssetManager.CreateAsset(assetPath);
+			bundleNode.AddAsset(assetNode);
+			Assert.AreEqual(bundleNode.assetNodes.Count, 1);
+		}
+
+		[Test]
+		public void BundleDependenciesTest()
+		{
+			string assetPath = "Assets/ArtResources/Prefabs/TestPrefab.prefab";
+			AssetNode assetNode = m_AssetManager.CreateAsset(assetPath);
+			m_AssetManager.RefreshAssetDependencies(assetNode);
+
+			m_AssetManager.CreateBundle("TestPrefab");
+			BundleNode bundleNode = m_AssetManager.GetBundle("TestPrefab");
+
+			bundleNode.AddAsset(assetNode);
+
+			m_AssetManager.RefreshBundleDependencies(bundleNode);
+
+			Assert.AreEqual(assetNode.dependencies.Count, bundleNode.dependencies.Count);
+			Assert.AreEqual(assetNode.refers.Count, bundleNode.refers.Count);
+			Assert.AreEqual(m_AssetManager.assets.Count, 3);
+			Assert.AreEqual(m_AssetManager.bundles.Count, 3);
+		}
+
+		[Test]
+		public void BundleDependencies2Test()
+		{
+			string assetPath = "Assets/ArtResources/Prefabs/TestPrefab.prefab";
+			AssetNode assetNode1 = m_AssetManager.CreateAsset(assetPath);
+
+			assetPath = "Assets/ArtResources/Prefabs/MyPrefab.prefab";
+			AssetNode assetNode2 = m_AssetManager.CreateAsset(assetPath);
+
+			m_AssetManager.RefreshAllAssetDependencies();
+
+			BundleNode bundleNode1 = m_AssetManager.CreateBundle("TestPrefab");
+			bundleNode1.AddAsset(assetNode1);
+
+			BundleNode bundleNode2 = m_AssetManager.CreateBundle("MyPrefab");
+			bundleNode2.AddAsset(assetNode2);
+
+			m_AssetManager.RefreshAllBundleDependencies();
+
+			Assert.AreEqual(assetNode1.dependencies.Count, bundleNode1.dependencies.Count);
+			Assert.AreEqual(assetNode1.refers.Count, bundleNode1.refers.Count);
+
+			Assert.AreEqual(assetNode2.dependencies.Count, bundleNode2.dependencies.Count);
+			Assert.AreEqual(assetNode2.refers.Count, bundleNode2.refers.Count);
+
+			Assert.AreEqual(m_AssetManager.assets.Count, 4);
+			Assert.AreEqual(m_AssetManager.bundles.Count, 4);
+		}
+
+		[Test]
+		public void BundleDependenciesCircleReferenceTest()
+		{
+			string assetPath = "Assets/ArtResources/Prefabs/CircelRefs/APreab.prefab";
+			string[] deps = UnityEditor.AssetDatabase.GetDependencies(assetPath, false);
+			foreach (var d in deps)
+			{
+				Debug.LogFormat("d1:{0}", d);
+			}
+			deps = UnityEditor.AssetDatabase.GetDependencies(assetPath, true);
+			foreach (var d in deps)
+			{
+				Debug.LogFormat("d2:{0}", d);
+			}
+
+			GameObject obj = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
+			UnityEngine.Object[] deps2= UnityEditor.EditorUtility.CollectDependencies(new UnityEngine.Object[] { obj });
+			foreach (var d in deps2)
+			{
+				Debug.LogFormat("d3:{0}",UnityEditor.AssetDatabase.GetAssetPath(d));
+			}
+
+			AssetNode assetNode = m_AssetManager.CreateAsset(assetPath);
+
+			m_AssetManager.RefreshAllAssetDependencies();
+
+			BundleNode bundleNode = m_AssetManager.CreateBundle("APreab");
+			bundleNode.AddAsset(assetNode);
+
+			m_AssetManager.RefreshAllBundleDependencies();
+
+			Assert.AreEqual(assetNode.dependencies.Count, bundleNode.dependencies.Count);
+			Assert.AreEqual(assetNode.refers.Count, bundleNode.refers.Count);
+
+			Assert.AreEqual(m_AssetManager.assets.Count, 4);
+			Assert.AreEqual(m_AssetManager.bundles.Count, 4);
+		}
+
+
+		[Test]
+		public void BundleRelationsTest()
+		{
+			string assetPath = "Assets/ArtResources/Prefabs/TestPrefab.prefab";
+			AssetNode assetNode = m_AssetManager.CreateAsset(assetPath);
+			m_AssetManager.RefreshAssetDependencies(assetNode);
+
+			m_AssetManager.CreateBundle("TestPrefab");
+			BundleNode bundleNode = m_AssetManager.GetBundle("TestPrefab");
+
+
+			bundleNode.AddAsset(assetNode);
+
+			m_AssetManager.RefreshBundleRelations(bundleNode);
+
+			Assert.AreEqual(assetNode.dependencies.Count, bundleNode.dependencies.Count);
+			Assert.AreEqual(assetNode.refers.Count, bundleNode.refers.Count);
+			Assert.AreEqual(m_AssetManager.assets.Count, 3);
+			Assert.AreEqual(m_AssetManager.bundles.Count,3);
+		}
+
+		[Test]
+		public void ImportTest()
+		{
+			string testAssets = "Assets/ArtResources/Tests";
+
+			DateTime start = DateTime.Now;
+			string[] prefabFiles = Directory.GetFiles(testAssets, "*.prefab", SearchOption.AllDirectories);
+			List<AssetNode> assets = new List<AssetNode>();
+			foreach (var f in prefabFiles)
+			{
+				AssetNode assetNode = m_AssetManager.CreateAsset(f);
+				//直接使用的资源，可以导址
+				assetNode.addressable = true;
+				assets.Add(assetNode);
+			}
+			TimeSpan used = DateTime.Now - start;
+			Debug.LogFormat("create assets used:{0}", used);
+			start = DateTime.Now;
+
+			m_AssetManager.RefreshAllAssetDependencies();
+
+			used = DateTime.Now - start;
+			Debug.LogFormat("RefreshAllAssetDependencies used:{0}", used);
+			start = DateTime.Now;
+
+			//create bundle from assets
+			foreach (var iter in m_AssetManager.assets)
+			{
+				BundleNode bundleNode = m_AssetManager.CreateBundle(null);
+				bundleNode.SetMainAsset(iter.Value);
+				if (iter.Value.addressable)
+				{
+					bundleNode.SetStandalone(iter.Value.addressable);
+				}
+			}
+
+			used = DateTime.Now - start;
+			Debug.LogFormat("Create Bundle used:{0}", used);
+			start = DateTime.Now;
+
+			Assert.AreEqual(m_AssetManager.assets.Count, m_AssetManager.bundles.Count);
+
 		}
 	}
 }

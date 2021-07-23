@@ -181,7 +181,7 @@ namespace AssetBundleBuilder.Model
             BundleNode node = GetNode(assetPath);
             if (node == null)
             {
-                node = new BundleNode(assetPath);
+                node = new BundleNode(null,assetPath);
                 //一定要先添加，后加载Dependencies。否则就会因为循环引用而无限循环。
                 AddNode(node);
                 if (loadDependency)
@@ -261,7 +261,7 @@ namespace AssetBundleBuilder.Model
             List<BundleNode> deps = new List<BundleNode>();
             foreach (var node in assets)
             {
-                if (node.IsShaderVariantCollection)
+                if (node.isShaderVariantCollection)
                 {
                     deps.Clear();
                     deps.AddRange(node.dependencies);
@@ -284,12 +284,12 @@ namespace AssetBundleBuilder.Model
 
             foreach (var node in assets)
             {
-                if (node.refers.Count == 1 && node.CanMerge)
+                if (node.refers.Count == 1 && node.canMerge)
                 {
                     var iter = node.refers.GetEnumerator();
                     iter.MoveNext();
                     //检查目标是不是Scene。Scene所在的AssetBundle,不能包含其它资源
-                    if (!iter.Current.IsScene)
+                    if (!iter.Current.isScene)
                     {
                         merged = true;
                         MergeNode(node, iter.Current);
@@ -311,7 +311,7 @@ namespace AssetBundleBuilder.Model
 
             foreach (var node in assets)
             {
-                if (node.CanMerge)
+                if (node.canMerge)
                 {
                     int hash = node.refersHashCode;
                     List<BundleNode> items = null;
@@ -414,7 +414,7 @@ namespace AssetBundleBuilder.Model
             //create node info
             foreach (var nodeInfo in data.assets)
             {
-                BundleNode node = new BundleNode(nodeInfo.mainAsset);
+                BundleNode node = new BundleNode(null,nodeInfo.mainAsset);
                 node.SetStandalone(nodeInfo.standalone);
                 node.refersHashCode = nodeInfo.refersHashCode;
 
