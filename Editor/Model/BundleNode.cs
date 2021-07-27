@@ -8,6 +8,7 @@ namespace AssetBundleBuilder
 	{
 		public enum BundleType
 		{
+			None,
 			Normal,
 			Scene,
 			Shader,
@@ -38,7 +39,9 @@ namespace AssetBundleBuilder
 		protected int m_RefersHashCode = 0;
 
 		protected BundleType m_BundleType;
-																  	
+
+		protected bool m_Enable = false;
+
 		public string name
 		{
 			get
@@ -58,7 +61,6 @@ namespace AssetBundleBuilder
 				return !m_Standalone && !isScene;
 			}
 		}
-
 
 		public bool isScene
 		{
@@ -96,6 +98,17 @@ namespace AssetBundleBuilder
 			}
 		}
 
+		public bool enbale
+		{
+			get
+			{
+				return m_Enable;
+			}
+			set
+			{
+				m_Enable = value;
+			}
+		}
 		//TODO::need change to hash64。资源多时，会产生冲突。
 		public int refersHashCode
 		{
@@ -106,7 +119,7 @@ namespace AssetBundleBuilder
 					System.Text.StringBuilder sb = new System.Text.StringBuilder();
 					foreach (var refer in refers)
 					{
-						sb.Append(refer.mainAsset).Append("-");
+						sb.Append(refer.mainAssetPath).Append("-");
 					}
 
 					m_RefersHashCode = sb.ToString().GetHashCode();
@@ -141,12 +154,25 @@ namespace AssetBundleBuilder
 
 		public HashSet<AssetNode> assetNodes => m_AssetNodes;
 
+		public string mainAssetPath
+		{
+			get
+			{
+				if (mainAssetNode != null)
+				{
+					return mainAssetNode.assetPath;
+				}
+				return "";
+			}
+		}
+
 		public BundleNode()
 		{
 			assets = new HashSet<string>();
 			m_AssetNodes = new HashSet<AssetNode>();
 			refers = new HashSet<BundleNode>();
 			dependencies = new HashSet<BundleNode>();
+			m_Enable = true;
 		}
 
 		public BundleNode(string name) : this()
@@ -157,6 +183,18 @@ namespace AssetBundleBuilder
 		public BundleNode(string name, string asset) : this(name)
 		{
 			SetMainAsset(asset);
+		}
+
+		public void Clear()
+		{
+			m_Name = null;
+			m_MainAssetNode = null;
+			m_Standalone = false;
+			m_RefersHashCode = 0;
+			m_BundleType = BundleType.None;
+			m_AssetNodes.Clear();
+			refers.Clear();
+			dependencies.Clear();
 		}
 
 		public void SetMainAsset(string asset)
@@ -303,6 +341,5 @@ namespace AssetBundleBuilder
 			}
 			return assetType;
 		}
-
 	}
 }

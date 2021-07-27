@@ -15,8 +15,8 @@ namespace AssetBundleBuilder
 	public class EditorAssetManager
 	{
 		//assets
-		Dictionary<string, AssetNode> m_Assets=new Dictionary<string, AssetNode>();
-		
+		Dictionary<string, AssetNode> m_Assets = new Dictionary<string, AssetNode>();
+
 		//bundles
 		//Key:asset relative path
 		Dictionary<string, BundleNode> m_AssetBundles = new Dictionary<string, BundleNode>();
@@ -24,7 +24,8 @@ namespace AssetBundleBuilder
 		//Dictionary<string, BundleNode> m_Bundles = new Dictionary<string, BundleNode>();
 		List<BundleNode> m_Bundles = new List<BundleNode>(4096);
 
-		private List<BundleNode> m_TempBundles = new List<BundleNode>(4096);
+		//private List<BundleNode> m_TempBundles = new List<BundleNode>(4096);
+		//private List<BundleNode> m_TempBundleDeps = new List<BundleNode>(4096);
 
 		public Dictionary<string, AssetNode> assets
 		{
@@ -61,6 +62,11 @@ namespace AssetBundleBuilder
 		#region Asset
 		public AssetNode CreateAssetNode(string assetPath)
 		{
+			//if (!ValidateAsset(assetPath))
+			//{
+			//	return null;
+			//}
+
 			string realPath = assetPath;
 			if (Path.IsPathRooted(assetPath))
 			{
@@ -81,8 +87,16 @@ namespace AssetBundleBuilder
 
 		public AssetNode CreateAsset(string assetPath)
 		{
+			//if (!ValidateAsset(assetPath))
+			//{
+			//	return null;
+			//}
+
 			AssetNode assetNode = CreateAssetNode(assetPath);
-			m_Assets[assetNode.assetPath] = assetNode;
+			if (assetNode != null)
+			{
+				m_Assets[assetNode.assetPath] = assetNode;
+			}
 			return assetNode;
 		}
 
@@ -115,7 +129,7 @@ namespace AssetBundleBuilder
 				assetNode.dependencies.Clear();
 				foreach (var dep in AssetDatabase.GetDependencies(assetNode.assetPath, false))
 				{
-					if (dep != assetNode.assetPath)
+					if (ValidateAsset(dep) && dep != assetNode.assetPath)
 					{
 						AssetNode depAsset = GetAsset(dep);
 						if (depAsset == null)
@@ -189,7 +203,7 @@ namespace AssetBundleBuilder
 
 			foreach (var dep in AssetDatabase.GetDependencies(assetNode.assetPath, true))
 			{
-				if (dep != assetNode.assetPath)
+				if (ValidateAsset(dep) && dep != assetNode.assetPath)
 				{
 					AssetNode depAsset = GetAsset(dep);
 					if (depAsset == null)
@@ -236,6 +250,17 @@ namespace AssetBundleBuilder
 			}
 		}
 
+		public static bool ValidateAsset(string name)
+		{
+			if (!name.StartsWith("Assets/"))
+				return false;
+			string ext = Path.GetExtension(name);
+			if (ext == ".dll" || ext == ".cs" || ext == ".meta" || ext == ".js" || ext == ".boo")
+				return false;
+
+			return true;
+		}
+
 		#endregion //Asset
 
 		#region Bundle
@@ -278,6 +303,13 @@ namespace AssetBundleBuilder
 				}
 			}
 			return null;
+		}
+
+		public void RemoveBundleNode(BundleNode bundleNode)
+		{
+			m_Bundles.Remove(bundleNode);
+			bundleNode.enbale = false;
+			bundleNode.Clear();
 		}
 
 		public void RefreshBundleDependencies(BundleNode bundleNode)
@@ -330,9 +362,10 @@ namespace AssetBundleBuilder
 
 		public void RefreshAllBundleDependencies()
 		{
-			m_TempBundles.Clear();
-			m_TempBundles.AddRange(m_Bundles);
-			foreach (var bundleNode in m_TempBundles)
+			//m_TempBundles.Clear();
+			//m_TempBundles.AddRange(m_Bundles);
+			List<BundleNode> bundles = new List<BundleNode>(m_Bundles);
+			foreach (var bundleNode in bundles)
 			{
 				RefreshBundleDependencies(bundleNode);
 			}
@@ -340,9 +373,10 @@ namespace AssetBundleBuilder
 
 		public void RefreshAllBundleRelations()
 		{
-			m_TempBundles.Clear();
-			m_TempBundles.AddRange(m_Bundles);
-			foreach (var bundleNode in m_TempBundles)
+			//m_TempBundles.Clear();
+			//m_TempBundles.AddRange(m_Bundles);
+			List<BundleNode> bundles = new List<BundleNode>(m_Bundles);
+			foreach (var bundleNode in bundles)
 			{
 				RefreshBundleRelations(bundleNode);
 			}
@@ -359,9 +393,9 @@ namespace AssetBundleBuilder
 		public BundleNode MergeBundle(BundleNode from, BundleNode to)
 		{
 			//合并资源
-			foreach (var asset in from.assets)
+			foreach (var asset in from.assetNodes)
 			{
-				to.assets.Add(asset);
+				to.AddAsset(asset);
 			}
 
 			//合并引用
@@ -398,7 +432,10 @@ namespace AssetBundleBuilder
 			}
 
 			//Repalce from assets.
-			ReplaceBundle(from, to);
+			//ReplaceBundle(from, to);
+
+			//remove from	bundle node
+			RemoveBundleNode(from);
 
 			return to;
 		}
@@ -467,5 +504,109 @@ namespace AssetBundleBuilder
 
 		#endregion //Asset Bundle
 
+
+		#region Optimizer
+		protected void MergeShaderToShaderVariantCollection()
+		{
+			List<BundleNode> bundles = new List<BundleNode>(m_Bundles);
+			List<BundleNode> deps = new List<BundleNode>();
+			foreach (var bundleNode in bundles)
+			{
+				if(bundleNode.enbale && bundleNode.isShaderVariantCollection && bundleNode.dependencies.Count>0)
+				{
+					deps.Clear();
+					deps.AddRange(bundleNode.dependencies);
+					foreach (var dep in deps)
+					{
+						MergeBundle(dep, bundleNode);
+					}
+				}
+			}
+		}
+
+		/// <summary>
+		/// 合并只有一个引用的项
+		/// </summary>
+		/// <returns></returns>
+		protected bool MergeOneReferAssets()
+		{
+			bool merged = false;
+			List<BundleNode> bundles = new List<BundleNode>(m_Bundles);
+			foreach (var node in bundles)
+			{
+				if (node.enbale &&  node.refers.Count == 1 && node.canMerge)
+				{
+					var iter = node.refers.GetEnumerator();
+					iter.MoveNext();
+					//检查目标是不是Scene。Scene所在的AssetBundle,不能包含其它资源
+					if (!iter.Current.isScene)
+					{
+						merged = true;
+						MergeBundle(node, iter.Current);
+					}
+				}
+			}
+			return merged;
+		}
+
+		/// <summary>
+		/// 合并相同引用的项
+		/// </summary>
+		/// <returns></returns>
+		protected bool MergeSameReferAssets()
+		{
+			bool merged = false;
+			Dictionary<int, List<BundleNode>> sameRefers = new Dictionary<int, List<BundleNode>>();
+			List<BundleNode> bundles = new List<BundleNode>(m_Bundles);
+			foreach (var node in bundles)
+			{
+				if (node.enbale && node.canMerge)
+				{
+					int hash = node.refersHashCode;
+					List<BundleNode> items = null;
+					if (!sameRefers.TryGetValue(hash, out items))
+					{
+						items = new List<BundleNode>();
+						sameRefers[hash] = items;
+					}
+					items.Add(node);
+				}
+			}
+
+			foreach (var iter in sameRefers)
+			{
+				if (iter.Value.Count > 1)
+				{
+					merged = true;
+					for (int i = 1; i < iter.Value.Count; ++i)
+					{
+						MergeBundle(iter.Value[i], iter.Value[0]);
+					}
+				}
+			}
+			return merged;
+		}
+
+		//拼合资源
+		public void Combine()
+		{
+			//只要执行一次就可以了。
+			MergeShaderToShaderVariantCollection();
+
+			int k = 0;
+			do
+			{
+				int n = 0;
+				while (MergeOneReferAssets())
+				{
+					++n;
+				}
+				Debug.Log("Merge one refer use " + n + " Times");
+				++k;
+			} while (MergeSameReferAssets());
+			Debug.Log("Combine assets use " + k + " Times");
+		}
+
+		#endregion //Optimizer
 	}
 }
