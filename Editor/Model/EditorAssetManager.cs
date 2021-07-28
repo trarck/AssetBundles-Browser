@@ -528,7 +528,7 @@ namespace AssetBundleBuilder
 		/// 合并只有一个引用的项
 		/// </summary>
 		/// <returns></returns>
-		protected bool MergeOneReferAssets()
+		protected bool MergeOneRefer()
 		{
 			bool merged = false;
 			List<BundleNode> bundles = new List<BundleNode>(m_Bundles);
@@ -553,7 +553,7 @@ namespace AssetBundleBuilder
 		/// 合并相同引用的项
 		/// </summary>
 		/// <returns></returns>
-		protected bool MergeSameReferAssets()
+		protected bool MergeSameRefer()
 		{
 			bool merged = false;
 			Dictionary<int, List<BundleNode>> sameRefers = new Dictionary<int, List<BundleNode>>();
@@ -597,13 +597,13 @@ namespace AssetBundleBuilder
 			do
 			{
 				int n = 0;
-				while (MergeOneReferAssets())
+				while (MergeOneRefer())
 				{
 					++n;
 				}
 				Debug.Log("Merge one refer use " + n + " Times");
 				++k;
-			} while (MergeSameReferAssets());
+			} while (MergeSameRefer());
 			Debug.Log("Combine assets use " + k + " Times");
 		}
 
