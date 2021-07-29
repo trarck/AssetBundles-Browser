@@ -22,9 +22,9 @@ namespace AssetBundleBuilder
 		//public HashSet<string> assets;
 
 		//主资源
-		protected AssetNode m_MainAssetNode;
+		protected AssetNode m_MainAsset;
 		//包含的资源
-		protected HashSet<AssetNode> m_AssetNodes;
+		protected HashSet<AssetNode> m_Assets;
 
 		//直接引用者
 		public HashSet<BundleNode> refers;
@@ -134,34 +134,34 @@ namespace AssetBundleBuilder
 			}
 		}
 
-		public AssetNode mainAssetNode
+		public AssetNode mainAsset
 		{
 			get
 			{
-				if (m_MainAssetNode == null && m_AssetNodes != null && m_AssetNodes.Count > 0)
+				if (m_MainAsset == null && m_Assets != null && m_Assets.Count > 0)
 				{
-					foreach (var iter in m_AssetNodes)
+					foreach (var iter in m_Assets)
 					{
 						return iter;
 					}
 				}
-				return m_MainAssetNode;
+				return m_MainAsset;
 			}
 			set
 			{
-				m_MainAssetNode = value;
+				m_MainAsset = value;
 			}
 		}
 
-		public HashSet<AssetNode> assetNodes => m_AssetNodes;
+		public HashSet<AssetNode> assets => m_Assets;
 
 		public string mainAssetPath
 		{
 			get
 			{
-				if (mainAssetNode != null)
+				if (mainAsset != null)
 				{
-					return mainAssetNode.assetPath;
+					return mainAsset.assetPath;
 				}
 				return "";
 			}
@@ -169,8 +169,7 @@ namespace AssetBundleBuilder
 
 		public BundleNode()
 		{
-			assets = new HashSet<string>();
-			m_AssetNodes = new HashSet<AssetNode>();
+			m_Assets = new HashSet<AssetNode>();
 			refers = new HashSet<BundleNode>();
 			dependencies = new HashSet<BundleNode>();
 			m_Enable = true;
@@ -180,38 +179,19 @@ namespace AssetBundleBuilder
 		{
 			m_Name = name;
 		}
-
-		public BundleNode(string name, string asset) : this(name)
-		{
-			SetMainAsset(asset);
-		}
-
-		public void Clear()
-		{
-			m_Name = null;
-			m_MainAssetNode = null;
-			m_Standalone = false;
-			m_RefersHashCode = 0;
-			m_BundleType = BundleType.None;
-
-			m_AssetNodes.Clear();
-			refers.Clear();
-			dependencies.Clear();
-		}
-
 		public void SetMainAsset(AssetNode assetNode)
 		{
 			if (assetNode == null)
 			{
 				return;
 			}
-			m_MainAssetNode = assetNode;
+			m_MainAsset = assetNode;
 			bundleType = AnalyzeAssetType(assetNode.assetPath);
 		}
 
 		public void AddAsset(AssetNode assetNode)
 		{
-			m_AssetNodes.Add(assetNode);
+			m_Assets.Add(assetNode);
 			assetNode.bundle = this;
 		}
 
@@ -310,6 +290,45 @@ namespace AssetBundleBuilder
 		public void ClearRefersHashCode()
 		{
 			m_RefersHashCode = 0;
+		}
+
+		public void ClearAssets()
+		{
+			foreach (var asset in m_Assets)
+			{
+				if (asset.bundle == this)
+				{
+					asset.bundle = null;
+				}
+			}
+			m_Assets.Clear();
+		}
+
+		public void ClearRelations()
+		{
+			foreach (var refer in refers)
+			{
+				refer.RemoveDependency(this);
+			}
+			refers.Clear();
+
+			foreach (var dep in dependencies)
+			{
+				dep.RemoveRefer(this);
+			}
+			dependencies.Clear();
+		}
+
+		public void Clear()
+		{
+			m_Name = null;
+			m_MainAsset = null;
+			m_Standalone = false;
+			m_RefersHashCode = 0;
+			m_BundleType = BundleType.None;
+
+			ClearAssets();
+			ClearRelations();
 		}
 
 		public static BundleType AnalyzeAssetType(string assetPath)

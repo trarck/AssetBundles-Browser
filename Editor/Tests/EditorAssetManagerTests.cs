@@ -308,7 +308,7 @@ namespace AssetBundleBuilder.Tests
 			string assetPath = "Assets/ArtResources/Prefabs/TestPrefab.prefab";
 			AssetNode assetNode = m_AssetManager.CreateAsset(assetPath);
 			bundleNode.AddAsset(assetNode);
-			Assert.AreEqual(bundleNode.assetNodes.Count, 1);
+			Assert.AreEqual(bundleNode.assets.Count, 1);
 		}
 
 		[Test]

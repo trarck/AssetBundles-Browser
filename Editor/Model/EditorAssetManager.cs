@@ -315,7 +315,7 @@ namespace AssetBundleBuilder
 
 		public void RefreshBundleDependencies(BundleNode bundleNode)
 		{
-			foreach (AssetNode assetNode in bundleNode.assetNodes)
+			foreach (AssetNode assetNode in bundleNode.assets)
 			{
 				//add dep
 				foreach (AssetNode assetDep in assetNode.dependencies)
@@ -333,7 +333,7 @@ namespace AssetBundleBuilder
 
 		public void RefreshBundleRelations(BundleNode bundleNode)
 		{
-			foreach (AssetNode assetNode in bundleNode.assetNodes)
+			foreach (AssetNode assetNode in bundleNode.assets)
 			{
 				//add dep
 				foreach (AssetNode assetDep in assetNode.dependencies)
@@ -386,7 +386,7 @@ namespace AssetBundleBuilder
 		public BundleNode MergeBundle(BundleNode from, BundleNode to)
 		{
 			//合并资源
-			foreach (var asset in from.assetNodes)
+			foreach (var asset in from.assets)
 			{
 				to.AddAsset(asset);
 			}
@@ -433,7 +433,6 @@ namespace AssetBundleBuilder
 			return to;
 		}
 
-
 		#endregion //Bundle
 
 		#region Asset Bundle
@@ -454,29 +453,12 @@ namespace AssetBundleBuilder
 
 		public void AddAssetToBundle(BundleNode bundleNode, AssetNode assetNode)
 		{
-			if (bundleNode.mainAssetNode == null)
+			if (bundleNode.mainAsset == null)
 			{
 				bundleNode.SetMainAsset(assetNode);
 			}
 
 			bundleNode.AddAsset(assetNode);
-		}
-
-		public void AddAssetBundle(BundleNode node)
-		{
-			//m_Assets.Add(node);
-			foreach (var assetName in node.assets)
-			{
-				m_AssetBundles[assetName] = node;
-			}
-		}
-
-		public void RemoveAssetBundle(BundleNode bundle)
-		{
-			foreach (var asset in bundle.assetNodes)
-			{
-				asset.bundle = null;
-			}
 		}
 
 		public BundleNode GetAssetBundle(string assetPath)
