@@ -17,9 +17,9 @@ namespace AssetBundleBuilder
 		//assets
 		Dictionary<string, AssetNode> m_Assets = new Dictionary<string, AssetNode>();
 
-		//bundles
-		//Key:asset relative path
-		Dictionary<string, BundleNode> m_AssetBundles = new Dictionary<string, BundleNode>();
+		////bundles
+		////Key:asset relative path
+		//Dictionary<string, BundleNode> m_AssetBundles = new Dictionary<string, BundleNode>();
 		//Key:bundle name
 		//Dictionary<string, BundleNode> m_Bundles = new Dictionary<string, BundleNode>();
 		List<BundleNode> m_Bundles = new List<BundleNode>(4096);
@@ -281,6 +281,7 @@ namespace AssetBundleBuilder
 		{
 			BundleNode bundle = CreateBundle(bundleName);
 			bundle.SetMainAsset(assetNode);
+			bundle.AddAsset(assetNode);
 			//m_AssetBundles[assetNode.assetPath] = bundle;
 			return bundle;
 		}
@@ -382,14 +383,6 @@ namespace AssetBundleBuilder
 			}
 		}
 
-		public void ReplaceBundle(BundleNode from, BundleNode to)
-		{
-			foreach (var assetName in from.assets)
-			{
-				m_AssetBundles[assetName] = to;
-			}
-		}
-
 		public BundleNode MergeBundle(BundleNode from, BundleNode to)
 		{
 			//合并资源
@@ -451,6 +444,7 @@ namespace AssetBundleBuilder
 			{
 				BundleNode bundleNode = CreateBundle(null);
 				bundleNode.SetMainAsset(iter.Value);
+				bundleNode.AddAsset(iter.Value);
 				if (iter.Value.addressable)
 				{
 					bundleNode.SetStandalone(iter.Value.addressable);
@@ -464,10 +458,8 @@ namespace AssetBundleBuilder
 			{
 				bundleNode.SetMainAsset(assetNode);
 			}
-			else
-			{
-				bundleNode.AddAsset(assetNode);
-			}
+
+			bundleNode.AddAsset(assetNode);
 		}
 
 		public void AddAssetBundle(BundleNode node)
@@ -481,25 +473,30 @@ namespace AssetBundleBuilder
 
 		public void RemoveAssetBundle(BundleNode bundle)
 		{
-			foreach (var assetName in bundle.assets)
+			foreach (var asset in bundle.assetNodes)
 			{
-				if (m_AssetBundles.ContainsKey(assetName))
-				{
-					m_AssetBundles.Remove(assetName);
-				}
+				asset.bundle = null;
 			}
 		}
 
 		public BundleNode GetAssetBundle(string assetPath)
 		{
-			BundleNode bundle = null;
-			m_AssetBundles.TryGetValue(assetPath, out bundle);
-			return bundle;
+			AssetNode assetNode = null;
+			if (m_Assets.TryGetValue(assetPath, out assetNode))
+			{
+				return assetNode.bundle;
+			}
+			return null;
 		}
 
 		public bool IsAssetHaveBundle(string assetPath)
 		{
-			return m_AssetBundles.ContainsKey(assetPath);
+			AssetNode assetNode = null;
+			if (m_Assets.TryGetValue(assetPath, out assetNode))
+			{
+				return assetNode.bundle != null;
+			}
+			return false;
 		}
 
 		#endregion //Asset Bundle

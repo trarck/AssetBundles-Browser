@@ -470,6 +470,7 @@ namespace AssetBundleBuilder.Tests
 			{
 				BundleNode bundleNode = m_AssetManager.CreateBundle(null);
 				bundleNode.SetMainAsset(iter.Value);
+				bundleNode.AddAsset(iter.Value);
 				if (iter.Value.addressable)
 				{
 					bundleNode.SetStandalone(iter.Value.addressable);
@@ -501,6 +502,7 @@ namespace AssetBundleBuilder.Tests
 			BundleNode bundleNode = m_AssetManager.CreateBundle("APreab");
 			bundleNode.SetStandalone(true);
 			bundleNode.SetMainAsset(assetNode);
+			bundleNode.AddAsset(assetNode);
 
 			m_AssetManager.RefreshAllBundleDependencies();
 
@@ -524,10 +526,12 @@ namespace AssetBundleBuilder.Tests
 			BundleNode bundleNode = m_AssetManager.CreateBundle("APreab");
 			bundleNode.SetStandalone(true);
 			bundleNode.SetMainAsset(assetNode);
+			bundleNode.AddAsset(assetNode);
 
 			bundleNode = m_AssetManager.CreateBundle("BPreab");
 			bundleNode.SetStandalone(true);
 			bundleNode.SetMainAsset(assetNode2);
+			bundleNode.AddAsset(assetNode2);
 
 			m_AssetManager.RefreshAllBundleDependencies();
 
@@ -551,10 +555,12 @@ namespace AssetBundleBuilder.Tests
 			BundleNode bundleNode = m_AssetManager.CreateBundle("SameRefA");
 			bundleNode.SetStandalone(true);
 			bundleNode.SetMainAsset(assetNode);
+			bundleNode.AddAsset(assetNode);
 
 			bundleNode = m_AssetManager.CreateBundle("SameRefB");
 			bundleNode.SetStandalone(true);
 			bundleNode.SetMainAsset(assetNode2);
+			bundleNode.AddAsset(assetNode2);
 
 			m_AssetManager.RefreshAllBundleDependencies();
 
@@ -586,6 +592,7 @@ namespace AssetBundleBuilder.Tests
 			{
 				BundleNode bundleNode = m_AssetManager.CreateBundle(null);
 				bundleNode.SetMainAsset(iter.Value);
+				bundleNode.AddAsset(iter.Value);
 				if (iter.Value.addressable)
 				{
 					bundleNode.SetStandalone(iter.Value.addressable);

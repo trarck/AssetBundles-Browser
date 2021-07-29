@@ -16,13 +16,14 @@ namespace AssetBundleBuilder
 		}
 		//bundle name
 		protected string m_Name;
-		//主路径
-		public string mainAsset;
-		//资源
-		public HashSet<string> assets;
+		////主路径
+		//public string mainAsset;
+		////资源
+		//public HashSet<string> assets;
 
-		//使用结点
+		//主资源
 		protected AssetNode m_MainAssetNode;
+		//包含的资源
 		protected HashSet<AssetNode> m_AssetNodes;
 
 		//直接引用者
@@ -192,16 +193,10 @@ namespace AssetBundleBuilder
 			m_Standalone = false;
 			m_RefersHashCode = 0;
 			m_BundleType = BundleType.None;
+
 			m_AssetNodes.Clear();
 			refers.Clear();
 			dependencies.Clear();
-		}
-
-		public void SetMainAsset(string asset)
-		{
-			mainAsset = asset;
-			assets.Add(asset);
-			bundleType = AnalyzeAssetType(asset);
 		}
 
 		public void SetMainAsset(AssetNode assetNode)
@@ -211,7 +206,6 @@ namespace AssetBundleBuilder
 				return;
 			}
 			m_MainAssetNode = assetNode;
-			AddAsset(assetNode);
 			bundleType = AnalyzeAssetType(assetNode.assetPath);
 		}
 
