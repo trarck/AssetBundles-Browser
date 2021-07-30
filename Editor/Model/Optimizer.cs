@@ -9,11 +9,11 @@ namespace AssetBundleBuilder.Model
     {
         //List<Node> m_Assets=new List<Node>();
         //这里的node允许重复。有些资源可能被合并到一起。
-        Dictionary<string, BundleNode> m_AssetsMap = new Dictionary<string, BundleNode>();
+        Dictionary<string, AssetBundleBuilder.BundleInfo> m_AssetsMap = new Dictionary<string, AssetBundleBuilder.BundleInfo>();
 
         #region Node
 
-        public void AddNode(BundleNode node)
+        public void AddNode(AssetBundleBuilder.BundleInfo node)
         {
             //m_Assets.Add(node);
             foreach (var assetName in node.assets)
@@ -22,14 +22,14 @@ namespace AssetBundleBuilder.Model
             }
         }
 
-        public BundleNode GetNode(string assetName)
+        public AssetBundleBuilder.BundleInfo GetNode(string assetName)
         {
-            BundleNode node = null;
+			AssetBundleBuilder.BundleInfo node = null;
             m_AssetsMap.TryGetValue(assetName, out node);
             return node;
         }
 
-        public void RemoveNode(BundleNode node)
+        public void RemoveNode(AssetBundleBuilder.BundleInfo node)
         {
             foreach (var assetName in node.assets)
             {
@@ -41,7 +41,7 @@ namespace AssetBundleBuilder.Model
 
         }
 
-        public void ReplaceNode(BundleNode from, BundleNode to)
+        public void ReplaceNode(AssetBundleBuilder.BundleInfo from, AssetBundleBuilder.BundleInfo to)
         {
             foreach (var assetName in from.assets)
             {
@@ -54,7 +54,7 @@ namespace AssetBundleBuilder.Model
             return m_AssetsMap.ContainsKey(assetName);
         }
 
-        public BundleNode MergeNode(BundleNode from, BundleNode to)
+        public AssetBundleBuilder.BundleInfo MergeNode(AssetBundleBuilder.BundleInfo from, AssetBundleBuilder.BundleInfo to)
         {
             //合并资源
             foreach (var asset in from.assets)
@@ -102,9 +102,9 @@ namespace AssetBundleBuilder.Model
         }
 
         //m_AssetsMap里可能被合并之后会有重复的node，这里去除重复
-        public HashSet<BundleNode> GetAssets()
+        public HashSet<AssetBundleBuilder.BundleInfo> GetAssets()
         {
-            HashSet<BundleNode> assets = new HashSet<BundleNode>();
+			HashSet<AssetBundleBuilder.BundleInfo> assets = new HashSet<AssetBundleBuilder.BundleInfo>();
             foreach (var iter in m_AssetsMap)
             {
                 assets.Add(iter.Value);
@@ -113,11 +113,11 @@ namespace AssetBundleBuilder.Model
         }
 
         //通过Asset列表构建AssetsMap，以便支持增量导入。
-        public void SetAssets(HashSet<BundleNode> assets)
+        public void SetAssets(HashSet<AssetBundleBuilder.BundleInfo> assets)
         {
             if (m_AssetsMap == null)
             {
-                m_AssetsMap = new Dictionary<string, BundleNode>();
+				m_AssetsMap = new Dictionary<string, AssetBundleBuilder.BundleInfo>();
             }
             else
             {
@@ -140,7 +140,7 @@ namespace AssetBundleBuilder.Model
         /// 加载依赖项
         /// </summary>
         /// <param name="node"></param>
-        public void LoadDependencies(BundleNode node)
+        public void LoadDependencies(AssetBundleBuilder.BundleInfo node)
         {
             List<string> deps = new List<string>();
             foreach (var asset in node.assets)
@@ -151,7 +151,7 @@ namespace AssetBundleBuilder.Model
 
             foreach (var dep in deps)
             {
-                BundleNode depNode = LoadAsset(dep, true);
+				AssetBundleBuilder.BundleInfo depNode = LoadAsset(dep, true);
                 if (depNode != null)
                 {
                     node.AddDependency(depNode);
@@ -166,7 +166,7 @@ namespace AssetBundleBuilder.Model
         /// <param name="assetPath"></param>
         /// <param name="loadDependency"></param>
         /// <returns></returns>
-        public BundleNode LoadAsset(string assetPath, bool loadDependency = true)
+        public AssetBundleBuilder.BundleInfo LoadAsset(string assetPath, bool loadDependency = true)
         {
             if (IgnoreAsset(assetPath))
             {
@@ -178,7 +178,7 @@ namespace AssetBundleBuilder.Model
                 assetPath = ModelUtils.Relative(Path.GetDirectoryName(Application.dataPath), assetPath);
             }
 
-            BundleNode node = GetNode(assetPath);
+			AssetBundleBuilder.BundleInfo node = GetNode(assetPath);
             if (node == null)
             {
                 node = new BundleNode(null,assetPath);
@@ -226,7 +226,7 @@ namespace AssetBundleBuilder.Model
                 {
                     if (!haveFilter || reg.IsMatch(fi.FullName))
                     {
-                        BundleNode node = LoadAsset(fi.FullName);
+						AssetBundleBuilder.BundleInfo node = LoadAsset(fi.FullName);
                         if (node != null)
                         {
                             node.SetStandalone(true);
@@ -257,8 +257,8 @@ namespace AssetBundleBuilder.Model
         /// </summary>
         protected void MergeShaderToShaderVariantCollection()
         {
-            HashSet<BundleNode> assets = GetAssets();
-            List<BundleNode> deps = new List<BundleNode>();
+			HashSet<AssetBundleBuilder.BundleInfo> assets = GetAssets();
+			List<AssetBundleBuilder.BundleInfo> deps = new List<AssetBundleBuilder.BundleInfo>();
             foreach (var node in assets)
             {
                 if (node.isShaderVariantCollection)
@@ -280,7 +280,7 @@ namespace AssetBundleBuilder.Model
         protected bool MergeOneReferAssets()
         {
             bool merged = false;
-            HashSet<BundleNode> assets = GetAssets();
+			HashSet<AssetBundleBuilder.BundleInfo> assets = GetAssets();
 
             foreach (var node in assets)
             {
@@ -306,18 +306,18 @@ namespace AssetBundleBuilder.Model
         protected bool MergeSameReferAssets()
         {
             bool merged = false;
-            HashSet<BundleNode> assets = GetAssets();
-            Dictionary<int, List<BundleNode>> sameRefers = new Dictionary<int, List<BundleNode>>();
+			HashSet<AssetBundleBuilder.BundleInfo> assets = GetAssets();
+			Dictionary<int, List<AssetBundleBuilder.BundleInfo>> sameRefers = new Dictionary<int, List<AssetBundleBuilder.BundleInfo>>();
 
             foreach (var node in assets)
             {
                 if (node.canMerge)
                 {
                     int hash = node.refersHashCode;
-                    List<BundleNode> items = null;
+					List<AssetBundleBuilder.BundleInfo> items = null;
                     if (!sameRefers.TryGetValue(hash, out items))
                     {
-                        items = new List<BundleNode>();
+                        items = new List<AssetBundleBuilder.BundleInfo>();
                         sameRefers[hash] = items;
                     }
                     items.Add(node);
@@ -383,7 +383,7 @@ namespace AssetBundleBuilder.Model
         {
             //crate asset infos
             List<NodeInfo> assetInfos = new List<NodeInfo>();
-            HashSet<BundleNode> assets = GetAssets();
+			HashSet<AssetBundleBuilder.BundleInfo> assets = GetAssets();
             foreach (var node in assets)
             {
                 NodeInfo nodeInfo = new NodeInfo()
@@ -414,7 +414,7 @@ namespace AssetBundleBuilder.Model
             //create node info
             foreach (var nodeInfo in data.assets)
             {
-                BundleNode node = new BundleNode(null,nodeInfo.mainAsset);
+                BundleInfo node = new BundleNode(null,nodeInfo.mainAsset);
                 node.SetStandalone(nodeInfo.standalone);
                 node.refersHashCode = nodeInfo.refersHashCode;
 
@@ -429,12 +429,12 @@ namespace AssetBundleBuilder.Model
             //build dependencies and refers
             foreach (var nodeInfo in data.assets)
             {
-                BundleNode node = GetNode(nodeInfo.mainAsset);
+				AssetBundleBuilder.BundleInfo node = GetNode(nodeInfo.mainAsset);
                 if (node != null)
                 {
                     foreach (var dep in nodeInfo.dependencies)
                     {
-                        BundleNode depNode = GetNode(dep);
+						AssetBundleBuilder.BundleInfo depNode = GetNode(dep);
                         if (depNode != null)
                         {
                             node.dependencies.Add(depNode);
@@ -472,7 +472,7 @@ namespace AssetBundleBuilder.Model
         #endregion
 
         #region Bundle
-        protected BundleInfo CreateBundleInfo(BundleNode node, Setting.Format forma)
+        protected BundleInfo CreateBundleInfo(AssetBundleBuilder.BundleInfo node, Setting.Format forma)
         {
             string mainAsset = node.mainAsset;
 
@@ -513,7 +513,7 @@ namespace AssetBundleBuilder.Model
         public List<BundleInfo> GenerateBundles(Setting.Format format)
         {
             List<BundleInfo> bundleInfos = new List<BundleInfo>();
-            HashSet<BundleNode> assets = GetAssets();
+			HashSet<AssetBundleBuilder.BundleInfo> assets = GetAssets();
             foreach (var node in assets)
             {
                 BundleInfo bundleInfo = CreateBundleInfo(node, format);

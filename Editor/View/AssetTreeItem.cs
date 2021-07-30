@@ -11,13 +11,13 @@ namespace AssetBundleBuilder.View
     {
 		internal static /*const*/ Color k_LightGrey = Color.grey * 1.5f;
 
-		private AssetInfo m_asset;
-        internal AssetInfo asset
+		private Model.AssetInfo m_asset;
+        internal Model.AssetInfo asset
         {
             get { return m_asset; }
         }
         internal AssetTreeItem() : base(-1, -1) { }
-        internal AssetTreeItem(AssetInfo a) : base(a != null ? a.fullAssetName.GetHashCode() : Random.Range(int.MinValue, int.MaxValue), 0, a != null ? a.displayName : "failed")
+        internal AssetTreeItem(Model.AssetInfo a) : base(a != null ? a.fullAssetName.GetHashCode() : Random.Range(int.MinValue, int.MaxValue), 0, a != null ? a.displayName : "failed")
         {
             m_asset = a;
             if (a != null)
@@ -50,7 +50,7 @@ namespace AssetBundleBuilder.View
                 m_asset.HighestMessageLevel() : MessageType.Error;
         }
 
-        internal bool ContainsChild(AssetInfo asset)
+        internal bool ContainsChild(Model.AssetInfo asset)
         {
             bool contains = false;
             if (children == null)
@@ -82,7 +82,7 @@ namespace AssetBundleBuilder.View
             //}
             //else
             {
-                List<AssetInfo> assets = bundleInfo.GetConcretes();
+				List<Model.AssetInfo> assets = bundleInfo.GetConcretes();
                 if (assets != null)
                 {
                     foreach (var asset in assets)

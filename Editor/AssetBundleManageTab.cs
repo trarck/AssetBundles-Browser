@@ -104,7 +104,7 @@ namespace AssetBundleBuilder
         internal void ForceReloadData()
         {
             UpdateSelectedBundles(new List<BundleInfo>());
-            SetSelectedItems(new List<AssetInfo>());
+			SetSelectedItems(new List<Model.AssetInfo>());
             m_BundleTree.SetSelection(new int[0]);
             Model.Model.ForceReloadData();
             m_BundleTree.Reload();
@@ -273,7 +273,7 @@ namespace AssetBundleBuilder
             m_MessageList.SetItems(null);
         }
 
-        internal void SetSelectedItems(IEnumerable<AssetInfo> items)
+        internal void SetSelectedItems(IEnumerable<Model.AssetInfo> items)
         {
             m_MessageList.SetItems(items);
         }

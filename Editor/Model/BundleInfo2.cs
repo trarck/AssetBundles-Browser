@@ -4,7 +4,7 @@ using System.IO;
 
 namespace AssetBundleBuilder
 {
-	public class BundleNode
+	public class BundleInfo
 	{
 		public enum BundleType
 		{
@@ -22,14 +22,14 @@ namespace AssetBundleBuilder
 		//public HashSet<string> assets;
 
 		//主资源
-		protected AssetNode m_MainAsset;
+		protected AssetInfo m_MainAsset;
 		//包含的资源
-		protected HashSet<AssetNode> m_Assets;
+		protected HashSet<AssetInfo> m_Assets;
 
 		//直接引用者
-		public HashSet<BundleNode> refers;
+		public HashSet<BundleInfo> refers;
 		//直接依赖
-		public HashSet<BundleNode> dependencies;
+		public HashSet<BundleInfo> dependencies;
 		//单独的.是--独立加载，需要主动加载的资源。否--依赖加载，不会主动加载。
 		//一般prefab，场景需要手动加载，一些贴图和音乐也需要手动加载。
 		//fbx基本是依赖加载，大部分材质也是依赖加载。
@@ -134,7 +134,7 @@ namespace AssetBundleBuilder
 			}
 		}
 
-		public AssetNode mainAsset
+		public AssetInfo mainAsset
 		{
 			get
 			{
@@ -153,7 +153,7 @@ namespace AssetBundleBuilder
 			}
 		}
 
-		public HashSet<AssetNode> assets => m_Assets;
+		public HashSet<AssetInfo> assets => m_Assets;
 
 		public string mainAssetPath
 		{
@@ -167,19 +167,19 @@ namespace AssetBundleBuilder
 			}
 		}
 
-		public BundleNode()
+		public BundleInfo()
 		{
-			m_Assets = new HashSet<AssetNode>();
-			refers = new HashSet<BundleNode>();
-			dependencies = new HashSet<BundleNode>();
+			m_Assets = new HashSet<AssetInfo>();
+			refers = new HashSet<BundleInfo>();
+			dependencies = new HashSet<BundleInfo>();
 			m_Enable = true;
 		}
 
-		public BundleNode(string name) : this()
+		public BundleInfo(string name) : this()
 		{
 			m_Name = name;
 		}
-		public void SetMainAsset(AssetNode assetNode)
+		public void SetMainAsset(AssetInfo assetNode)
 		{
 			if (assetNode == null)
 			{
@@ -189,13 +189,13 @@ namespace AssetBundleBuilder
 			bundleType = AnalyzeAssetType(assetNode.assetPath);
 		}
 
-		public void AddAsset(AssetNode assetNode)
+		public void AddAsset(AssetInfo assetNode)
 		{
 			m_Assets.Add(assetNode);
 			assetNode.bundle = this;
 		}
 
-		public void AddAssets(IEnumerable<AssetNode> assetNodes)
+		public void AddAssets(IEnumerable<AssetInfo> assetNodes)
 		{
 			if (assetNodes == null)
 			{
@@ -207,7 +207,7 @@ namespace AssetBundleBuilder
 			}
 		}
 
-		public void AddDependency(BundleNode dep)
+		public void AddDependency(BundleInfo dep)
 		{
 			if (dep != this)
 			{
@@ -216,7 +216,7 @@ namespace AssetBundleBuilder
 			}
 		}
 
-		public void RemoveDependency(BundleNode dep)
+		public void RemoveDependency(BundleInfo dep)
 		{
 			if (dep != this)
 			{
@@ -225,7 +225,7 @@ namespace AssetBundleBuilder
 			}
 		}
 
-		public void AddRefer(BundleNode refer)
+		public void AddRefer(BundleInfo refer)
 		{
 			if (refer != this)
 			{
@@ -236,7 +236,7 @@ namespace AssetBundleBuilder
 			}
 		}
 
-		public void RemoveRefer(BundleNode refer)
+		public void RemoveRefer(BundleInfo refer)
 		{
 			if (refer != this)
 			{
@@ -247,7 +247,7 @@ namespace AssetBundleBuilder
 			}
 		}
 
-		public void Link(BundleNode dep)
+		public void Link(BundleInfo dep)
 		{
 			if (dep != this)
 			{
@@ -259,7 +259,7 @@ namespace AssetBundleBuilder
 			}
 		}
 
-		public void Break(BundleNode dep)
+		public void Break(BundleInfo dep)
 		{
 			if (dep != this)
 			{

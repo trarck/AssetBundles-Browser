@@ -15,19 +15,19 @@ namespace AssetBundleBuilder
 	public class EditorAssetManager
 	{
 		//assets
-		Dictionary<string, AssetNode> m_Assets = new Dictionary<string, AssetNode>();
+		Dictionary<string, AssetInfo> m_Assets = new Dictionary<string, AssetInfo>();
 
 		////bundles
 		////Key:asset relative path
 		//Dictionary<string, BundleNode> m_AssetBundles = new Dictionary<string, BundleNode>();
 		//Key:bundle name
 		//Dictionary<string, BundleNode> m_Bundles = new Dictionary<string, BundleNode>();
-		List<BundleNode> m_Bundles = new List<BundleNode>(4096);
+		List<BundleInfo> m_Bundles = new List<BundleInfo>(4096);
 
 		//private List<BundleNode> m_TempBundles = new List<BundleNode>(4096);
 		//private List<BundleNode> m_TempBundleDeps = new List<BundleNode>(4096);
 
-		public Dictionary<string, AssetNode> assets
+		public Dictionary<string, AssetInfo> assets
 		{
 			get
 			{
@@ -39,7 +39,7 @@ namespace AssetBundleBuilder
 			}
 		}
 
-		public List<BundleNode> bundles
+		public List<BundleInfo> bundles
 		{
 			get
 			{
@@ -60,7 +60,7 @@ namespace AssetBundleBuilder
 		}
 
 		#region Asset
-		public AssetNode CreateAssetNode(string assetPath)
+		public AssetInfo CreateAssetInfo(string assetPath)
 		{
 			//if (!ValidateAsset(assetPath))
 			//{
@@ -81,64 +81,64 @@ namespace AssetBundleBuilder
 
 			assetPath = FileSystem.NormalizePath(assetPath);
 
-			AssetNode assetNode = new AssetNode(assetPath, realPath);
-			return assetNode;
+			AssetInfo assetInfo = new AssetInfo(assetPath, realPath);
+			return assetInfo;
 		}
 
-		public AssetNode CreateAsset(string assetPath)
+		public AssetInfo CreateAsset(string assetPath)
 		{
 			//if (!ValidateAsset(assetPath))
 			//{
 			//	return null;
 			//}
 
-			AssetNode assetNode = CreateAssetNode(assetPath);
-			if (assetNode != null)
+			AssetInfo assetInfo = CreateAssetInfo(assetPath);
+			if (assetInfo != null)
 			{
-				m_Assets[assetNode.assetPath] = assetNode;
+				m_Assets[assetInfo.assetPath] = assetInfo;
 			}
-			return assetNode;
+			return assetInfo;
 		}
 
-		public AssetNode GetAsset(string assetPath)
+		public AssetInfo GetAsset(string assetPath)
 		{
-			AssetNode assetNode = null;
-			m_Assets.TryGetValue(assetPath, out assetNode);
-			return assetNode;
+			AssetInfo assetInfo = null;
+			m_Assets.TryGetValue(assetPath, out assetInfo);
+			return assetInfo;
 		}
 
-		public AssetNode GetOrCreateAsset(string assetPath)
+		public AssetInfo GetOrCreateAsset(string assetPath)
 		{
-			AssetNode assetNode = null;
-			if (!m_Assets.TryGetValue(assetPath, out assetNode))
+			AssetInfo assetInfo = null;
+			if (!m_Assets.TryGetValue(assetPath, out assetInfo))
 			{
-				assetNode = CreateAsset(assetPath);
+				assetInfo = CreateAsset(assetPath);
 			}
-			return assetNode;
+			return assetInfo;
 		}
 
 		/// <summary>
 		/// 刷新资源的直接依赖
 		/// </summary>
-		/// <param name="assetNode"></param>
-		public void RefreshAssetDependencies(AssetNode assetNode)
+		/// <param name="asset"></param>
+		public void RefreshAssetDependencies(AssetInfo asset)
 		{
-			if (!AssetDatabase.IsValidFolder(assetNode.assetPath))
+			if (!AssetDatabase.IsValidFolder(asset.assetPath))
 			{
 				//dep
-				assetNode.dependencies.Clear();
-				foreach (var dep in AssetDatabase.GetDependencies(assetNode.assetPath, false))
+				asset.dependencies.Clear();
+				foreach (var dep in AssetDatabase.GetDependencies(asset.assetPath, false))
 				{
-					if (ValidateAsset(dep) && dep != assetNode.assetPath)
+					if (ValidateAsset(dep) && dep != asset.assetPath)
 					{
-						AssetNode depAsset = GetAsset(dep);
+						AssetInfo depAsset = GetAsset(dep);
 						if (depAsset == null)
 						{
 							depAsset = CreateAsset(dep);
 							RefreshAssetDependencies(depAsset);
 						}
 
-						depAsset.AddRefer(assetNode);
+						depAsset.AddRefer(asset);
 					}
 				}
 			}
@@ -150,27 +150,27 @@ namespace AssetBundleBuilder
 		/// 注意：要在 RefreshAssetDependencies 之后才能执行这个方法
 		/// TODO::测试通过unity的直接获取所有依赖和通过遍历的速度
 		/// </summary>
-		/// <param name="assetNode"></param>
-		public void RefreshAssetAllDependencies(AssetNode assetNode)
+		/// <param name="asset"></param>
+		public void RefreshAssetAllDependencies(AssetInfo asset)
 		{
 			//clear all deps
-			if (assetNode.allDependencies == null)
+			if (asset.allDependencies == null)
 			{
-				assetNode.allDependencies = new HashSet<AssetNode>();
+				asset.allDependencies = new HashSet<AssetInfo>();
 			}
 			else
 			{
-				assetNode.allDependencies.Clear();
+				asset.allDependencies.Clear();
 			}
 
-			Stack<AssetNode> assetsStack = new Stack<AssetNode>();
-			HashSet<AssetNode> visiteds = new HashSet<AssetNode>();
+			Stack<AssetInfo> assetsStack = new Stack<AssetInfo>();
+			HashSet<AssetInfo> visiteds = new HashSet<AssetInfo>();
 
-			assetsStack.Push(assetNode);
+			assetsStack.Push(asset);
 
 			while (assetsStack.Count > 0)
 			{
-				AssetNode current = assetsStack.Pop();
+				AssetInfo current = assetsStack.Pop();
 				if (visiteds.Contains(current))
 				{
 					continue;
@@ -182,37 +182,37 @@ namespace AssetBundleBuilder
 				{
 					foreach (var dep in current.dependencies)
 					{
-						assetNode.allDependencies.Add(dep);
+						asset.allDependencies.Add(dep);
 						assetsStack.Push(dep);
 					}
 				}
 			}
 		}
 
-		public void RefreshAssetAllDependencies2(AssetNode assetNode)
+		public void RefreshAssetAllDependencies2(AssetInfo asset)
 		{
 			//dep
-			if (assetNode.allDependencies == null)
+			if (asset.allDependencies == null)
 			{
-				assetNode.allDependencies = new HashSet<AssetNode>();
+				asset.allDependencies = new HashSet<AssetInfo>();
 			}
 			else
 			{
-				assetNode.allDependencies.Clear();
+				asset.allDependencies.Clear();
 			}
 
-			foreach (var dep in AssetDatabase.GetDependencies(assetNode.assetPath, true))
+			foreach (var dep in AssetDatabase.GetDependencies(asset.assetPath, true))
 			{
-				if (ValidateAsset(dep) && dep != assetNode.assetPath)
+				if (ValidateAsset(dep) && dep != asset.assetPath)
 				{
-					AssetNode depAsset = GetAsset(dep);
+					AssetInfo depAsset = GetAsset(dep);
 					if (depAsset == null)
 					{
 						depAsset = CreateAsset(dep);
 						RefreshAssetAllDependencies2(depAsset);
 					}
 
-					assetNode.allDependencies.Add(depAsset);
+					asset.allDependencies.Add(depAsset);
 				}
 			}
 		}
@@ -222,10 +222,10 @@ namespace AssetBundleBuilder
 		/// </summary>
 		public void RefreshAllAssetDependencies()
 		{
-			List<AssetNode> assets = new List<AssetNode>(m_Assets.Values);
-			foreach (var assetNode in assets)
+			List<AssetInfo> assets = new List<AssetInfo>(m_Assets.Values);
+			foreach (var asset in assets)
 			{
-				RefreshAssetDependencies(assetNode);
+				RefreshAssetDependencies(asset);
 			}
 		}
 
@@ -234,19 +234,19 @@ namespace AssetBundleBuilder
 		/// </summary>
 		public void RefreshAllAssetAllDependencies()
 		{
-			List<AssetNode> assets = new List<AssetNode>(m_Assets.Values);
-			foreach (var assetNode in assets)
+			List<AssetInfo> assets = new List<AssetInfo>(m_Assets.Values);
+			foreach (var asset in assets)
 			{
-				RefreshAssetAllDependencies(assetNode);
+				RefreshAssetAllDependencies(asset);
 			}
 		}
 
 		public void RefreshAllAssetAllDependencies2()
 		{
-			List<AssetNode> assets = new List<AssetNode>(m_Assets.Values);
-			foreach (var assetNode in assets)
+			List<AssetInfo> assets = new List<AssetInfo>(m_Assets.Values);
+			foreach (var asset in assets)
 			{
-				RefreshAssetAllDependencies2(assetNode);
+				RefreshAssetAllDependencies2(asset);
 			}
 		}
 
@@ -265,21 +265,21 @@ namespace AssetBundleBuilder
 
 		#region Bundle
 
-		public BundleNode CreateBundleNode(string bundleName)
+		public BundleInfo CreateBundleInfo(string bundleName)
 		{
-			BundleNode bundleNode = new BundleNode(bundleName);
-			return bundleNode;
+			BundleInfo bundleInfo = new BundleInfo(bundleName);
+			return bundleInfo;
 		}
 
-		public BundleNode CreateBundle(string bundleName)
+		public BundleInfo CreateBundle(string bundleName)
 		{
-			BundleNode bundle = CreateBundleNode(bundleName);
+			BundleInfo bundle = CreateBundleInfo(bundleName);
 			m_Bundles.Add(bundle);
 			return bundle;
 		}
-		public BundleNode CreateBundle(string bundleName, AssetNode assetNode)
+		public BundleInfo CreateBundle(string bundleName, AssetInfo assetNode)
 		{
-			BundleNode bundle = CreateBundle(bundleName);
+			BundleInfo bundle = CreateBundle(bundleName);
 			bundle.SetMainAsset(assetNode);
 			bundle.AddAsset(assetNode);
 			//m_AssetBundles[assetNode.assetPath] = bundle;
@@ -294,7 +294,7 @@ namespace AssetBundleBuilder
 		//	return bundle;
 		//}
 
-		public BundleNode GetBundle(string bundleName)
+		public BundleInfo GetBundle(string bundleName)
 		{
 			foreach (var bundle in m_Bundles)
 			{
@@ -306,84 +306,14 @@ namespace AssetBundleBuilder
 			return null;
 		}
 
-		public void RemoveBundleNode(BundleNode bundleNode)
+		public void RemoveBundle(BundleInfo bundle)
 		{
-			m_Bundles.Remove(bundleNode);
-			bundleNode.enbale = false;
-			bundleNode.Clear();
+			m_Bundles.Remove(bundle);
+			bundle.enbale = false;
+			bundle.Clear();
 		}
 
-		public void RefreshBundleDependencies(BundleNode bundleNode)
-		{
-			foreach (AssetNode assetNode in bundleNode.assets)
-			{
-				//add dep
-				foreach (AssetNode assetDep in assetNode.dependencies)
-				{
-					if (assetDep.bundle == null)
-					{
-						assetDep.bundle = CreateBundle(null, assetDep);
-						RefreshBundleDependencies(assetDep.bundle);
-					}
-					bundleNode.AddDependency(assetDep.bundle);
-					assetDep.bundle.AddRefer(bundleNode);
-				}
-			}
-		}
-
-		public void RefreshBundleRelations(BundleNode bundleNode)
-		{
-			foreach (AssetNode assetNode in bundleNode.assets)
-			{
-				//add dep
-				foreach (AssetNode assetDep in assetNode.dependencies)
-				{
-					if (assetDep.bundle == null)
-					{
-						assetDep.bundle = CreateBundle(null, assetDep);
-						RefreshBundleRelations(assetDep.bundle);
-					}
-					bundleNode.AddDependency(assetDep.bundle);
-					assetDep.bundle.AddRefer(bundleNode);
-				}
-
-				//add refer
-				foreach (AssetNode assetRef in assetNode.refers)
-				{
-					if (assetRef.bundle == null)
-					{
-						assetRef.bundle = CreateBundle(null, assetRef);
-						RefreshBundleRelations(assetRef.bundle);
-					}
-					bundleNode.AddRefer(assetRef.bundle);
-					assetRef.bundle.AddDependency(bundleNode);
-				}
-			}
-		}
-
-		public void RefreshAllBundleDependencies()
-		{
-			//m_TempBundles.Clear();
-			//m_TempBundles.AddRange(m_Bundles);
-			List<BundleNode> bundles = new List<BundleNode>(m_Bundles);
-			foreach (var bundleNode in bundles)
-			{
-				RefreshBundleDependencies(bundleNode);
-			}
-		}
-
-		public void RefreshAllBundleRelations()
-		{
-			//m_TempBundles.Clear();
-			//m_TempBundles.AddRange(m_Bundles);
-			List<BundleNode> bundles = new List<BundleNode>(m_Bundles);
-			foreach (var bundleNode in bundles)
-			{
-				RefreshBundleRelations(bundleNode);
-			}
-		}
-
-		public BundleNode MergeBundle(BundleNode from, BundleNode to)
+		public BundleInfo MergeBundle(BundleInfo from, BundleInfo to)
 		{
 			//合并资源
 			foreach (var asset in from.assets)
@@ -428,9 +358,79 @@ namespace AssetBundleBuilder
 			//ReplaceBundle(from, to);
 
 			//remove from	bundle node
-			RemoveBundleNode(from);
+			RemoveBundle(from);
 
 			return to;
+		}
+
+		public void RefreshBundleDependencies(BundleInfo bundle)
+		{
+			foreach (AssetInfo assetNode in bundle.assets)
+			{
+				//add dep
+				foreach (AssetInfo assetDep in assetNode.dependencies)
+				{
+					if (assetDep.bundle == null)
+					{
+						assetDep.bundle = CreateBundle(null, assetDep);
+						RefreshBundleDependencies(assetDep.bundle);
+					}
+					bundle.AddDependency(assetDep.bundle);
+					assetDep.bundle.AddRefer(bundle);
+				}
+			}
+		}
+
+		public void RefreshBundleRelations(BundleInfo bundle)
+		{
+			foreach (AssetInfo assetNode in bundle.assets)
+			{
+				//add dep
+				foreach (AssetInfo assetDep in assetNode.dependencies)
+				{
+					if (assetDep.bundle == null)
+					{
+						assetDep.bundle = CreateBundle(null, assetDep);
+						RefreshBundleRelations(assetDep.bundle);
+					}
+					bundle.AddDependency(assetDep.bundle);
+					assetDep.bundle.AddRefer(bundle);
+				}
+
+				//add refer
+				foreach (AssetInfo assetRef in assetNode.refers)
+				{
+					if (assetRef.bundle == null)
+					{
+						assetRef.bundle = CreateBundle(null, assetRef);
+						RefreshBundleRelations(assetRef.bundle);
+					}
+					bundle.AddRefer(assetRef.bundle);
+					assetRef.bundle.AddDependency(bundle);
+				}
+			}
+		}
+
+		public void RefreshAllBundleDependencies()
+		{
+			//m_TempBundles.Clear();
+			//m_TempBundles.AddRange(m_Bundles);
+			List<BundleInfo> bundles = new List<BundleInfo>(m_Bundles);
+			foreach (var bundle in bundles)
+			{
+				RefreshBundleDependencies(bundle);
+			}
+		}
+
+		public void RefreshAllBundleRelations()
+		{
+			//m_TempBundles.Clear();
+			//m_TempBundles.AddRange(m_Bundles);
+			List<BundleInfo> bundles = new List<BundleInfo>(m_Bundles);
+			foreach (var bundle in bundles)
+			{
+				RefreshBundleRelations(bundle);
+			}
 		}
 
 		#endregion //Bundle
@@ -441,63 +441,62 @@ namespace AssetBundleBuilder
 		{
 			foreach (var iter in m_Assets)
 			{
-				BundleNode bundleNode = CreateBundle(null);
-				bundleNode.SetMainAsset(iter.Value);
-				bundleNode.AddAsset(iter.Value);
+				BundleInfo bundle = CreateBundle(null);
+				bundle.SetMainAsset(iter.Value);
+				bundle.AddAsset(iter.Value);
 				if (iter.Value.addressable)
 				{
-					bundleNode.SetStandalone(iter.Value.addressable);
+					bundle.SetStandalone(iter.Value.addressable);
 				}
 			}
 		}
 
-		public void AddAssetToBundle(BundleNode bundleNode, AssetNode assetNode)
+		public void AddAssetToBundle(BundleInfo bundle, AssetInfo asset)
 		{
-			if (bundleNode.mainAsset == null)
+			if (bundle.mainAsset == null)
 			{
-				bundleNode.SetMainAsset(assetNode);
+				bundle.SetMainAsset(asset);
 			}
 
-			bundleNode.AddAsset(assetNode);
+			bundle.AddAsset(asset);
 		}
 
-		public BundleNode GetAssetBundle(string assetPath)
+		public BundleInfo GetAssetBundle(string assetPath)
 		{
-			AssetNode assetNode = null;
-			if (m_Assets.TryGetValue(assetPath, out assetNode))
+			AssetInfo asset = null;
+			if (m_Assets.TryGetValue(assetPath, out asset))
 			{
-				return assetNode.bundle;
+				return asset.bundle;
 			}
 			return null;
 		}
 
 		public bool IsAssetHaveBundle(string assetPath)
 		{
-			AssetNode assetNode = null;
-			if (m_Assets.TryGetValue(assetPath, out assetNode))
+			AssetInfo asset = null;
+			if (m_Assets.TryGetValue(assetPath, out asset))
 			{
-				return assetNode.bundle != null;
+				return asset.bundle != null;
 			}
 			return false;
 		}
 
 		#endregion //Asset Bundle
 
-
 		#region Optimizer
 		protected void MergeShaderToShaderVariantCollection()
 		{
-			List<BundleNode> bundles = new List<BundleNode>(m_Bundles);
-			List<BundleNode> deps = new List<BundleNode>();
-			foreach (var bundleNode in bundles)
+			List<BundleInfo> bundles = new List<BundleInfo>(m_Bundles);
+			List<BundleInfo> deps = new List<BundleInfo>();
+			foreach (var bundle in bundles)
 			{
-				if(bundleNode.enbale && bundleNode.isShaderVariantCollection && bundleNode.dependencies.Count>0)
+				if(bundle.enbale && bundle.isShaderVariantCollection && bundle.dependencies.Count>0)
 				{
 					deps.Clear();
-					deps.AddRange(bundleNode.dependencies);
+					deps.AddRange(bundle.dependencies);
 					foreach (var dep in deps)
 					{
-						MergeBundle(dep, bundleNode);
+						MergeBundle(dep, bundle);
 					}
 				}
 			}
@@ -510,18 +509,18 @@ namespace AssetBundleBuilder
 		protected bool MergeOneRefer()
 		{
 			bool merged = false;
-			List<BundleNode> bundles = new List<BundleNode>(m_Bundles);
-			foreach (var node in bundles)
+			List<BundleInfo> bundles = new List<BundleInfo>(m_Bundles);
+			foreach (var bundle in bundles)
 			{
-				if (node.enbale &&  node.refers.Count == 1 && node.canMerge)
+				if (bundle.enbale &&  bundle.refers.Count == 1 && bundle.canMerge)
 				{
-					var iter = node.refers.GetEnumerator();
+					var iter = bundle.refers.GetEnumerator();
 					iter.MoveNext();
 					//检查目标是不是Scene。Scene所在的AssetBundle,不能包含其它资源
 					if (!iter.Current.isScene)
 					{
 						merged = true;
-						MergeBundle(node, iter.Current);
+						MergeBundle(bundle, iter.Current);
 					}
 				}
 			}
@@ -535,20 +534,20 @@ namespace AssetBundleBuilder
 		protected bool MergeSameRefer()
 		{
 			bool merged = false;
-			Dictionary<int, List<BundleNode>> sameRefers = new Dictionary<int, List<BundleNode>>();
-			List<BundleNode> bundles = new List<BundleNode>(m_Bundles);
-			foreach (var node in bundles)
+			Dictionary<int, List<BundleInfo>> sameRefers = new Dictionary<int, List<BundleInfo>>();
+			List<BundleInfo> bundles = new List<BundleInfo>(m_Bundles);
+			foreach (var bundle in bundles)
 			{
-				if (node.enbale && node.canMerge)
+				if (bundle.enbale && bundle.canMerge)
 				{
-					int hash = node.refersHashCode;
-					List<BundleNode> items = null;
+					int hash = bundle.refersHashCode;
+					List<BundleInfo> items = null;
 					if (!sameRefers.TryGetValue(hash, out items))
 					{
-						items = new List<BundleNode>();
+						items = new List<BundleInfo>();
 						sameRefers[hash] = items;
 					}
-					items.Add(node);
+					items.Add(bundle);
 				}
 			}
 
@@ -587,5 +586,58 @@ namespace AssetBundleBuilder
 		}
 
 		#endregion //Optimizer
+
+		#region Save Load
+
+		public void SerializeAsset(AssetInfo asset , BinaryWriter writer)
+		{
+			writer.Write(asset.assetPath);
+			writer.Write((byte)asset.assetType);
+			writer.Write(asset.fileSize);
+			writer.Write(asset.addressable);
+			//deps
+			writer.Write(asset.dependencies.Count);
+			foreach (var dep in asset.dependencies)
+			{
+				writer.Write(dep.assetPath);
+			}
+			//refers
+			writer.Write(asset.refers.Count);
+			foreach(var refer in asset.refers)
+			{
+				writer.Write(refer.assetPath);
+			}
+			////all deps
+			//writer.Write(asset.allDependencies.Count);
+			//foreach (var dep in asset.allDependencies)
+			//{
+			//	writer.Write(dep.assetPath);
+			//}
+		}
+
+		public AssetInfo DeserializeAsset(BinaryReader reader,ref List<string> deps, ref List<string> refers)
+		{
+			string assetPath = reader.ReadString();
+			AssetInfo asset = new AssetInfo(assetPath);
+			asset.assetType = (AssetInfo.AssetType)reader.ReadByte();
+			asset.fileSize = reader.ReadInt64();
+			asset.addressable = reader.ReadBoolean();
+
+			int depsCount = reader.ReadInt32();
+			deps.Clear();
+			deps.Capacity = depsCount;
+			for (int i = 0; i < depsCount; ++i)
+			{
+				deps.Add(reader.ReadString());
+			}
+
+			int referCount = reader.ReadInt32();
+
+			return null;
+		}
+
+
+
+		#endregion //SaveLoad
 	}
 }

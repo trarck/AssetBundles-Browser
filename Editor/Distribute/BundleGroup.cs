@@ -6,7 +6,7 @@ using AssetBundleBuilder.Model;
 
 namespace AssetBundleBuilder.Distribute
 {
-    public class DeepNode:BundleNode
+    public class DeepNode:BundleInfo
     {
         public int deep = -1;
     }

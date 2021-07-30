@@ -45,7 +45,7 @@ namespace AssetBundleBuilder.Tests
         {
 			string assetPath = "Assets/ArtResources/Prefabs/TestPrefab.prefab";
 			m_AssetManager.CreateAsset(assetPath);
-			AssetNode assetNode = m_AssetManager.GetAsset(assetPath);
+			AssetInfo assetNode = m_AssetManager.GetAsset(assetPath);
 			Assert.NotNull(assetNode);
 		}
 
@@ -103,7 +103,7 @@ namespace AssetBundleBuilder.Tests
 				 string[] textureFiles = Directory.GetFiles(testAssets, "*.png", SearchOption.AllDirectories);
 				 foreach (var f in textureFiles)
 				 {
-					 AssetNode node=  m_AssetManager.CreateAssetNode(f);
+					 AssetInfo node=  m_AssetManager.CreateAssetInfo(f);
 					 lock (locker)
 					 {
 						 m_AssetManager.assets[node.assetPath] = node;
@@ -116,7 +116,7 @@ namespace AssetBundleBuilder.Tests
 				string[] matFiles = Directory.GetFiles(testAssets, "*.mat", SearchOption.AllDirectories);
 				foreach (var f in matFiles)
 				{
-					AssetNode node = m_AssetManager.CreateAssetNode(f);
+					AssetInfo node = m_AssetManager.CreateAssetInfo(f);
 					lock (locker)
 					{
 						m_AssetManager.assets[node.assetPath] = node;
@@ -129,7 +129,7 @@ namespace AssetBundleBuilder.Tests
 				string[] prefabFiles = Directory.GetFiles(testAssets, "*.prefab", SearchOption.AllDirectories);
 				foreach (var f in prefabFiles)
 				{
-					AssetNode node = m_AssetManager.CreateAssetNode(f);
+					AssetInfo node = m_AssetManager.CreateAssetInfo(f);
 					lock (locker)
 					{
 						m_AssetManager.assets[node.assetPath] = node;
@@ -199,7 +199,7 @@ namespace AssetBundleBuilder.Tests
 			Debug.LogFormat("refresh assets all deps used:{0}", used);
 
 			string assetFile = prefabFiles[0];
-			AssetNode node = m_AssetManager.GetAsset(FileSystem.Relative(FileSystem.applicationPath,assetFile));
+			AssetInfo node = m_AssetManager.GetAsset(FileSystem.Relative(FileSystem.applicationPath,assetFile));
 			ShowAssetNode(node);
 
 			assetFile = prefabFiles[1];
@@ -253,7 +253,7 @@ namespace AssetBundleBuilder.Tests
 			Debug.LogFormat("refresh assets all deps 2 used:{0}", used);
 
 			string assetFile = prefabFiles[0];
-			AssetNode node = m_AssetManager.GetAsset(FileSystem.Relative(FileSystem.applicationPath, assetFile));
+			AssetInfo node = m_AssetManager.GetAsset(FileSystem.Relative(FileSystem.applicationPath, assetFile));
 			ShowAssetNode(node);
 
 			assetFile = prefabFiles[1];
@@ -265,7 +265,7 @@ namespace AssetBundleBuilder.Tests
 			ShowAssetNode(node);
 		}
 
-		private void ShowAssetNode(AssetNode node)
+		private void ShowAssetNode(AssetInfo node)
 		{
 			Debug.LogFormat("{0},{1},{2}", node.assetPath, node.dependencies.Count, node.allDependencies.Count);
 			string s = "";
@@ -294,7 +294,7 @@ namespace AssetBundleBuilder.Tests
 		public void CreateBundleTest()
 		{
 			m_AssetManager.CreateBundle("MyBundle");
-			BundleNode bundleNode = m_AssetManager.GetBundle("MyBundle");
+			BundleInfo bundleNode = m_AssetManager.GetBundle("MyBundle");
 			Assert.NotNull(bundleNode);
 		}
 
@@ -302,11 +302,11 @@ namespace AssetBundleBuilder.Tests
 		public void AddAssetsToBundleTest()
 		{
 			m_AssetManager.CreateBundle("MyBundle");
-			BundleNode bundleNode = m_AssetManager.GetBundle("MyBundle");
+			BundleInfo bundleNode = m_AssetManager.GetBundle("MyBundle");
 			Assert.NotNull(bundleNode);
 
 			string assetPath = "Assets/ArtResources/Prefabs/TestPrefab.prefab";
-			AssetNode assetNode = m_AssetManager.CreateAsset(assetPath);
+			AssetInfo assetNode = m_AssetManager.CreateAsset(assetPath);
 			bundleNode.AddAsset(assetNode);
 			Assert.AreEqual(bundleNode.assets.Count, 1);
 		}
@@ -315,11 +315,11 @@ namespace AssetBundleBuilder.Tests
 		public void BundleDependenciesTest()
 		{
 			string assetPath = "Assets/ArtResources/Prefabs/TestPrefab.prefab";
-			AssetNode assetNode = m_AssetManager.CreateAsset(assetPath);
+			AssetInfo assetNode = m_AssetManager.CreateAsset(assetPath);
 			m_AssetManager.RefreshAssetDependencies(assetNode);
 
 			m_AssetManager.CreateBundle("TestPrefab");
-			BundleNode bundleNode = m_AssetManager.GetBundle("TestPrefab");
+			BundleInfo bundleNode = m_AssetManager.GetBundle("TestPrefab");
 
 			bundleNode.AddAsset(assetNode);
 
@@ -335,17 +335,17 @@ namespace AssetBundleBuilder.Tests
 		public void BundleDependencies2Test()
 		{
 			string assetPath = "Assets/ArtResources/Prefabs/TestPrefab.prefab";
-			AssetNode assetNode1 = m_AssetManager.CreateAsset(assetPath);
+			AssetInfo assetNode1 = m_AssetManager.CreateAsset(assetPath);
 
 			assetPath = "Assets/ArtResources/Prefabs/MyPrefab.prefab";
-			AssetNode assetNode2 = m_AssetManager.CreateAsset(assetPath);
+			AssetInfo assetNode2 = m_AssetManager.CreateAsset(assetPath);
 
 			m_AssetManager.RefreshAllAssetDependencies();
 
-			BundleNode bundleNode1 = m_AssetManager.CreateBundle("TestPrefab");
+			BundleInfo bundleNode1 = m_AssetManager.CreateBundle("TestPrefab");
 			bundleNode1.AddAsset(assetNode1);
 
-			BundleNode bundleNode2 = m_AssetManager.CreateBundle("MyPrefab");
+			BundleInfo bundleNode2 = m_AssetManager.CreateBundle("MyPrefab");
 			bundleNode2.AddAsset(assetNode2);
 
 			m_AssetManager.RefreshAllBundleDependencies();
@@ -383,11 +383,11 @@ namespace AssetBundleBuilder.Tests
 			//}
 
 			assetPath = "Assets/ArtResources/Prefabs/CircelRefs/APreab.prefab";
-			AssetNode assetNode = m_AssetManager.CreateAsset(assetPath);
+			AssetInfo assetNode = m_AssetManager.CreateAsset(assetPath);
 
 			m_AssetManager.RefreshAllAssetDependencies();
 
-			BundleNode bundleNode = m_AssetManager.CreateBundle("APreab");
+			BundleInfo bundleNode = m_AssetManager.CreateBundle("APreab");
 			bundleNode.AddAsset(assetNode);
 
 			m_AssetManager.RefreshAllBundleDependencies();
@@ -404,11 +404,11 @@ namespace AssetBundleBuilder.Tests
 		public void BundleRelationsTest()
 		{
 			string assetPath = "Assets/ArtResources/Prefabs/TestPrefab.prefab";
-			AssetNode assetNode = m_AssetManager.CreateAsset(assetPath);
+			AssetInfo assetNode = m_AssetManager.CreateAsset(assetPath);
 			m_AssetManager.RefreshAssetDependencies(assetNode);
 
 			m_AssetManager.CreateBundle("TestPrefab");
-			BundleNode bundleNode = m_AssetManager.GetBundle("TestPrefab");
+			BundleInfo bundleNode = m_AssetManager.GetBundle("TestPrefab");
 
 
 			bundleNode.AddAsset(assetNode);
@@ -425,11 +425,11 @@ namespace AssetBundleBuilder.Tests
 		public void BundleRelationsCircleReferenceTest()
 		{
 			string assetPath = "Assets/ArtResources/Prefabs/CircelRefs/APreab.prefab";
-			AssetNode assetNode = m_AssetManager.CreateAsset(assetPath);
+			AssetInfo assetNode = m_AssetManager.CreateAsset(assetPath);
 
 			m_AssetManager.RefreshAllAssetDependencies();
 
-			BundleNode bundleNode = m_AssetManager.CreateBundle("APreab");
+			BundleInfo bundleNode = m_AssetManager.CreateBundle("APreab");
 			bundleNode.AddAsset(assetNode);
 
 			m_AssetManager.RefreshAllBundleRelations();
@@ -447,10 +447,10 @@ namespace AssetBundleBuilder.Tests
 
 			DateTime start = DateTime.Now;
 			string[] prefabFiles = Directory.GetFiles(testAssets, "*.prefab", SearchOption.AllDirectories);
-			List<AssetNode> assets = new List<AssetNode>();
+			List<AssetInfo> assets = new List<AssetInfo>();
 			foreach (var f in prefabFiles)
 			{
-				AssetNode assetNode = m_AssetManager.CreateAsset(f);
+				AssetInfo assetNode = m_AssetManager.CreateAsset(f);
 				//直接使用的资源，可以导址
 				assetNode.addressable = true;
 				assets.Add(assetNode);
@@ -468,7 +468,7 @@ namespace AssetBundleBuilder.Tests
 			//create bundle from assets
 			foreach (var iter in m_AssetManager.assets)
 			{
-				BundleNode bundleNode = m_AssetManager.CreateBundle(null);
+				BundleInfo bundleNode = m_AssetManager.CreateBundle(null);
 				bundleNode.SetMainAsset(iter.Value);
 				bundleNode.AddAsset(iter.Value);
 				if (iter.Value.addressable)
@@ -495,11 +495,11 @@ namespace AssetBundleBuilder.Tests
 		public void CombileTest1()
 		{
 			string assetPath = "Assets/ArtResources/Prefabs/CircelRefs/APreab.prefab";
-			AssetNode assetNode = m_AssetManager.CreateAsset(assetPath);
+			AssetInfo assetNode = m_AssetManager.CreateAsset(assetPath);
 
 			m_AssetManager.RefreshAllAssetDependencies();
 
-			BundleNode bundleNode = m_AssetManager.CreateBundle("APreab");
+			BundleInfo bundleNode = m_AssetManager.CreateBundle("APreab");
 			bundleNode.SetStandalone(true);
 			bundleNode.SetMainAsset(assetNode);
 			bundleNode.AddAsset(assetNode);
@@ -516,14 +516,14 @@ namespace AssetBundleBuilder.Tests
 		public void CombileTest2()
 		{
 			string assetPath = "Assets/ArtResources/Prefabs/CircelRefs/APreab.prefab";
-			AssetNode assetNode = m_AssetManager.CreateAsset(assetPath);
+			AssetInfo assetNode = m_AssetManager.CreateAsset(assetPath);
 
 			assetPath = "Assets/ArtResources/Prefabs/CircelRefs/BPreab.prefab";
-			AssetNode assetNode2 = m_AssetManager.CreateAsset(assetPath);
+			AssetInfo assetNode2 = m_AssetManager.CreateAsset(assetPath);
 
 			m_AssetManager.RefreshAllAssetDependencies();
 
-			BundleNode bundleNode = m_AssetManager.CreateBundle("APreab");
+			BundleInfo bundleNode = m_AssetManager.CreateBundle("APreab");
 			bundleNode.SetStandalone(true);
 			bundleNode.SetMainAsset(assetNode);
 			bundleNode.AddAsset(assetNode);
@@ -545,14 +545,14 @@ namespace AssetBundleBuilder.Tests
 		public void CombileSameRefTest()
 		{
 			string assetPath = "Assets/ArtResources/Prefabs/SameRefers/SameRefA.prefab";
-			AssetNode assetNode = m_AssetManager.CreateAsset(assetPath);
+			AssetInfo assetNode = m_AssetManager.CreateAsset(assetPath);
 
 			assetPath = "Assets/ArtResources/Prefabs/SameRefers/SameRefB.prefab";
-			AssetNode assetNode2 = m_AssetManager.CreateAsset(assetPath);
+			AssetInfo assetNode2 = m_AssetManager.CreateAsset(assetPath);
 
 			m_AssetManager.RefreshAllAssetDependencies();
 
-			BundleNode bundleNode = m_AssetManager.CreateBundle("SameRefA");
+			BundleInfo bundleNode = m_AssetManager.CreateBundle("SameRefA");
 			bundleNode.SetStandalone(true);
 			bundleNode.SetMainAsset(assetNode);
 			bundleNode.AddAsset(assetNode);
@@ -576,10 +576,10 @@ namespace AssetBundleBuilder.Tests
 			string testAssets = "Assets/ArtResources/Tests";
 
 			string[] prefabFiles = Directory.GetFiles(testAssets, "*.prefab", SearchOption.AllDirectories);
-			List<AssetNode> assets = new List<AssetNode>();
+			List<AssetInfo> assets = new List<AssetInfo>();
 			foreach (var f in prefabFiles)
 			{
-				AssetNode assetNode = m_AssetManager.CreateAsset(f);
+				AssetInfo assetNode = m_AssetManager.CreateAsset(f);
 				//直接使用的资源，可以导址
 				assetNode.addressable = true;
 				assets.Add(assetNode);
@@ -590,7 +590,7 @@ namespace AssetBundleBuilder.Tests
 			//create bundle from assets
 			foreach (var iter in m_AssetManager.assets)
 			{
-				BundleNode bundleNode = m_AssetManager.CreateBundle(null);
+				BundleInfo bundleNode = m_AssetManager.CreateBundle(null);
 				bundleNode.SetMainAsset(iter.Value);
 				bundleNode.AddAsset(iter.Value);
 				if (iter.Value.addressable)

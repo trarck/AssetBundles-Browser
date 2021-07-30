@@ -7,7 +7,7 @@ using System.IO;
 
 namespace AssetBundleBuilder
 {
-    public class AssetNode
+    public class AssetInfo
     {
 		public enum AssetType
 		{
@@ -23,9 +23,9 @@ namespace AssetBundleBuilder
 		private long m_FileSize = -1;
 		private string m_RealFilePath = null;
 
-		private HashSet<AssetNode> m_Refers;
-        private HashSet<AssetNode> m_Dependencies = null;
-        private HashSet<AssetNode> m_AllDependencies = null;
+		private HashSet<AssetInfo> m_Refers;
+        private HashSet<AssetInfo> m_Dependencies = null;
+        private HashSet<AssetInfo> m_AllDependencies = null;
 
 		protected AssetType m_AssetType = AssetType.None;
 
@@ -36,7 +36,7 @@ namespace AssetBundleBuilder
 		//一般情况调用LoadFromFolder的资源都是独立的，调用LoadDependencies是依赖的。
 		protected bool m_Addressable = false;
 
-		public BundleNode bundle;
+		public BundleInfo bundle;
 
 		public string assetPath
 		{
@@ -58,6 +58,17 @@ namespace AssetBundleBuilder
 			}
 		}
 
+		public AssetType assetType
+		{
+			get
+			{
+				return m_AssetType;
+			}
+			set
+			{
+				m_AssetType = value;
+			}
+		}
 
 		public bool isScene
 		{
@@ -93,6 +104,10 @@ namespace AssetBundleBuilder
 				}
 				return m_FileSize;
 			}
+			set
+			{
+				m_FileSize = value;
+			}
 		}
 
 		public bool addressable
@@ -107,13 +122,13 @@ namespace AssetBundleBuilder
 			}
 		}
 
-		public HashSet<AssetNode> refers
+		public HashSet<AssetInfo> refers
 		{
 			get
 			{
 				if (m_Refers == null)
 				{
-					m_Refers = new HashSet<AssetNode>();
+					m_Refers = new HashSet<AssetInfo>();
 				}
 				return m_Refers;
 			}
@@ -123,13 +138,13 @@ namespace AssetBundleBuilder
 			}
 		}
 
-		public HashSet<AssetNode> dependencies
+		public HashSet<AssetInfo> dependencies
 		{
 			get
 			{
 				if (m_Dependencies == null)
 				{
-					m_Dependencies = new HashSet<AssetNode>();
+					m_Dependencies = new HashSet<AssetInfo>();
 				}
 				return m_Dependencies;
 			}
@@ -139,7 +154,7 @@ namespace AssetBundleBuilder
 			}
 		}
 
-		public HashSet<AssetNode> allDependencies
+		public HashSet<AssetInfo> allDependencies
 		{
 			get
 			{
@@ -151,61 +166,61 @@ namespace AssetBundleBuilder
 			}
 		}
 
-		public AssetNode(string assetPath)
+		public AssetInfo(string assetPath)
 		{
 			this.assetPath = assetPath;
-			m_Refers = new HashSet<AssetNode>();
+			m_Refers = new HashSet<AssetInfo>();
 			m_AssetType = AnalyzeAssetType(assetPath);
 		}
 
-		public AssetNode(string assetPath, string assetFilePath)
+		public AssetInfo(string assetPath, string assetFilePath)
 		{
 			this.assetPath = assetPath;
 			m_RealFilePath = assetFilePath;
-			m_Refers = new HashSet<AssetNode>();
+			m_Refers = new HashSet<AssetInfo>();
 			m_AssetType = AnalyzeAssetType(assetPath);
 		}
 
-		public void AddRefer(AssetNode referNode)
+		public void AddRefer(AssetInfo referNode)
 		{
 			AddReferNode(referNode);
 			referNode.AddDependencyNode(this);
 		}
 
-		public void RemoveRefer(AssetNode referNode)
+		public void RemoveRefer(AssetInfo referNode)
 		{
 			RemoveReferNode(referNode);
 			referNode.RemoveDependencyNode(this);
 		}
 
-		public void AddDependency(AssetNode depNode)
+		public void AddDependency(AssetInfo depNode)
 		{
 			AddDependencyNode(depNode);
 			depNode.AddReferNode(this);
 		}
 
-		public void RemoveDependency(AssetNode depNode)
+		public void RemoveDependency(AssetInfo depNode)
 		{
 			RemoveDependencyNode(depNode);
 			depNode.RemoveReferNode(this);
 		}
 
-		public void AddReferNode(AssetNode assetNode)
+		public void AddReferNode(AssetInfo assetNode)
 		{
 			refers.Add(assetNode);
 		}
 
-		public void RemoveReferNode(AssetNode assetNode)
+		public void RemoveReferNode(AssetInfo assetNode)
 		{
 			refers.Remove(assetNode);
 		}
 
-		public void AddDependencyNode(AssetNode assetNode)
+		public void AddDependencyNode(AssetInfo assetNode)
 		{
 			dependencies.Add(assetNode);
 		}
 
-		public void RemoveDependencyNode(AssetNode assetNode)
+		public void RemoveDependencyNode(AssetInfo assetNode)
 		{
 			dependencies.Remove(assetNode);
 		}

@@ -35,7 +35,7 @@ namespace AssetBundleBuilder.Model
 
         public void ImportFile(string filePath)
         {
-            BundleNode assetNode =m_Optimizer.LoadAsset(filePath);
+			AssetBundleBuilder.BundleInfo assetNode = m_Optimizer.LoadAsset(filePath);
             assetNode.SetStandalone(true);
         }
 

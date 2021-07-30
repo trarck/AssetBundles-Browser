@@ -222,7 +222,7 @@ namespace AssetBundleBuilder.View
                 return;
 
             List<Object> selectedObjects = new List<Object>();
-            List<AssetInfo> selectedAssets = new List<AssetInfo>();
+			List<Model.AssetInfo> selectedAssets = new List<Model.AssetInfo>();
             foreach (var id in selectedIds)
             {
                 var assetItem = FindItem(id, rootItem) as AssetTreeItem;
@@ -354,7 +354,7 @@ namespace AssetBundleBuilder.View
         void RemoveAssets(object obj)
         {
             var selectedNodes = obj as List<AssetTreeItem>;
-            var assets = new List<AssetInfo>();
+            var assets = new List<Model.AssetInfo>();
             //var bundles = new List<AssetBundleModel.BundleInfo>();
             foreach (var node in selectedNodes)
             {

@@ -34,11 +34,11 @@ namespace AssetBundleBuilder.DataSource
                     assetBundleInfo.hash = buildManifest.GetAssetBundleHash(assetBundleName).ToString();
                     assetBundleInfo.dependencies = buildManifest.GetDirectDependencies(assetBundleName);
 
-                    List<AssetInfo> assets = new List<AssetInfo>();
+					List<YH.AssetManage.AssetInfo> assets = new List<YH.AssetManage.AssetInfo>();
                    // foreach (Model.AssetInfo assetInfo in bundleInfo.GetConcretes())
                    foreach(var assetPath in dataSource.GetAssetPathsFromAssetBundle(assetBundleName))
                    {
-                        AssetInfo ai = new AssetInfo();
+						YH.AssetManage.AssetInfo ai = new YH.AssetManage.AssetInfo();
                         //Debug.Log(assetInfo.displayName + "," + assetInfo.bundleName + "," + assetInfo.fullAssetName);
                         ai.fullName = assetPath;// assetInfo.fullAssetName;
                         assets.Add(ai);
