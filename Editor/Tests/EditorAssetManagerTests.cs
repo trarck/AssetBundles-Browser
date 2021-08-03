@@ -614,5 +614,103 @@ namespace AssetBundleBuilder.Tests
 
 			Debug.LogFormat("After optimze Asset Count:{0},Bundle Count:{1}", m_AssetManager.assets.Count, m_AssetManager.bundles.Count);
 		}
+
+		[Test]
+		public void SerializeAssetTest()
+		{
+			string assetPath = "Assets/ArtResources/Prefabs/TestPrefab.prefab";
+			AssetInfo assetPrefab = m_AssetManager.CreateAssetInfo(assetPath);
+
+			string assetMatPath = "Assets/ArtResources/Materials/MyMaterial.mat";
+			AssetInfo assetMat = m_AssetManager.CreateAssetInfo(assetMatPath);
+
+			assetPrefab.AddDependency(assetMat);
+
+			MemoryStream ms = new MemoryStream();
+			using (BinaryWriter bw = new BinaryWriter(ms))
+			{
+				EditorAssetManager.SerializeAsset(assetPrefab,bw);
+			}
+
+			AssetSerializeInfo deserializeInfo = null;
+			MemoryStream rms = new MemoryStream(ms.GetBuffer());
+			using (BinaryReader br = new BinaryReader(rms))
+			{
+				deserializeInfo = EditorAssetManager.DeserializeAsset(br);
+			}
+
+			Assert.NotNull(deserializeInfo);
+			Assert.AreEqual(assetPrefab.assetPath,deserializeInfo.asset.assetPath);
+			Assert.AreEqual(assetPrefab.fileSize, deserializeInfo.asset.fileSize);
+			Assert.AreEqual(assetPrefab.assetType, deserializeInfo.asset.assetType);
+			Assert.AreEqual(assetPrefab.dependencies.Count, deserializeInfo.dependencies.Count);
+		}
+
+		[Test]
+		public void SaveLoadTest()
+		{
+			string assetPath = "Assets/ArtResources/Prefabs/TestPrefab.prefab";
+			AssetInfo assetNode1 = m_AssetManager.CreateAsset(assetPath);
+
+			assetPath = "Assets/ArtResources/Prefabs/MyPrefab.prefab";
+			AssetInfo assetNode2 = m_AssetManager.CreateAsset(assetPath);
+
+			m_AssetManager.RefreshAllAssetDependencies();
+
+			BundleInfo bundleNode1 = m_AssetManager.CreateBundle("TestPrefab");
+			bundleNode1.SetMainAsset(assetNode1);
+			bundleNode1.AddAsset(assetNode1);
+
+			BundleInfo bundleNode2 = m_AssetManager.CreateBundle("MyPrefab");
+			bundleNode2.SetMainAsset(assetNode2);
+			bundleNode2.AddAsset(assetNode2);
+
+			m_AssetManager.RefreshAllBundleDependencies();
+
+			MemoryStream wms = new MemoryStream();
+			m_AssetManager.Save(wms);
+			byte[] data = wms.GetBuffer();
+	
+			EditorAssetManager editorAssetManager = new EditorAssetManager();
+			
+			MemoryStream rms = new MemoryStream(data);
+			editorAssetManager.Load(rms);
+
+			Assert.AreEqual(m_AssetManager.assets.Count,editorAssetManager.assets.Count);
+			Assert.AreEqual(m_AssetManager.bundles.Count, editorAssetManager.bundles.Count);
+
+			foreach (var iter in m_AssetManager.assets)
+			{
+				var asset = iter.Value;
+				var otherAsset = editorAssetManager.GetAsset(iter.Key);
+				Assert.NotNull(otherAsset);
+				Assert.AreEqual(asset.fileSize, otherAsset.fileSize);
+				Assert.AreEqual(asset.assetType, otherAsset.assetType);
+
+				Assert.AreEqual(asset.dependencies.Count, otherAsset.dependencies.Count);
+				Assert.AreEqual(asset.refers.Count, otherAsset.refers.Count);
+			}
+
+			foreach (var bundle in m_AssetManager.bundles)
+			{
+				var otherBundle = editorAssetManager.GetBundle(bundle.id);
+				Assert.NotNull(otherBundle);
+				if (string.IsNullOrEmpty(bundle.name))
+				{
+					Assert.AreEqual(true, string.IsNullOrEmpty(otherBundle.name));
+				}
+				else
+				{
+					Assert.AreEqual(bundle.name, otherBundle.name);
+				}
+
+				Assert.AreEqual(bundle.bundleType, otherBundle.bundleType);
+				Assert.AreEqual(bundle.IsStandalone(), otherBundle.IsStandalone());
+				Assert.AreEqual(bundle.refersHashCode, otherBundle.refersHashCode);
+				Assert.AreEqual(bundle.mainAssetPath, otherBundle.mainAssetPath);
+				Assert.AreEqual(bundle.dependencies.Count, otherBundle.dependencies.Count);
+				Assert.AreEqual(bundle.refers.Count, otherBundle.refers.Count);
+			}
+		}
 	}
 }

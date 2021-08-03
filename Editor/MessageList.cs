@@ -10,7 +10,7 @@ namespace AssetBundleBuilder
 
         private GUIStyle[] m_Style = new GUIStyle[2];
 
-        IEnumerable<Model.AssetInfo> m_Selecteditems;
+        IEnumerable<Model.AssetNode> m_Selecteditems;
         List<MessageSystem.Message> m_Messages;
 
         Vector2 m_Dimensions = new Vector2(0, 0);
@@ -71,7 +71,7 @@ namespace AssetBundleBuilder
             GUI.EndScrollView();
         }
 
-        internal void SetItems(IEnumerable<Model.AssetInfo> items)
+        internal void SetItems(IEnumerable<Model.AssetNode> items)
         {
             m_Selecteditems = items;
             CollectMessages();

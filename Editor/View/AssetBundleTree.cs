@@ -88,7 +88,7 @@ namespace AssetBundleBuilder.View
         protected override void SelectionChanged(IList<int> selectedIds)
         {
 
-            var selectedBundles = new List<Model.BundleInfo>();
+            var selectedBundles = new List<Model.BundleNode>();
             if (selectedIds != null)
             {
                 foreach (var id in selectedIds)
@@ -375,7 +375,7 @@ namespace AssetBundleBuilder.View
             internal bool hasScene = false;
             internal bool hasNonScene = false;
             internal bool hasVariantChild = false;
-            internal List<BundleInfo> draggedNodes;
+            internal List<BundleNode> draggedNodes;
             internal BundleTreeItem targetNode;
             internal DragAndDropArgs args;
             internal string[] paths;
@@ -383,7 +383,7 @@ namespace AssetBundleBuilder.View
             internal DragAndDropData(DragAndDropArgs a)
             {
                 args = a;
-                draggedNodes = DragAndDrop.GetGenericData("Model.BundleInfo") as List<BundleInfo>;
+                draggedNodes = DragAndDrop.GetGenericData("Model.BundleNode") as List<BundleNode>;
                 targetNode = args.parentItem as BundleTreeItem;
                 paths = DragAndDrop.paths;
 
@@ -639,7 +639,7 @@ namespace AssetBundleBuilder.View
 
             DragAndDrop.PrepareStartDrag();
 
-            var selectedBundles = new List<BundleInfo>();
+            var selectedBundles = new List<BundleNode>();
             foreach (var id in args.draggedItemIDs)
             {
                 var item = FindItem(id, rootItem) as BundleTreeItem;
@@ -647,7 +647,7 @@ namespace AssetBundleBuilder.View
             }
             DragAndDrop.paths = null;
             DragAndDrop.objectReferences = m_EmptyObjectList.ToArray();
-            DragAndDrop.SetGenericData("Model.BundleInfo", selectedBundles);
+            DragAndDrop.SetGenericData("Model.BundleNode", selectedBundles);
             DragAndDrop.visualMode = DragAndDropVisualMode.Copy;//Move;
             DragAndDrop.StartDrag("AssetBundleTree");
         }

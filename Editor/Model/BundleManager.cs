@@ -13,8 +13,8 @@ namespace AssetBundleBuilder.Model
 {
 	public class BundleManager
 	{
-		Dictionary<string, BundleInfo> m_Bundles;
-		Dictionary<string, AssetInfo> m_Assets;
+		Dictionary<string, BundleNode> m_Bundles;
+		Dictionary<string, AssetNode> m_Assets;
 		BundleFolderInfo m_Root;
 
 		DataSource.DataSource m_DataSource;
@@ -37,8 +37,8 @@ namespace AssetBundleBuilder.Model
 
 		public void Init()
 		{
-			m_Bundles = new Dictionary<string, BundleInfo>();
-			m_Assets = new Dictionary<string, AssetInfo>();
+			m_Bundles = new Dictionary<string, BundleNode>();
+			m_Assets = new Dictionary<string, AssetNode>();
 			m_Root = new BundleFolderConcreteInfo("",null);
 		}
 
@@ -93,16 +93,16 @@ namespace AssetBundleBuilder.Model
 		}
 
 		#region Bundle
-		public BundleInfo GetBundle(string bundlePath)
+		public BundleNode GetBundle(string bundlePath)
 		{
-			BundleInfo bundleInfo = null;
+			BundleNode bundleInfo = null;
 			m_Bundles.TryGetValue(bundlePath, out bundleInfo);
 			return bundleInfo;
 		}
 
-		public BundleInfo GetBundle(string bundlePath,BundleFolderInfo parent)
+		public BundleNode GetBundle(string bundlePath,BundleFolderInfo parent)
 		{
-			BundleInfo bundleInfo = null;
+			BundleNode bundleInfo = null;
 			if (parent != null)
 			{
 				bundlePath = parent.m_Name.fullNativeName + "/" + bundlePath;
@@ -111,10 +111,10 @@ namespace AssetBundleBuilder.Model
 			return bundleInfo;
 		}
 
-		private BundleInfo GetBundle(List<string> pathTokens,  BundleFolderInfo parent)
+		private BundleNode GetBundle(List<string> pathTokens,  BundleFolderInfo parent)
 		{
 			string bundleName = null;
-			BundleInfo bundleInfo = null;
+			BundleNode bundleInfo = null;
 
 			for (int i = 0,l=pathTokens.Count; i < l; ++i)
 			{
@@ -156,7 +156,7 @@ namespace AssetBundleBuilder.Model
 			return bundleInfo;
 		}
 
-		public void AddBundle(BundleInfo bundleInfo, BundleFolderInfo parent)
+		public void AddBundle(BundleNode bundleInfo, BundleFolderInfo parent)
 		{
 			if (parent != null)
 			{
@@ -257,7 +257,7 @@ namespace AssetBundleBuilder.Model
 		private BundleFolderInfo GetBundleFolder(List<string> pathTokens, int deep, BundleFolderInfo parent)
 		{
 			string bundleName = null;
-			BundleInfo bundleInfo = null;
+			BundleNode bundleInfo = null;
 
 			for (int i = 0; i < deep; ++i)
 			{
@@ -299,21 +299,21 @@ namespace AssetBundleBuilder.Model
 		#endregion Bundle
 
 		#region Asset
-		public AssetInfo GetAsset(string assetPath)
+		public AssetNode GetAsset(string assetPath)
 		{
-			AssetInfo assetInfo = null;
+			AssetNode assetInfo = null;
 			m_Assets.TryGetValue(assetPath, out assetInfo);
 			return assetInfo;
 		}
 
-		public AssetInfo CreateAsset(string assetPath, string bundlePath=null)
+		public AssetNode CreateAsset(string assetPath, string bundlePath=null)
 		{
 			if (string.IsNullOrEmpty(bundlePath))
 			{
 				bundlePath = dataSource.GetAssetBundleName(assetPath);
 			}
 
-			AssetInfo assetInfo = new AssetInfo(assetPath, bundlePath);
+			AssetNode assetInfo = new AssetNode(assetPath, bundlePath);
 			m_Assets[assetPath] = assetInfo;
 			return assetInfo;
 		}
@@ -322,7 +322,7 @@ namespace AssetBundleBuilder.Model
 		/// 刷新资源的直接依赖
 		/// </summary>
 		/// <param name="assetInfo"></param>
-		internal void RefreshAssetDependencies(AssetInfo assetInfo)
+		internal void RefreshAssetDependencies(AssetNode assetInfo)
 		{
 			if (!AssetDatabase.IsValidFolder(assetInfo.fullAssetName))
 			{
@@ -332,7 +332,7 @@ namespace AssetBundleBuilder.Model
 				{
 					if (dep != assetInfo.fullAssetName)
 					{
-						AssetInfo depAsset = GetAsset(dep);
+						AssetNode depAsset = GetAsset(dep);
 						if (depAsset == null)
 						{
 							depAsset = CreateAsset(dep);
@@ -351,21 +351,21 @@ namespace AssetBundleBuilder.Model
 		/// TODO::测试通过unity的直接获取所有依赖和通过遍历的速度
 		/// </summary>
 		/// <param name="assetInfo"></param>
-		internal void RefreshAssetAllDependencies(AssetInfo assetInfo)
+		internal void RefreshAssetAllDependencies(AssetNode assetInfo)
 		{
 			if (!AssetDatabase.IsValidFolder(assetInfo.fullAssetName))
 			{
 				//clear all deps
 				assetInfo.allDependencies.Clear();
 
-				Stack<AssetInfo> assetsStack = new Stack<AssetInfo>();
-				HashSet<AssetInfo> visitedInfos = new HashSet<AssetInfo>();
+				Stack<AssetNode> assetsStack = new Stack<AssetNode>();
+				HashSet<AssetNode> visitedInfos = new HashSet<AssetNode>();
 				
 				assetsStack.Push(assetInfo);
 
 				while (assetsStack.Count > 0)
 				{
-					AssetInfo ai = assetsStack.Pop();
+					AssetNode ai = assetsStack.Pop();
 					if (visitedInfos.Contains(ai))
 					{
 						continue;
@@ -385,7 +385,7 @@ namespace AssetBundleBuilder.Model
 			}
 		}
 
-		internal void RefreshAssetAllDependencies2(AssetInfo assetInfo)
+		internal void RefreshAssetAllDependencies2(AssetNode assetInfo)
 		{
 			if (!AssetDatabase.IsValidFolder(assetInfo.fullAssetName))
 			{
@@ -395,7 +395,7 @@ namespace AssetBundleBuilder.Model
 				{
 					if (dep != assetInfo.fullAssetName)
 					{
-						AssetInfo depAsset = GetAsset(dep);
+						AssetNode depAsset = GetAsset(dep);
 						if (depAsset == null)
 						{
 							depAsset = CreateAsset(dep);

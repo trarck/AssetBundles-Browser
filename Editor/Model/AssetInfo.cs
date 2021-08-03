@@ -3,66 +3,145 @@ using UnityEditor;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.IMGUI.Controls;
+using System.IO;
 
-namespace AssetBundleBuilder.Model
+namespace AssetBundleBuilder
 {
     public class AssetInfo
     {
-		private string m_AssetName;
+		public enum AssetType
+		{
+			None,
+			Normal,
+			Scene,
+			Shader,
+			ShaderVariantCollection
+		}
+
+		private string m_AssetPath;
         private string m_DisplayName;
-        private string m_BundleName;
 		private long m_FileSize = -1;
+		private string m_RealFilePath = null;
 
 		private HashSet<AssetInfo> m_Refers;
-		HashSet<AssetInfo> m_Dependencies = null;
-		HashSet<AssetInfo> m_AllDependencies = null;
+        private HashSet<AssetInfo> m_Dependencies = null;
+        private HashSet<AssetInfo> m_AllDependencies = null;
 
-		private MessageSystem.MessageState m_AssetMessages = new MessageSystem.MessageState();
-		internal bool isScene
+		protected AssetType m_AssetType = AssetType.None;
+
+		//单独的.是--独立加载，需要主动加载的资源。否--依赖加载，不会主动加载。
+		//一般prefab，场景需要手动加载，一些贴图和音乐也需要手动加载。
+		//fbx基本是依赖加载，大部分材质也是依赖加载。
+		//具体还是需要根据项目来定。
+		//一般情况调用LoadFromFolder的资源都是独立的，调用LoadDependencies是依赖的。
+		protected bool m_Addressable = false;
+
+		public BundleInfo bundle;
+
+		public string assetPath
 		{
-			get; set;
+			get
+			{
+				return m_AssetPath;
+			}
+			set
+			{
+				m_AssetPath = value;
+				m_DisplayName = System.IO.Path.GetFileNameWithoutExtension(m_AssetPath);
+			}
 		}
-		internal bool isFolder
+		public string displayName
 		{
-			get; set;
+			get
+			{
+				return m_DisplayName;
+			}
 		}
-		internal long fileSize
+
+		public AssetType assetType
+		{
+			get
+			{
+				return m_AssetType;
+			}
+			set
+			{
+				m_AssetType = value;
+			}
+		}
+
+		public bool isScene
+		{
+			get
+			{
+				return m_AssetType == AssetType.Scene;
+			}
+		}
+
+		public bool isShader
+		{
+			get
+			{
+				return m_AssetType == AssetType.Shader;
+			}
+		}
+
+		public long fileSize
 		{
 			get
 			{
 				if (m_FileSize == -1)
 				{
-					System.IO.FileInfo fileInfo = new System.IO.FileInfo(m_AssetName);
-					if (fileInfo.Exists)
+					if (!string.IsNullOrEmpty(m_RealFilePath))
 					{
-						m_FileSize = fileInfo.Length;
-					}
-					else
-					{
-						m_FileSize = 0;
+						FileInfo fileInfo = new FileInfo(m_RealFilePath);
+						if (fileInfo.Exists)
+						{
+							m_FileSize = fileInfo.Length;
+						}
+						else
+						{
+							m_FileSize = 0;
+						}
 					}
 				}
 				return m_FileSize;
 			}
+			set
+			{
+				m_FileSize = value;
+			}
 		}
 
-        internal string fullAssetName
-        {
-            get { return m_AssetName; }
-            set
-            {
-                m_AssetName = value;
-                m_DisplayName = System.IO.Path.GetFileNameWithoutExtension(m_AssetName);
-            }
-        }
-        internal string displayName
-        {
-            get { return m_DisplayName; }
-        }
-        internal string bundleName
-        { get { return System.String.IsNullOrEmpty(m_BundleName) ? "auto" : m_BundleName; } }
-        
-		internal HashSet<AssetInfo> dependencies
+		public bool addressable
+		{
+			get
+			{
+				return m_Addressable;
+			}
+			set
+			{
+				m_Addressable = value;
+			}
+		}
+
+		public HashSet<AssetInfo> refers
+		{
+			get
+			{
+				if (m_Refers == null)
+				{
+					m_Refers = new HashSet<AssetInfo>();
+				}
+				return m_Refers;
+			}
+			set
+			{
+				m_Refers = value;
+			}
+		}
+
+		public HashSet<AssetInfo> dependencies
 		{
 			get
 			{
@@ -78,10 +157,14 @@ namespace AssetBundleBuilder.Model
 			}
 		}
 
-		internal HashSet<AssetInfo> allDependencies
+		public HashSet<AssetInfo> allDependencies
 		{
 			get
 			{
+				if (m_AllDependencies == null)
+				{
+					m_AllDependencies = new HashSet<AssetInfo>();
+				}
 				return m_AllDependencies;
 			}
 			set
@@ -90,134 +173,96 @@ namespace AssetBundleBuilder.Model
 			}
 		}
 
-		internal AssetInfo(string inName, string bundleName = "")
+		public AssetInfo(string assetPath)
 		{
-			fullAssetName = inName;
-			m_BundleName = bundleName;
+			this.assetPath = assetPath;
 			m_Refers = new HashSet<AssetInfo>();
-			isScene = false;
-			isFolder = false;
+			m_Dependencies = new HashSet<AssetInfo>();
+			m_AssetType = AnalyzeAssetType(assetPath);
 		}
 
-		#region Message
-		internal bool IsMessageSet(MessageSystem.MessageFlag flag)
-        {
-            return m_AssetMessages.IsSet(flag);
-        }
-        internal void SetMessageFlag(MessageSystem.MessageFlag flag, bool on)
-        {
-            m_AssetMessages.SetFlag(flag, on);
-        }
-        internal MessageType HighestMessageLevel()
-        {
-            return m_AssetMessages.HighestMessageLevel();
-        }
-        internal IEnumerable<MessageSystem.Message> GetMessages()
-        {
-            List<MessageSystem.Message> messages = new List<MessageSystem.Message>();
-            if(IsMessageSet(MessageSystem.MessageFlag.SceneBundleConflict))
-            {
-                var message = displayName + "\n";
-                if (isScene)
-                    message += "Is a scene that is in a bundle with non-scene assets. Scene bundles must have only one or more scene assets.";
-                else
-                    message += "Is included in a bundle with a scene. Scene bundles must have only one or more scene assets.";
-                messages.Add(new MessageSystem.Message(message, MessageType.Error));
-            }
-            if(IsMessageSet(MessageSystem.MessageFlag.DependencySceneConflict))
-            {
-                var message = displayName + "\n";
-                message += MessageSystem.GetMessage(MessageSystem.MessageFlag.DependencySceneConflict).message;
-                messages.Add(new MessageSystem.Message(message, MessageType.Error));
-            }
-            if (IsMessageSet(MessageSystem.MessageFlag.AssetsDuplicatedInMultBundles))
-            {
-                var bundleNames = Model.CheckDependencyTracker(this);
-                string message = displayName + "\n" + "Is auto-included in multiple bundles:\n";
-                foreach(var bundleName in bundleNames)
-                {
-                    message += bundleName + ", ";
-                }
-                message = message.Substring(0, message.Length - 2);//remove trailing comma.
-                messages.Add(new MessageSystem.Message(message, MessageType.Warning));
-            }
-
-            if (System.String.IsNullOrEmpty(m_BundleName) && m_Refers.Count > 0)
-            {
-                //TODO - refine the parent list to only include those in the current asset list
-                var message = displayName + "\n" + "Is auto included in bundle(s) due to parent(s): \n";
-                foreach (var parent in m_Refers)
-                {
-                    message += parent + ", ";
-                }
-                message = message.Substring(0, message.Length - 2);//remove trailing comma.
-                messages.Add(new MessageSystem.Message(message, MessageType.Info));
-            }            
-
-            if (m_Dependencies != null && m_Dependencies.Count > 0)
-            {
-                var message = string.Empty;
-                var sortedDependencies = m_Dependencies.OrderBy(d => d.bundleName);
-                foreach (var dependent in sortedDependencies)
-                {
-                    if (dependent.bundleName != bundleName)
-                    {
-                        message += dependent.bundleName + " : " + dependent.displayName + "\n";
-                    }
-                }
-                if (string.IsNullOrEmpty(message) == false)
-                {
-                    message = message.Insert(0, displayName + "\n" + "Is dependent on other bundle's asset(s) or auto included asset(s): \n");
-                    message = message.Substring(0, message.Length - 1);//remove trailing line break.
-                    messages.Add(new MessageSystem.Message(message, MessageType.Info));
-                }
-            }            
-
-            messages.Add(new MessageSystem.Message(displayName + "\n" + "Path: " + fullAssetName, MessageType.Info));
-
-            return messages;
-        }
-
-		#endregion
-
-		internal void AddRefer(AssetInfo referInfo)
+		public AssetInfo(string assetPath, string assetFilePath)
 		{
-			m_Refers.Add(referInfo);
-			referInfo.dependencies.Add(this);
+			this.assetPath = assetPath;
+			m_RealFilePath = assetFilePath;
+			m_Refers = new HashSet<AssetInfo>();
+			m_Dependencies = new HashSet<AssetInfo>();
+			m_AssetType = AnalyzeAssetType(assetPath);
 		}
 
-		internal void RemoveRefer(AssetInfo referInfo)
+		public void AddRefer(AssetInfo refer)
 		{
-			m_Refers.Remove(referInfo);
-			referInfo.dependencies.Remove(this);
+			AddReferOnly(refer);
+			refer.AddDependencyOnlfy(this);
 		}
 
-        internal HashSet<AssetInfo> RefreshDependencies()
-        {
-            //TODO - not sure this refreshes enough. need to build tests around that.
-            if (m_Dependencies == null)
-            {
-				m_Dependencies = new HashSet<AssetInfo>();
-                if (AssetDatabase.IsValidFolder(m_AssetName))
-                {
-                    //if we have a folder, its dependencies were already pulled in through alternate means.  no need to GatherFoldersAndFiles
-                    //GatherFoldersAndFiles();
-                }
-                else
-                {
-					
-				}
-            }
-            return m_Dependencies;
-        }
+		public void RemoveRefer(AssetInfo refer)
+		{
+			RemoveReferOnly(refer);
+			refer.RemoveDependencyOnly(this);
+		}
 
-		internal string GetSizeString()
+		public void AddDependency(AssetInfo dep)
+		{
+			AddDependencyOnlfy(dep);
+			dep.AddReferOnly(this);
+		}
+
+		public void RemoveDependency(AssetInfo dep)
+		{
+			RemoveDependencyOnly(dep);
+			dep.RemoveReferOnly(this);
+		}
+
+		public void AddReferOnly(AssetInfo asset)
+		{
+			refers.Add(asset);
+		}
+
+		public void RemoveReferOnly(AssetInfo asset)
+		{
+			refers.Remove(asset);
+		}
+
+		public void AddDependencyOnlfy(AssetInfo asset)
+		{
+			dependencies.Add(asset);
+		}
+
+		public void RemoveDependencyOnly(AssetInfo asset)
+		{
+			dependencies.Remove(asset);
+		}
+
+		public string GetSizeString()
 		{
 			if (fileSize == 0)
 				return "--";
 			return EditorUtility.FormatBytes(fileSize);
 		}
 
-	}
+		public static AssetType AnalyzeAssetType(string assetPath)
+		{
+			AssetType assetType = AssetType.None;
+			//现根据扩展名判断
+			string ext = Path.GetExtension(assetPath);
+			switch (ext.ToLower())
+			{
+				case ".unity":
+					assetType = AssetType.Scene;
+					break;
+				case ".shader":
+					assetType = AssetType.Shader;
+					break;
+				case ".shadervariants":
+					assetType = AssetType.ShaderVariantCollection;
+					break;
+				default:
+					assetType = AssetType.Normal;
+					break;
+			}
+			return assetType;
+		}
 
+	}
 }

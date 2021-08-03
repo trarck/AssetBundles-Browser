@@ -11,7 +11,7 @@ namespace AssetBundleBuilder.Model
         {
             BundleFolderInfo folder = parent;
             int size = nameData.pathTokens.Count;
-            BundleInfo currInfo = null;
+            BundleNode currInfo = null;
             for (var index = 0; index < size; index++)
             {
                 if (folder != null)

@@ -41,7 +41,7 @@ namespace AssetBundleBuilder.Model
 
                 //check asset tree have bundle name
                 BundleNameData nameData = new BundleNameData(bundleName);
-                BundleInfo info = Model.FindBundle(nameData);
+                BundleNode info = Model.FindBundle(nameData);
                 if (info != null)
                 {
                     return 0;

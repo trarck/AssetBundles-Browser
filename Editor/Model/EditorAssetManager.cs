@@ -12,7 +12,7 @@ namespace AssetBundleBuilder
 	 *  1.如果一个asset只属于一个bundle，则可以建立AssetNode指向BundleNode的属性。
 	 *  2.如果一个asset可属于多个bundle，则不能建立AssetNode指向BundleNode的属性。把asset添加到bundle时会这被覆盖掉。如何建立asset到bundle之间的映射关系?
 	 */
-	public class EditorAssetManager
+	public partial class EditorAssetManager
 	{
 		//assets
 		Dictionary<string, AssetInfo> m_Assets = new Dictionary<string, AssetInfo>();
@@ -23,6 +23,8 @@ namespace AssetBundleBuilder
 		//Key:bundle name
 		//Dictionary<string, BundleNode> m_Bundles = new Dictionary<string, BundleNode>();
 		List<BundleInfo> m_Bundles = new List<BundleInfo>(4096);
+
+		Dictionary<uint, BundleInfo> m_BundlesIdMap = new Dictionary<uint, BundleInfo>();
 
 		//private List<BundleNode> m_TempBundles = new List<BundleNode>(4096);
 		//private List<BundleNode> m_TempBundleDeps = new List<BundleNode>(4096);
@@ -56,6 +58,16 @@ namespace AssetBundleBuilder
 			if (m_Assets != null)
 			{
 				m_Assets.Clear();
+			}
+
+			if (m_Bundles != null)
+			{
+				m_Bundles.Clear();
+			}
+
+			if (m_BundlesIdMap != null)
+			{
+				m_BundlesIdMap.Clear();
 			}
 		}
 
@@ -275,6 +287,7 @@ namespace AssetBundleBuilder
 		{
 			BundleInfo bundle = CreateBundleInfo(bundleName);
 			m_Bundles.Add(bundle);
+			m_BundlesIdMap[bundle.id] = bundle;
 			return bundle;
 		}
 		public BundleInfo CreateBundle(string bundleName, AssetInfo assetNode)
@@ -306,9 +319,20 @@ namespace AssetBundleBuilder
 			return null;
 		}
 
+		public BundleInfo GetBundle(uint id)
+		{
+			BundleInfo bundle = null;
+			if (m_BundlesIdMap.TryGetValue(id, out bundle))
+			{
+				return bundle;
+			}
+			return null;
+		}
+
 		public void RemoveBundle(BundleInfo bundle)
 		{
 			m_Bundles.Remove(bundle);
+			m_BundlesIdMap.Remove(bundle.id);
 			bundle.enbale = false;
 			bundle.Clear();
 		}
@@ -326,9 +350,9 @@ namespace AssetBundleBuilder
 			{
 				if (refer != to)
 				{
-					to.AddRefer(refer);
-					refer.RemoveDependency(from);
-					refer.AddDependency(to);
+					to.AddReferOnly(refer);
+					refer.RemoveDependencyOnly(from);
+					refer.AddDependencyOnly(to);
 				}
 			}
 
@@ -337,21 +361,21 @@ namespace AssetBundleBuilder
 			{
 				if (dep != to)
 				{
-					to.AddDependency(dep);
-					dep.RemoveRefer(from);
-					dep.AddRefer(to);
+					to.AddDependencyOnly(dep);
+					dep.RemoveReferOnly(from);
+					dep.AddReferOnly(to);
 				}
 			}
 
 			//如果from在to的refers或dependencies中(循环引用)，则移除。
 			if (to.refers.Contains(from))
 			{
-				to.RemoveRefer(from);
+				to.RemoveReferOnly(from);
 			}
 
 			if (to.dependencies.Contains(from))
 			{
-				to.RemoveDependency(from);
+				to.RemoveDependencyOnly(from);
 			}
 
 			//Repalce from assets.
@@ -375,8 +399,8 @@ namespace AssetBundleBuilder
 						assetDep.bundle = CreateBundle(null, assetDep);
 						RefreshBundleDependencies(assetDep.bundle);
 					}
-					bundle.AddDependency(assetDep.bundle);
-					assetDep.bundle.AddRefer(bundle);
+					bundle.AddDependencyOnly(assetDep.bundle);
+					assetDep.bundle.AddReferOnly(bundle);
 				}
 			}
 		}
@@ -393,8 +417,8 @@ namespace AssetBundleBuilder
 						assetDep.bundle = CreateBundle(null, assetDep);
 						RefreshBundleRelations(assetDep.bundle);
 					}
-					bundle.AddDependency(assetDep.bundle);
-					assetDep.bundle.AddRefer(bundle);
+					bundle.AddDependencyOnly(assetDep.bundle);
+					assetDep.bundle.AddReferOnly(bundle);
 				}
 
 				//add refer
@@ -405,8 +429,8 @@ namespace AssetBundleBuilder
 						assetRef.bundle = CreateBundle(null, assetRef);
 						RefreshBundleRelations(assetRef.bundle);
 					}
-					bundle.AddRefer(assetRef.bundle);
-					assetRef.bundle.AddDependency(bundle);
+					bundle.AddReferOnly(assetRef.bundle);
+					assetRef.bundle.AddDependencyOnly(bundle);
 				}
 			}
 		}
@@ -586,58 +610,5 @@ namespace AssetBundleBuilder
 		}
 
 		#endregion //Optimizer
-
-		#region Save Load
-
-		public void SerializeAsset(AssetInfo asset , BinaryWriter writer)
-		{
-			writer.Write(asset.assetPath);
-			writer.Write((byte)asset.assetType);
-			writer.Write(asset.fileSize);
-			writer.Write(asset.addressable);
-			//deps
-			writer.Write(asset.dependencies.Count);
-			foreach (var dep in asset.dependencies)
-			{
-				writer.Write(dep.assetPath);
-			}
-			//refers
-			writer.Write(asset.refers.Count);
-			foreach(var refer in asset.refers)
-			{
-				writer.Write(refer.assetPath);
-			}
-			////all deps
-			//writer.Write(asset.allDependencies.Count);
-			//foreach (var dep in asset.allDependencies)
-			//{
-			//	writer.Write(dep.assetPath);
-			//}
-		}
-
-		public AssetInfo DeserializeAsset(BinaryReader reader,ref List<string> deps, ref List<string> refers)
-		{
-			string assetPath = reader.ReadString();
-			AssetInfo asset = new AssetInfo(assetPath);
-			asset.assetType = (AssetInfo.AssetType)reader.ReadByte();
-			asset.fileSize = reader.ReadInt64();
-			asset.addressable = reader.ReadBoolean();
-
-			int depsCount = reader.ReadInt32();
-			deps.Clear();
-			deps.Capacity = depsCount;
-			for (int i = 0; i < depsCount; ++i)
-			{
-				deps.Add(reader.ReadString());
-			}
-
-			int referCount = reader.ReadInt32();
-
-			return null;
-		}
-
-
-
-		#endregion //SaveLoad
 	}
 }

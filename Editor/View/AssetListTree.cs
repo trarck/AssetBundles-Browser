@@ -11,7 +11,7 @@ namespace AssetBundleBuilder.View
 {
     internal class AssetListTree : TreeView
     {
-        List<Model.BundleInfo> m_SourceBundles = new List<Model.BundleInfo>();
+        List<Model.BundleNode> m_SourceBundles = new List<Model.BundleNode>();
         AssetBundleManageTab m_Controller;
         List<UnityEngine.Object> m_EmptyObjectList = new List<UnityEngine.Object>();
 
@@ -119,7 +119,7 @@ namespace AssetBundleBuilder.View
             return rows;
         }
 
-        internal void SetSelectedBundles(IEnumerable<BundleInfo> bundles)
+        internal void SetSelectedBundles(IEnumerable<BundleNode> bundles)
         {
             m_Controller.SetSelectedItems(null);
             m_SourceBundles = bundles.ToList();
@@ -222,7 +222,7 @@ namespace AssetBundleBuilder.View
                 return;
 
             List<Object> selectedObjects = new List<Object>();
-			List<Model.AssetInfo> selectedAssets = new List<Model.AssetInfo>();
+			List<Model.AssetNode> selectedAssets = new List<Model.AssetNode>();
             foreach (var id in selectedIds)
             {
                 var assetItem = FindItem(id, rootItem) as AssetTreeItem;
@@ -354,8 +354,8 @@ namespace AssetBundleBuilder.View
         void RemoveAssets(object obj)
         {
             var selectedNodes = obj as List<AssetTreeItem>;
-            var assets = new List<Model.AssetInfo>();
-            //var bundles = new List<AssetBundleModel.BundleInfo>();
+            var assets = new List<Model.AssetNode>();
+            //var bundles = new List<AssetBundleModel.BundleNode>();
             foreach (var node in selectedNodes)
             {
                 if (!System.String.IsNullOrEmpty(node.asset.bundleName))
@@ -447,7 +447,7 @@ namespace AssetBundleBuilder.View
             SelectionChanged(hashCodes);
         }
 
-        internal static AssetTreeItem CreateAssetListTreeView(IEnumerable<Model.BundleInfo> selectedBundles)
+        internal static AssetTreeItem CreateAssetListTreeView(IEnumerable<Model.BundleNode> selectedBundles)
         {
             var root = new AssetTreeItem();
             if (selectedBundles != null)

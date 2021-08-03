@@ -10,13 +10,13 @@ namespace AssetBundleBuilder.View
 {
     internal sealed class BundleTreeItem : TreeViewItem
     {
-        private BundleInfo m_Bundle;
-        internal BundleInfo bundle
+        private BundleNode m_Bundle;
+        internal BundleNode bundle
         {
             get { return m_Bundle; }
         }
 
-        internal BundleTreeItem(BundleInfo b, int depth, Texture2D iconTexture) : base(b.nameHashCode, depth, b.displayName)
+        internal BundleTreeItem(BundleNode b, int depth, Texture2D iconTexture) : base(b.nameHashCode, depth, b.displayName)
         {
             m_Bundle = b;
             icon = iconTexture;
@@ -80,7 +80,7 @@ namespace AssetBundleBuilder.View
 		//    m_Bundle.dirty = false;
 		//}
 
-		public static BundleTreeItem Create(BundleInfo b, int depth)
+		public static BundleTreeItem Create(BundleNode b, int depth)
         {
             if (!b.HaveChildren())
             {

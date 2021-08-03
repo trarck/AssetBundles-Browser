@@ -20,11 +20,11 @@ namespace AssetBundleBuilder.Model
                 m_Format = value;
             }
         }
-        Optimizer m_Optimizer = null;
+        //Optimizer m_Optimizer = null;
 
         public AutoImport()
         {
-            m_Optimizer = new Optimizer();
+            //m_Optimizer = new Optimizer();
         }
 
         protected string GetAssetsDataFile() {
@@ -35,34 +35,34 @@ namespace AssetBundleBuilder.Model
 
         public void ImportFile(string filePath)
         {
-			AssetBundleBuilder.BundleInfo assetNode = m_Optimizer.LoadAsset(filePath);
-            assetNode.SetStandalone(true);
+			//AssetBundleBuilder.BundleInfo assetNode = m_Optimizer.LoadAsset(filePath);
+   //         assetNode.SetStandalone(true);
         }
 
         public void ImportFolder(string folderPath, string pattern = null)
         {
-            m_Optimizer.LoadFromFolder(folderPath, pattern);
+            //m_Optimizer.LoadFromFolder(folderPath, pattern);
         }
 
         public void GenerateBundles()
         {
-            m_Optimizer.Combine();
-            m_Optimizer.GenerateBundles(m_Format);
+            //m_Optimizer.Combine();
+            //m_Optimizer.GenerateBundles(m_Format);
         }
 
 
         [MenuItem("My/TestTTT")]
         public static void Test()
         {
-            var appPath = Path.GetFullPath(".");
+            //var appPath = Path.GetFullPath(".");
 
-            Setting.Format format = Setting.Format.WithFolder;
+            //Setting.Format format = Setting.Format.WithFolder;
 
-            Optimizer optimizer = new Optimizer();
-            optimizer.LoadFromFolder(Path.Combine(appPath, "Assets/ArtResources"), ".*\\.prefab");
-            optimizer.Combine();
-            optimizer.SaveAssetsData(Path.Combine(appPath, AssetBundleConstans.AssetsDataFile));
-            optimizer.GenerateBundles(format);
+            //Optimizer optimizer = new Optimizer();
+            //optimizer.LoadFromFolder(Path.Combine(appPath, "Assets/ArtResources"), ".*\\.prefab");
+            //optimizer.Combine();
+            //optimizer.SaveAssetsData(Path.Combine(appPath, AssetBundleConstans.AssetsDataFile));
+            //optimizer.GenerateBundles(format);
         }
         
     }

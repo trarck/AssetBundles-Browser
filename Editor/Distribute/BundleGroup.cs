@@ -39,7 +39,8 @@ namespace AssetBundleBuilder.Distribute
                 string[] assets = Model.Model.DataSource.GetAssetPathsFromAssetBundle(bundleName);
                 foreach(var asset in assets)
                 {
-                    node.assets.Add(asset);
+                    //TODO:: node.assets.Add(asset);
+
                     //asset in bundle map
                     m_AssetBundles[asset] = node;
                 }
@@ -51,13 +52,13 @@ namespace AssetBundleBuilder.Distribute
             {
                 foreach(var asset in node.assets)
                 {
-                    string[] depAssets = AssetDatabase.GetDependencies(asset, false);
+                    string[] depAssets = null;//TODO::AssetDatabase.GetDependencies(asset, false);
                     foreach(var depAsset in depAssets)
                     {
                         if(m_AssetBundles.TryGetValue(depAsset,out depNode))
                         {
-                            node.AddDependency(depNode);
-                            depNode.AddRefer(node);
+                            node.AddDependencyOnly(depNode);
+                            depNode.AddReferOnly(node);
                         }
                     }
                 }
@@ -186,7 +187,7 @@ namespace AssetBundleBuilder.Distribute
                     referNode.deep = deep;
                 }
                 //remove dep
-                referNode.RemoveDependency(node);
+                referNode.RemoveDependencyOnly(node);
                 //add no deps node
                 if (referNode.dependencies.Count == 0)
                 {

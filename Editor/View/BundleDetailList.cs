@@ -273,7 +273,7 @@ namespace AssetBundleBuilder.View
 
 
 
-        internal void SetItems(IEnumerable<BundleInfo> items)
+        internal void SetItems(IEnumerable<BundleNode> items)
         {
             m_Selecteditems.Clear();
             foreach(var item in items)
@@ -284,7 +284,7 @@ namespace AssetBundleBuilder.View
             Reload();
             ExpandAll( 2 );
         }
-        internal void CollectBundles(BundleInfo bundle)
+        internal void CollectBundles(BundleNode bundle)
         {
             var bunData = bundle as BundleDataInfo;
             if (bunData != null)
