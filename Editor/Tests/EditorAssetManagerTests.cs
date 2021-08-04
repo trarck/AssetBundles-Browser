@@ -668,13 +668,13 @@ namespace AssetBundleBuilder.Tests
 			m_AssetManager.RefreshAllBundleDependencies();
 
 			MemoryStream wms = new MemoryStream();
-			m_AssetManager.Save(wms);
+			m_AssetManager.SaveAssetsAndBundles(wms);
 			byte[] data = wms.GetBuffer();
 	
 			EditorAssetManager editorAssetManager = new EditorAssetManager();
 			
 			MemoryStream rms = new MemoryStream(data);
-			editorAssetManager.Load(rms);
+			editorAssetManager.LoadAssetsAndBundles(rms);
 
 			Assert.AreEqual(m_AssetManager.assets.Count,editorAssetManager.assets.Count);
 			Assert.AreEqual(m_AssetManager.bundles.Count, editorAssetManager.bundles.Count);

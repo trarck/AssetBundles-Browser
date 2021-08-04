@@ -367,7 +367,7 @@ namespace AssetBundleBuilder
 			}
 		}
 
-		public void Save(Stream output)
+		public void SaveAssetsAndBundles(Stream output)
 		{
 			using (BinaryWriter bw = new BinaryWriter(output))
 			{
@@ -376,7 +376,7 @@ namespace AssetBundleBuilder
 			}
 		}
 
-		public void Load(Stream input)
+		public void LoadAssetsAndBundles(Stream input)
 		{
 			using (BinaryReader br = new BinaryReader(input))
 			{
@@ -385,19 +385,19 @@ namespace AssetBundleBuilder
 			}
 		}
 
-		public void Save(string filePath)
+		public void SaveAssetsAndBundles(string filePath)
 		{
 			using (FileStream fs = new FileStream(filePath, FileMode.Truncate))
 			{
-				Save(fs);
+				SaveAssetsAndBundles(fs);
 			}
 		}
 
-		public void Load(string filePath)
+		public void LoadAssetsAndBundles(string filePath)
 		{
 			using (FileStream fs = new FileStream(filePath, FileMode.Open))
 			{
-				Load(fs);
+				LoadAssetsAndBundles(fs);
 			}
 		}
 
