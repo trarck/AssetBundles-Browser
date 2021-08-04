@@ -22,6 +22,7 @@ namespace AssetBundleBuilder
         private string m_DisplayName;
 		private long m_FileSize = -1;
 		private string m_RealFilePath = null;
+		private ulong m_HashCode = 0;
 
 		private HashSet<AssetInfo> m_Refers;
         private HashSet<AssetInfo> m_Dependencies = null;
@@ -47,7 +48,8 @@ namespace AssetBundleBuilder
 			set
 			{
 				m_AssetPath = value;
-				m_DisplayName = System.IO.Path.GetFileNameWithoutExtension(m_AssetPath);
+				m_DisplayName = Path.GetFileNameWithoutExtension(m_AssetPath);
+				//m_HashCode = YH.Hash.xxHash.xxHash64.ComputeHash(m_AssetPath);
 			}
 		}
 		public string displayName
@@ -55,6 +57,18 @@ namespace AssetBundleBuilder
 			get
 			{
 				return m_DisplayName;
+			}
+		}
+
+		public ulong hashCode
+		{
+			get
+			{
+				return m_HashCode;
+			}
+			set
+			{
+				m_HashCode = value;
 			}
 		}
 
@@ -173,12 +187,8 @@ namespace AssetBundleBuilder
 			}
 		}
 
-		public AssetInfo(string assetPath)
+		public AssetInfo(string assetPath):this(assetPath,null)
 		{
-			this.assetPath = assetPath;
-			m_Refers = new HashSet<AssetInfo>();
-			m_Dependencies = new HashSet<AssetInfo>();
-			m_AssetType = AnalyzeAssetType(assetPath);
 		}
 
 		public AssetInfo(string assetPath, string assetFilePath)
