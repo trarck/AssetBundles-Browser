@@ -374,7 +374,7 @@ namespace AssetBundleBuilder
                 m_InspectTab.RefreshBundles();
             };
 
-            Model.Model.DataSource.BuildAssetBundles (buildInfo);
+            Model.Model.DataSource.BuildAssetBundles(buildInfo);
 
             AssetDatabase.Refresh(ImportAssetOptions.ForceUpdate);
 

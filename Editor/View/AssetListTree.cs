@@ -293,11 +293,11 @@ namespace AssetBundleBuilder.View
                 return false;
 
             //can't drag into a folder
-            var folder = m_SourceBundles[0] as BundleFolderInfo;
+            var folder = m_SourceBundles[0] as BundleFolderNode;
             if (folder != null)
                 return false;
 
-            var data = m_SourceBundles[0] as BundleDataInfo;
+            var data = m_SourceBundles[0] as BundleDataNode;
             if(data == null)
                 return false; // this should never happen.
 

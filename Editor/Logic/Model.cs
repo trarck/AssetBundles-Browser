@@ -25,7 +25,7 @@ namespace AssetBundleBuilder.Model
         internal static /*const*/ Color k_LightGrey = Color.grey * 1.5f;
 
         private static DataSource.DataSource s_DataSource;
-        private static BundleFolderConcreteInfo s_RootLevelBundles = new BundleFolderConcreteInfo("", null);
+        private static BundleFolderConcreteNode s_RootLevelBundles = new BundleFolderConcreteNode("", null);
         private static List<ABMoveData> s_MoveData = new List<ABMoveData>();
         private static List<BundleNode> s_BundlesToUpdate = new List<BundleNode>();
         private static Dictionary<string, AssetNode> s_GlobalAssetList = new Dictionary<string, AssetNode>();
@@ -115,7 +115,7 @@ namespace AssetBundleBuilder.Model
         /// </summary>
         public static void Rebuild()
         {
-            s_RootLevelBundles = new BundleFolderConcreteInfo("", null);
+            s_RootLevelBundles = new BundleFolderConcreteNode("", null);
             s_MoveData = new List<ABMoveData>();
             s_BundlesToUpdate = new List<BundleNode>();
             s_GlobalAssetList = new Dictionary<string, AssetNode>();
@@ -150,7 +150,7 @@ namespace AssetBundleBuilder.Model
 
             if(s_InErrorState)
             {
-                s_RootLevelBundles = new BundleFolderConcreteInfo("", null);
+                s_RootLevelBundles = new BundleFolderConcreteNode("", null);
                 s_EmptyMessageString = k_ProblemEmptyMessage;
             }
         }
@@ -245,10 +245,10 @@ namespace AssetBundleBuilder.Model
             return s_EmptyMessageString;
         }
 
-        internal static BundleNode CreateEmptyBundle(BundleFolderInfo folder = null, string newName = null)
+        internal static BundleNode CreateEmptyBundle(BundleFolderNode folder = null, string newName = null)
         {
-            if ((folder as BundleVariantFolderInfo) != null)
-                return CreateEmptyVariant(folder as BundleVariantFolderInfo);
+            if ((folder as BundleVariantFolderNode) != null)
+                return CreateEmptyVariant(folder as BundleVariantFolderNode);
 
             folder = (folder == null) ? s_RootLevelBundles : folder;
             string name = GetUniqueName(folder, newName);
@@ -257,10 +257,10 @@ namespace AssetBundleBuilder.Model
             return AddBundleToFolder(folder, nameData);
         }
 
-        internal static BundleNode CreateOrGetBundle(BundleFolderInfo folder = null, string name = null)
+        internal static BundleNode CreateOrGetBundle(BundleFolderNode folder = null, string name = null)
         {
-            if ((folder as BundleVariantFolderInfo) != null)
-                return CreateOrGetVariant(folder as BundleVariantFolderInfo,name);
+            if ((folder as BundleVariantFolderNode) != null)
+                return CreateOrGetVariant(folder as BundleVariantFolderNode,name);
 
             folder = (folder == null) ? s_RootLevelBundles : folder;
             BundleNameData nameData;
@@ -268,7 +268,7 @@ namespace AssetBundleBuilder.Model
             return AddBundleToFolder(folder, nameData);
         }
 
-        internal static BundleNode CreateEmptyVariant(BundleVariantFolderInfo folder)
+        internal static BundleNode CreateEmptyVariant(BundleVariantFolderNode folder)
         {
             string name = GetUniqueName(folder, k_NewVariantBaseName);
             string variantName = folder.m_Name.bundleName + "." + name;
@@ -276,7 +276,7 @@ namespace AssetBundleBuilder.Model
             return AddBundleToFolder(folder.parent, nameData);
         }
 
-        internal static BundleNode CreateOrGetVariant(BundleVariantFolderInfo folder,string name)
+        internal static BundleNode CreateOrGetVariant(BundleVariantFolderNode folder,string name)
         {
             name =string.IsNullOrEmpty(name)?k_NewVariantBaseName:name;
             string variantName = folder.m_Name.bundleName + "." + name;
@@ -284,7 +284,7 @@ namespace AssetBundleBuilder.Model
             return AddBundleToFolder(folder.parent, nameData);
         }
 
-        internal static BundleFolderInfo CreateEmptyBundleFolder(BundleFolderConcreteInfo folder = null)
+        internal static BundleFolderNode CreateEmptyBundleFolder(BundleFolderConcreteNode folder = null)
         {
             folder = (folder == null) ? s_RootLevelBundles : folder;
             string name = GetUniqueName(folder) + "/dummy";
@@ -292,7 +292,7 @@ namespace AssetBundleBuilder.Model
             return AddFoldersToBundle(s_RootLevelBundles, nameData);
         }
 
-        internal static BundleFolderInfo CreateEmptyBundleFolder(BundleFolderConcreteInfo folder,string newName)
+        internal static BundleFolderNode CreateEmptyBundleFolder(BundleFolderConcreteNode folder,string newName)
         {
             folder = (folder == null) ? s_RootLevelBundles : folder;
             string name = GetUniqueName(folder, newName)+"/dummy";
@@ -300,7 +300,7 @@ namespace AssetBundleBuilder.Model
             return AddFoldersToBundle(s_RootLevelBundles, nameData);
         }
 
-        internal static BundleFolderInfo CreateOrGetBundleFolder(BundleFolderConcreteInfo folder, string newName)
+        internal static BundleFolderNode CreateOrGetBundleFolder(BundleFolderConcreteNode folder, string newName)
         {
             folder = (folder == null) ? s_RootLevelBundles : folder;
             if (string.IsNullOrEmpty(newName))
@@ -320,7 +320,7 @@ namespace AssetBundleBuilder.Model
             
             BundleNameData nameData = new BundleNameData(name);
 
-            BundleFolderInfo folder = AddFoldersToBundle(s_RootLevelBundles, nameData);
+            BundleFolderNode folder = AddFoldersToBundle(s_RootLevelBundles, nameData);
             if (folder == null)
             {
                 folder = s_RootLevelBundles;
@@ -330,10 +330,10 @@ namespace AssetBundleBuilder.Model
             return currInfo;
         }
 
-        internal static BundleFolderInfo AddFoldersToBundle(BundleFolderInfo parent, BundleNameData nameData)
+        internal static BundleFolderNode AddFoldersToBundle(BundleFolderNode parent, BundleNameData nameData)
         {
             BundleNode currInfo = null;
-            BundleFolderInfo folder = parent;
+            BundleFolderNode folder = parent;
             var size = nameData.pathTokens.Count;
             for (var index = 0; index < size; index++)
             {
@@ -342,11 +342,11 @@ namespace AssetBundleBuilder.Model
                     currInfo = folder.GetChild(nameData.pathTokens[index]);
                     if (currInfo == null)
                     {
-                        currInfo = new BundleFolderConcreteInfo(nameData.pathTokens, index + 1, folder);
+                        currInfo = new BundleFolderConcreteNode(nameData.pathTokens, index + 1, folder);
                         folder.AddChild(currInfo);
                     }
 
-                    folder = currInfo as BundleFolderInfo;
+                    folder = currInfo as BundleFolderNode;
                     if (folder == null)
                     {
                         s_InErrorState = true;
@@ -355,7 +355,7 @@ namespace AssetBundleBuilder.Model
                     }
                 }
             }
-            return currInfo as BundleFolderInfo;
+            return currInfo as BundleFolderNode;
         }
 
         private static void LogFolderAndBundleNameConflict(string name)
@@ -368,17 +368,17 @@ namespace AssetBundleBuilder.Model
             LogError(message);
         }
 
-        private static BundleNode AddBundleToFolder(BundleFolderInfo folder, BundleNameData nameData)
+        private static BundleNode AddBundleToFolder(BundleFolderNode folder, BundleNameData nameData)
         {
             BundleNode currInfo = folder.GetChild(nameData.shortName);
             if (!System.String.IsNullOrEmpty(nameData.variant))
             {
                 if(currInfo == null)
                 {
-                    currInfo = new BundleVariantFolderInfo(nameData.bundleName, folder);
+                    currInfo = new BundleVariantFolderNode(nameData.bundleName, folder);
                     folder.AddChild(currInfo);
                 }
-                var variantFolder = currInfo as BundleVariantFolderInfo;
+                var variantFolder = currInfo as BundleVariantFolderNode;
                 if (variantFolder == null)
                 {
                     var message = "Bundle named " + nameData.shortName;
@@ -394,7 +394,7 @@ namespace AssetBundleBuilder.Model
                 currInfo = variantFolder.GetChild(nameData.variant);
                 if (currInfo == null)
                 {
-                    currInfo = new BundleVariantDataInfo(nameData.fullNativeName, variantFolder);
+                    currInfo = new BundleVariantDataNode(nameData.fullNativeName, variantFolder);
                     variantFolder.AddChild(currInfo);
                 }
                 
@@ -403,12 +403,12 @@ namespace AssetBundleBuilder.Model
             {
                 if (currInfo == null)
                 {
-                    currInfo = new BundleDataInfo(nameData.fullNativeName, folder);
+                    currInfo = new BundleDataNode(nameData.fullNativeName, folder);
                     folder.AddChild(currInfo);
                 }
                 else
                 {
-                    var dataInfo = currInfo as BundleDataInfo;
+                    var dataInfo = currInfo as BundleDataNode;
                     if (dataInfo == null)
                     {
                         s_InErrorState = true;
@@ -419,7 +419,7 @@ namespace AssetBundleBuilder.Model
             return currInfo;
         }
 
-        private static string GetUniqueName(BundleFolderInfo folder, string suggestedName = null)
+        private static string GetUniqueName(BundleFolderNode folder, string suggestedName = null)
         {
             suggestedName = (suggestedName == null) ? k_NewBundleBaseName : suggestedName;
             string name = suggestedName;
@@ -488,7 +488,7 @@ namespace AssetBundleBuilder.Model
             return result;  
         }
 
-        internal static void HandleBundleReparent(IEnumerable<BundleNode> bundles, BundleFolderInfo parent)
+        internal static void HandleBundleReparent(IEnumerable<BundleNode> bundles, BundleFolderNode parent)
         {
             parent = (parent == null) ? s_RootLevelBundles : parent;
             foreach (var bundle in bundles)
@@ -498,7 +498,7 @@ namespace AssetBundleBuilder.Model
             ExecuteAssetMove();
         }
 
-        internal static void HandleBundleMerge(IEnumerable<BundleNode> bundles, BundleDataInfo target)
+        internal static void HandleBundleMerge(IEnumerable<BundleNode> bundles, BundleDataNode target)
         {
             foreach (var bundle in bundles)
             {
@@ -536,9 +536,9 @@ namespace AssetBundleBuilder.Model
             BundleNode currNode = s_RootLevelBundles;
             foreach (var token in name.pathTokens)
             {
-                if(currNode is BundleFolderInfo)
+                if(currNode is BundleFolderNode)
                 {
-                    currNode = (currNode as BundleFolderInfo).GetChild(token);
+                    currNode = (currNode as BundleFolderNode).GetChild(token);
                     if (currNode == null)
                         return null;
                 }
@@ -548,12 +548,12 @@ namespace AssetBundleBuilder.Model
                 }
             }
 
-            if(currNode is BundleFolderInfo)
+            if(currNode is BundleFolderNode)
             {
-                currNode = (currNode as BundleFolderInfo).GetChild(name.shortName);
-                if(currNode is BundleVariantFolderInfo)
+                currNode = (currNode as BundleFolderNode).GetChild(name.shortName);
+                if(currNode is BundleVariantFolderNode)
                 {
-                    currNode = (currNode as BundleVariantFolderInfo).GetChild(name.variant);
+                    currNode = (currNode as BundleVariantFolderNode).GetChild(name.variant);
                 }
                 return currNode;
             }
@@ -599,19 +599,19 @@ namespace AssetBundleBuilder.Model
             return newBundle;
         }
 
-        internal static BundleNode HandleConvertToVariant(BundleDataInfo bundle)
+        internal static BundleNode HandleConvertToVariant(BundleDataNode bundle)
         {
             bundle.HandleDelete(true, bundle.m_Name.bundleName, k_NewVariantBaseName);
             ExecuteAssetMove();
-            var root = bundle.parent.GetChild(bundle.m_Name.shortName) as BundleVariantFolderInfo;
+            var root = bundle.parent.GetChild(bundle.m_Name.shortName) as BundleVariantFolderNode;
 
             if (root != null)
                 return root.GetChild(k_NewVariantBaseName);
             else
             {
                 //we got here because the converted bundle was empty.
-                var vfolder = new BundleVariantFolderInfo(bundle.m_Name.bundleName, bundle.parent);
-                var vdata = new BundleVariantDataInfo(bundle.m_Name.bundleName + "." + k_NewVariantBaseName, vfolder);
+                var vfolder = new BundleVariantFolderNode(bundle.m_Name.bundleName, bundle.parent);
+                var vdata = new BundleVariantDataNode(bundle.m_Name.bundleName + "." + k_NewVariantBaseName, vfolder);
                 bundle.parent.AddChild(vfolder);
                 vfolder.AddChild(vdata);
                 return vdata;

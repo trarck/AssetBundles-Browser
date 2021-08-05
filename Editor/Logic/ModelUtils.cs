@@ -7,9 +7,9 @@ namespace AssetBundleBuilder.Model
     {
         public static string assetPathPrev = "Assets/";
 
-        internal static BundleFolderInfo CreateBundleFolders(BundleFolderInfo parent, BundleNameData nameData)
+        internal static BundleFolderNode CreateBundleFolders(BundleFolderNode parent, BundleNameData nameData)
         {
-            BundleFolderInfo folder = parent;
+            BundleFolderNode folder = parent;
             int size = nameData.pathTokens.Count;
             BundleNode currInfo = null;
             for (var index = 0; index < size; index++)
@@ -19,18 +19,18 @@ namespace AssetBundleBuilder.Model
                     currInfo = folder.GetChild(nameData.pathTokens[index]);
                     if (currInfo == null)
                     {
-                        currInfo = new BundleFolderConcreteInfo(nameData.pathTokens, index + 1, folder);
+                        currInfo = new BundleFolderConcreteNode(nameData.pathTokens, index + 1, folder);
                         folder.AddChild(currInfo);
                     }
                     
-                    folder = currInfo as BundleFolderInfo;
+                    folder = currInfo as BundleFolderNode;
                     if (folder == null)
                     {
                         return null;
                     }
                 }
             }
-            return currInfo as BundleFolderInfo;
+            return currInfo as BundleFolderNode;
         }
 
         /// <summary>

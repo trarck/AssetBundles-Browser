@@ -164,20 +164,20 @@ namespace AssetBundleBuilder.Model
 
     public abstract class BundleNode
     {
-        internal BundleFolderInfo m_Parent;
+        internal BundleFolderNode m_Parent;
         protected bool m_DoneUpdating;
         protected bool m_Dirty;
         internal BundleNameData m_Name;
         protected MessageSystem.MessageState m_BundleMessages = new MessageSystem.MessageState();
         protected MessageSystem.Message m_CachedHighMessage = null;
 
-        internal BundleNode(string name, BundleFolderInfo parent)
+        internal BundleNode(string name, BundleFolderNode parent)
         {
             m_Name = new BundleNameData(name);
             m_Parent = parent;
         }
 
-        internal BundleFolderInfo parent
+        internal BundleFolderNode parent
         { get { return m_Parent; } }
         internal virtual string displayName
         {
@@ -252,7 +252,7 @@ namespace AssetBundleBuilder.Model
             m_Dirty = true;
         }
 
-        abstract internal void HandleReparent(string parentName, BundleFolderInfo newParent = null);
+        abstract internal void HandleReparent(string parentName, BundleFolderNode newParent = null);
         abstract internal List<AssetNode> GetDependencies();
         abstract public List<AssetNode> GetConcretes();
 
@@ -279,7 +279,7 @@ namespace AssetBundleBuilder.Model
         }
     }
 
-    public class BundleDataInfo : BundleNode
+    public class BundleDataNode : BundleNode
     {
         protected List<AssetNode> m_ConcreteAssets;
         protected List<AssetNode> m_DependentAssets;
@@ -297,7 +297,7 @@ namespace AssetBundleBuilder.Model
             }
         }
 
-        internal BundleDataInfo(string name, BundleFolderInfo parent) : base(name, parent)
+        internal BundleDataNode(string name, BundleFolderNode parent) : base(name, parent)
         {
             m_ConcreteAssets = new List<AssetNode>();
             m_DependentAssets = new List<AssetNode>();
@@ -305,7 +305,7 @@ namespace AssetBundleBuilder.Model
             m_ConcreteCounter = 0;
             m_DependentCounter = 0;
         }
-        ~BundleDataInfo()
+        ~BundleDataNode()
         {
             foreach (var asset in m_DependentAssets)
             {
@@ -586,7 +586,7 @@ namespace AssetBundleBuilder.Model
         //        return new BundleTreeItem(this, depth, Model.GetBundleIcon());
         //}
 
-        internal override void HandleReparent(string parentName, BundleFolderInfo newParent = null)
+        internal override void HandleReparent(string parentName, BundleFolderNode newParent = null)
         {
             RefreshAssetList();
             string newName = System.String.IsNullOrEmpty(parentName) ? "" : parentName + '/';
@@ -659,10 +659,10 @@ namespace AssetBundleBuilder.Model
         }
     }
 
-    public class BundleVariantDataInfo : BundleDataInfo
+    public class BundleVariantDataNode : BundleDataNode
     {
         protected List<AssetNode> m_FolderIncludeAssets = new List<AssetNode>();
-        internal BundleVariantDataInfo(string name, BundleFolderInfo parent) : base(name, parent)
+        internal BundleVariantDataNode(string name, BundleFolderNode parent) : base(name, parent)
         {
         }
 
@@ -673,7 +673,7 @@ namespace AssetBundleBuilder.Model
         internal override void Update()
         {
             base.Update();
-            (m_Parent as BundleVariantFolderInfo).ValidateVariants();
+            (m_Parent as BundleVariantFolderNode).ValidateVariants();
         }
         internal override void RefreshAssetList()
         {
@@ -719,7 +719,7 @@ namespace AssetBundleBuilder.Model
             Model.MoveAssetToBundle(m_ConcreteAssets, forcedNewName, forcedNewVariant);
         }
 
-        internal bool FindContentMismatch(BundleVariantDataInfo other)
+        internal bool FindContentMismatch(BundleVariantDataNode other)
         {
             bool result = false;
 
@@ -775,16 +775,16 @@ namespace AssetBundleBuilder.Model
         }
     }
 
-    public class BundleFolderInfo : BundleNode
+    public class BundleFolderNode : BundleNode
     {
         protected Dictionary<string, BundleNode> m_Children;
 
-        internal BundleFolderInfo(string name, BundleFolderInfo parent) : base(name, parent)
+        internal BundleFolderNode(string name, BundleFolderNode parent) : base(name, parent)
         {
             m_Children = new Dictionary<string, BundleNode>();
         }
         
-        internal BundleFolderInfo(List<string> path, int depth, BundleFolderInfo parent) : base("", parent)
+        internal BundleFolderNode(List<string> path, int depth, BundleFolderNode parent) : base("", parent)
         {
             m_Children = new Dictionary<string, BundleNode>();
             m_Name = new BundleNameData("");
@@ -903,7 +903,7 @@ namespace AssetBundleBuilder.Model
                 if (!System.String.IsNullOrEmpty(newName))
                 {
                     BundleNameData nameData = new BundleNameData(newName);
-                    BundleFolderInfo bundleFolderInfo = ModelUtils.CreateBundleFolders(this, nameData);
+                    BundleFolderNode bundleFolderInfo = ModelUtils.CreateBundleFolders(this, nameData);
                     if (bundleFolderInfo != null)
                     {
                         bundleFolderInfo.AddChild(info, nameData.shortName);
@@ -917,7 +917,7 @@ namespace AssetBundleBuilder.Model
             return true;
         }
 
-		internal override void HandleReparent(string parentName, BundleFolderInfo newParent = null)
+		internal override void HandleReparent(string parentName, BundleFolderNode newParent = null)
 		{
 			if (parentName.StartsWith(m_Name.bundleName))
 			{
@@ -1013,13 +1013,13 @@ namespace AssetBundleBuilder.Model
 		}
 	}
 
-    public class BundleFolderConcreteInfo : BundleFolderInfo
+    public class BundleFolderConcreteNode : BundleFolderNode
     {
-        internal BundleFolderConcreteInfo(string name, BundleFolderInfo parent) : base(name, parent)
+        internal BundleFolderConcreteNode(string name, BundleFolderNode parent) : base(name, parent)
         {
         }
 
-        internal BundleFolderConcreteInfo(List<string> path, int depth, BundleFolderInfo parent) : base(path, depth, parent)
+        internal BundleFolderConcreteNode(List<string> path, int depth, BundleFolderNode parent) : base(path, depth, parent)
         {
         }
 
@@ -1039,7 +1039,7 @@ namespace AssetBundleBuilder.Model
         //    }
         //    return result;
         //}
-        internal override void HandleReparent(string parentName, BundleFolderInfo newParent = null)
+        internal override void HandleReparent(string parentName, BundleFolderNode newParent = null)
         {
             if (parentName.StartsWith(m_Name.bundleName))
             {
@@ -1080,9 +1080,9 @@ namespace AssetBundleBuilder.Model
 
     }
 
-    public class BundleVariantFolderInfo : BundleFolderInfo
+    public class BundleVariantFolderNode : BundleFolderNode
     {
-        internal BundleVariantFolderInfo(string name, BundleFolderInfo parent) : base(name, parent)
+        internal BundleVariantFolderNode(string name, BundleFolderNode parent) : base(name, parent)
         {
         }
         internal override void AddChild(BundleNode info,string key=null)
@@ -1104,10 +1104,10 @@ namespace AssetBundleBuilder.Model
             bool childMismatch = false;
             if(m_Children.Count > 1)
             {
-                BundleVariantDataInfo goldChild = null;
+                BundleVariantDataNode goldChild = null;
                 foreach(var c in m_Children)
                 {
-                    var child = c.Value as BundleVariantDataInfo;
+                    var child = c.Value as BundleVariantDataNode;
                     child.SetMessageFlag(MessageSystem.MessageFlag.VariantBundleMismatch, false);
                     if (goldChild == null)
                     {
@@ -1141,7 +1141,7 @@ namespace AssetBundleBuilder.Model
         //    return result;
         //}
 
-        internal override void HandleReparent(string parentName, BundleFolderInfo newParent = null)
+        internal override void HandleReparent(string parentName, BundleFolderNode newParent = null)
         {
             string newName = System.String.IsNullOrEmpty(parentName) ? "" : parentName + '/';
             newName += displayName;
@@ -1178,7 +1178,7 @@ namespace AssetBundleBuilder.Model
         internal override Texture2D GetIcon()
         {
             if ((m_Children.Count > 0) &&
-                ((m_Children.First().Value as BundleVariantDataInfo).IsSceneVariant()))
+                ((m_Children.First().Value as BundleVariantDataNode).IsSceneVariant()))
             {
                 return Model.GetSceneIcon();
             }

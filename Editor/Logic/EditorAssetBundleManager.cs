@@ -12,7 +12,7 @@ namespace AssetBundleBuilder
 	 *  1.如果一个asset只属于一个bundle，则可以建立AssetNode指向BundleNode的属性。
 	 *  2.如果一个asset可属于多个bundle，则不能建立AssetNode指向BundleNode的属性。把asset添加到bundle时会这被覆盖掉。如何建立asset到bundle之间的映射关系?
 	 */
-	public partial class EditorAssetManager
+	public partial class EditorAssetBundleManager
 	{
 		//assets
 		Dictionary<string, AssetInfo> m_Assets = new Dictionary<string, AssetInfo>();

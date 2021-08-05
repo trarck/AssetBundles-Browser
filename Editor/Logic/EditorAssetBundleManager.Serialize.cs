@@ -46,7 +46,7 @@ namespace AssetBundleBuilder
 	/// 序列化的时候是无序保存，所以在反序列化的时候要循环二遍。
 	/// 如果序列化的时候，按引用层级序列化，反序列化只需要循环一遍。
 	/// </summary>
-	public partial class EditorAssetManager
+	public partial class EditorAssetBundleManager
 	{
 
 		#region Serialize

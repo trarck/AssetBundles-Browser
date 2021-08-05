@@ -9,7 +9,7 @@ namespace AssetBundleBuilder.Model
     {
 
 
-        internal static int ImportFile(string filePath, BundleFolderConcreteInfo parent,Setting.Format format,bool force=true)
+        internal static int ImportFile(string filePath, BundleFolderConcreteNode parent,Setting.Format format,bool force=true)
         {
             if (Path.IsPathRooted(filePath))
             {
@@ -23,7 +23,7 @@ namespace AssetBundleBuilder.Model
 
             if ((format & Setting.Format.WithFolder) == Setting.Format.WithFolder)
             {
-                parent = Model.CreateOrGetBundleFolder(parent, Setting.GetBundleFolderName(Path.GetDirectoryName(filePath))) as BundleFolderConcreteInfo;
+                parent = Model.CreateOrGetBundleFolder(parent, Setting.GetBundleFolderName(Path.GetDirectoryName(filePath))) as BundleFolderConcreteNode;
             }
 
             bool useFullname = (format & Setting.Format.FullPath) == Setting.Format.FullPath;
@@ -59,22 +59,22 @@ namespace AssetBundleBuilder.Model
         public static int ImportFileToStringPath(string filePath,string parentPath, Setting.Format format, bool force = true)
         {
             BundleNameData nameData = new BundleNameData(parentPath);
-            BundleFolderConcreteInfo parentFolder = Model.FindBundle(nameData) as BundleFolderConcreteInfo;
+            BundleFolderConcreteNode parentFolder = Model.FindBundle(nameData) as BundleFolderConcreteNode;
             return ImportFile(filePath, parentFolder, format, force);
         }
 
         private struct ImportFolderInfo
         {
-            public ImportFolderInfo(DirectoryInfo directory, BundleFolderConcreteInfo parent)
+            public ImportFolderInfo(DirectoryInfo directory, BundleFolderConcreteNode parent)
             {
                 this.directory = directory;
                 this.parent = parent;
             }
             public DirectoryInfo directory;
-            public BundleFolderConcreteInfo parent;
+            public BundleFolderConcreteNode parent;
         }
 
-        internal static List<int> ImportFolder(string folderPath, BundleFolderConcreteInfo parent, Setting.Format format, bool force = true)
+        internal static List<int> ImportFolder(string folderPath, BundleFolderConcreteNode parent, Setting.Format format, bool force = true)
         {
             List<int> ids = new List<int>();
 
@@ -129,7 +129,7 @@ namespace AssetBundleBuilder.Model
         public static List<int> ImportFolderToStringPath(string folderPath,string parentPath, Setting.Format format = Setting.Format.FullPath, bool force = true)
         {
             BundleNameData nameData = new BundleNameData(parentPath);
-            BundleFolderConcreteInfo parentFolder =Model.FindBundle(nameData) as BundleFolderConcreteInfo;
+            BundleFolderConcreteNode parentFolder =Model.FindBundle(nameData) as BundleFolderConcreteNode;
             return ImportFolder(folderPath, parentFolder, format,force);
         }
     }

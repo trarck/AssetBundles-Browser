@@ -9,16 +9,16 @@ using System.Threading;
 
 namespace AssetBundleBuilder.Tests
 {
-    public class EditorAssetManagerTests
+    public class EditorAssetBundleManagerTests
 	{
-		private EditorAssetManager m_AssetManager = null;
+		private EditorAssetBundleManager m_AssetManager = null;
 
 		//run once
 		[OneTimeSetUp]
 		public void OneTimeSetUp()
 		{
 			Debug.Log("OneTimeSetUp");
-			m_AssetManager = new EditorAssetManager();
+			m_AssetManager = new EditorAssetBundleManager();
 		}
 
 		[OneTimeTearDown]
@@ -629,14 +629,14 @@ namespace AssetBundleBuilder.Tests
 			MemoryStream ms = new MemoryStream();
 			using (BinaryWriter bw = new BinaryWriter(ms))
 			{
-				EditorAssetManager.SerializeAsset(assetPrefab,bw);
+				EditorAssetBundleManager.SerializeAsset(assetPrefab,bw);
 			}
 
 			AssetSerializeInfo deserializeInfo = null;
 			MemoryStream rms = new MemoryStream(ms.GetBuffer());
 			using (BinaryReader br = new BinaryReader(rms))
 			{
-				deserializeInfo = EditorAssetManager.DeserializeAsset(br);
+				deserializeInfo = EditorAssetBundleManager.DeserializeAsset(br);
 			}
 
 			Assert.NotNull(deserializeInfo);
@@ -671,7 +671,7 @@ namespace AssetBundleBuilder.Tests
 			m_AssetManager.SaveAssetsAndBundles(wms);
 			byte[] data = wms.GetBuffer();
 	
-			EditorAssetManager editorAssetManager = new EditorAssetManager();
+			EditorAssetBundleManager editorAssetManager = new EditorAssetBundleManager();
 			
 			MemoryStream rms = new MemoryStream(data);
 			editorAssetManager.LoadAssetsAndBundles(rms);

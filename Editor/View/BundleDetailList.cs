@@ -71,7 +71,7 @@ namespace AssetBundleBuilder.View
     }
     internal class BundleDetailList : TreeView
     {
-        HashSet<BundleDataInfo> m_Selecteditems;
+        HashSet<BundleDataNode> m_Selecteditems;
         Rect m_TotalRect;
 
         const float k_DoubleIndent = 32f;
@@ -85,7 +85,7 @@ namespace AssetBundleBuilder.View
 
         internal BundleDetailList(TreeViewState state) : base(state)
         {
-            m_Selecteditems = new HashSet<BundleDataInfo>();
+            m_Selecteditems = new HashSet<BundleDataNode>();
             showBorder = true;
         }
         internal void Update()
@@ -204,7 +204,7 @@ namespace AssetBundleBuilder.View
             }
         }
 
-        internal static TreeViewItem AppendBundleToTree(BundleDataInfo bundle)
+        internal static TreeViewItem AppendBundleToTree(BundleDataNode bundle)
         {
             var itemName = bundle.m_Name.fullNativeName;
             var bunRoot = new TreeViewItem(itemName.GetHashCode(), 0, itemName);
@@ -286,12 +286,12 @@ namespace AssetBundleBuilder.View
         }
         internal void CollectBundles(BundleNode bundle)
         {
-            var bunData = bundle as BundleDataInfo;
+            var bunData = bundle as BundleDataNode;
             if (bunData != null)
                 m_Selecteditems.Add(bunData);
             else
             {
-                var bunFolder = bundle as BundleFolderInfo;
+                var bunFolder = bundle as BundleFolderNode;
                 foreach (var bun in bunFolder.GetChildList())
                 {
                     CollectBundles(bun);
