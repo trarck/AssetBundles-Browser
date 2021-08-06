@@ -21,6 +21,10 @@ namespace AssetBundleBuilder
 
 		//bundle name
 		protected string m_Name;
+
+		//bundle variant name
+		protected string m_VariantName;
+
 		////主路径
 		//public string mainAsset;
 		////资源
@@ -69,6 +73,18 @@ namespace AssetBundleBuilder
 			set
 			{
 				m_Name = value;
+			}
+		}
+
+		public string variantName
+		{
+			get
+			{
+				return m_VariantName;
+			}
+			set
+			{
+				m_VariantName = value;
 			}
 		}
 
@@ -184,19 +200,28 @@ namespace AssetBundleBuilder
 			}
 		}
 
-		public BundleInfo():this(++IdIndex,null)
+		public BundleInfo():this(++IdIndex,null, null)
 		{
 		}
 
-		public BundleInfo(string name) : this(++IdIndex,name)
+		public BundleInfo(string name) : this(++IdIndex,name, null)
 		{
 			
 		}
+		public BundleInfo(string name, string variantName) : this(++IdIndex, name, variantName)
+		{
 
-		public BundleInfo(uint id,string name) 
+		}
+
+		public BundleInfo(uint id,string name) : this(id, name,null)
+		{
+		}
+
+		public BundleInfo(uint id, string name, string variantName)
 		{
 			m_Id = id;
 			m_Name = name;
+			m_VariantName = variantName;
 
 			m_Assets = new HashSet<AssetInfo>();
 			refers = new HashSet<BundleInfo>();

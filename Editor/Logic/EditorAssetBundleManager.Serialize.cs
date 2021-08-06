@@ -107,6 +107,7 @@ namespace AssetBundleBuilder
 		{
 			writer.Write(bundle.id);
 			writer.Write(bundle.name==null?"":bundle.name);
+			writer.Write(bundle.variantName == null ? "" : bundle.variantName);
 			writer.Write((byte)bundle.bundleType);
 			writer.Write(bundle.IsStandalone());
 			writer.Write(bundle.refersHashCode);
@@ -140,7 +141,8 @@ namespace AssetBundleBuilder
 
 			uint id = reader.ReadUInt32();
 			string name = reader.ReadString();
-			BundleInfo bundle = new BundleInfo(id,name);
+			string variantName = reader.ReadString();
+			BundleInfo bundle = new BundleInfo(id,name, variantName);
 			bundle.bundleType =(BundleInfo.BundleType) reader.ReadByte();
 			bundle.SetStandalone(reader.ReadBoolean());
 			bundle.refersHashCode = reader.ReadInt32();

@@ -54,6 +54,11 @@ namespace AssetBundleBuilder.DataSource
             return AssetDatabase.GetAllAssetBundleNames ();
         }
 
+        public string[] GetAllAssetPaths()
+        {
+            return AssetDatabase.GetAllAssetPaths();
+        }
+
         public bool IsReadOnly() {
             return false;
         }

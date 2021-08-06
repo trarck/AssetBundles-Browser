@@ -91,6 +91,12 @@ namespace AssetBundleBuilder.DataSource
         /// Array of asset bundle names in project
         /// </summary>
         string[] GetAllAssetBundleNames();
+
+        /// <summary>
+        /// Array of assets
+        /// </summary>
+        /// <returns></returns>
+        string[] GetAllAssetPaths();
         /// <summary>
         /// If this data source is read only. 
         ///  If this returns true, much of the Browsers's interface will be diabled (drag&drop, etc.)

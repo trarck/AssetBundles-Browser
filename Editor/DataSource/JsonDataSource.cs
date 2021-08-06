@@ -82,6 +82,11 @@ namespace AssetBundleBuilder.DataSource
             return m_Bundles.Keys.ToArray();
         }
 
+        public string[] GetAllAssetPaths()
+        {
+            return m_Assets.Keys.ToArray();
+        }
+
         public bool IsReadOnly() {
             return false;
         }
