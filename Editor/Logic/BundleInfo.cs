@@ -322,6 +322,15 @@ namespace AssetBundleBuilder
 			}
 		}
 
+		public bool TryGetAssetsPaths(ref List<string> assetPaths)
+		{
+			foreach (var asset in assets)
+			{
+				assetPaths.Add(asset.assetPath);
+			}
+			return true;
+		}
+
 		//如果已经设置为ture，则不能再改false。
 		//由于默认为false，通常只需要设置为true的时候调用。
 

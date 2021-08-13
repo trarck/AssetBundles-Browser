@@ -451,7 +451,7 @@ namespace AssetBundleBuilder.Tests
 			foreach (var f in prefabFiles)
 			{
 				AssetInfo assetNode = m_AssetManager.CreateAsset(f);
-				//直接使用的资源，可以导址
+				//直接使用的资源，可以寻址
 				assetNode.addressable = true;
 				assets.Add(assetNode);
 			}
@@ -574,7 +574,8 @@ namespace AssetBundleBuilder.Tests
 		public void OptimizerTest()
 		{
 			string testAssets = "Assets/ArtResources/Tests";
-
+			DateTime start = DateTime.Now;
+			
 			string[] prefabFiles = Directory.GetFiles(testAssets, "*.prefab", SearchOption.AllDirectories);
 			List<AssetInfo> assets = new List<AssetInfo>();
 			foreach (var f in prefabFiles)
@@ -585,7 +586,17 @@ namespace AssetBundleBuilder.Tests
 				assets.Add(assetNode);
 			}
 
+			//used
+			TimeSpan used = DateTime.Now - start;
+			Debug.LogFormat("import assets used:{0}", used);
+			start = DateTime.Now;
+
 			m_AssetManager.RefreshAllAssetDependencies();
+
+			//used
+			used = DateTime.Now - start;
+			Debug.LogFormat("refresh assets deps used:{0}", used);
+			start = DateTime.Now;
 
 			//create bundle from assets
 			foreach (var iter in m_AssetManager.assets)
@@ -599,20 +610,52 @@ namespace AssetBundleBuilder.Tests
 				}
 			}
 
+			//used
+			used = DateTime.Now - start;
+			Debug.LogFormat("create bundle used:{0}", used);
+			start = DateTime.Now;
 			m_AssetManager.RefreshAllBundleDependencies();
+
+			//used
+			used = DateTime.Now - start;
+			Debug.LogFormat("refresh bundles deps used:{0}", used);
+
 
 			Debug.LogFormat("Before optimze Asset Count:{0},Bundle Count:{1}", m_AssetManager.assets.Count, m_AssetManager.bundles.Count);
 			Assert.AreEqual(m_AssetManager.assets.Count, m_AssetManager.bundles.Count);
-
-			DateTime start = DateTime.Now;
-
+			
+			start = DateTime.Now;
+			
 			m_AssetManager.Combine();
 
-			TimeSpan used = DateTime.Now - start;
-			Debug.LogFormat("create assets used:{0}", used);
-			start = DateTime.Now;
+			used = DateTime.Now - start;
+			Debug.LogFormat("Combine bundle used:{0}", used);
 
 			Debug.LogFormat("After optimze Asset Count:{0},Bundle Count:{1}", m_AssetManager.assets.Count, m_AssetManager.bundles.Count);
+
+			int n = 0;
+			List<BundleInfo> bundles = new List<BundleInfo>();
+			foreach (var bundle in m_AssetManager.bundles)
+			{
+				if (bundle.refers.Count > 1)
+				{
+					++n;
+					bundles.Add(bundle);
+				}	
+			}
+			Debug.LogFormat("More refer bundle count:{0}", n);
+
+			List<EditorAssetBundleManager.BundleJsonInfo> bundleJsons = new List<EditorAssetBundleManager.BundleJsonInfo>();
+			foreach (var bundle in bundles)
+			{
+				EditorAssetBundleManager.BundleJsonInfo bundleJson = m_AssetManager.BundleInfoToJsonInfo(bundle);
+				bundleJsons.Add(bundleJson);
+			}
+			EditorAssetBundleManager.AssetBundleJsonInfo asbInfo = new EditorAssetBundleManager.AssetBundleJsonInfo();
+			asbInfo.bundles = bundleJsons;
+
+			string jsonStr =  JsonUtility.ToJson(asbInfo, true);
+			File.WriteAllText("t.json", jsonStr);
 		}
 
 		[Test]
@@ -668,13 +711,13 @@ namespace AssetBundleBuilder.Tests
 			m_AssetManager.RefreshAllBundleDependencies();
 
 			MemoryStream wms = new MemoryStream();
-			m_AssetManager.SaveAssetsAndBundles(wms);
+			m_AssetManager.SaveBinary(wms);
 			byte[] data = wms.GetBuffer();
 	
 			EditorAssetBundleManager editorAssetManager = new EditorAssetBundleManager();
 			
 			MemoryStream rms = new MemoryStream(data);
-			editorAssetManager.LoadAssetsAndBundles(rms);
+			editorAssetManager.LoadBinary(rms);
 
 			Assert.AreEqual(m_AssetManager.assets.Count,editorAssetManager.assets.Count);
 			Assert.AreEqual(m_AssetManager.bundles.Count, editorAssetManager.bundles.Count);

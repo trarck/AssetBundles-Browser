@@ -49,7 +49,7 @@ namespace AssetBundleBuilder
 	public partial class EditorAssetBundleManager
 	{
 
-		#region Serialize
+		#region Serialize Binary
 		public static void SerializeAsset(AssetInfo asset , BinaryWriter writer)
 		{
 			writer.Write(asset.assetPath);
@@ -220,7 +220,7 @@ namespace AssetBundleBuilder
 
 		#endregion //Serialize
 
-		#region Load Save
+		#region Load Save  Binary
 		public void SaveAssets(Stream output)
 		{
 			using (BinaryWriter bw = new BinaryWriter(output))
@@ -231,11 +231,12 @@ namespace AssetBundleBuilder
 
 		public void LoadAssets(BinaryReader reader)
 		{
+			CleanAssets();
+
 			List<AssetSerializeInfo> assetSerializeInfos = DeserializeAssets(reader);
 
 			if (assetSerializeInfos != null)
 			{
-				m_Assets.Clear();
 				foreach (var assetSerializeInfo in assetSerializeInfos)
 				{
 					AssetInfo asset = assetSerializeInfo.asset;
@@ -270,6 +271,11 @@ namespace AssetBundleBuilder
 
 		public void SaveAssets(string filePath)
 		{
+			string dir = Path.GetDirectoryName(filePath);
+			if (!Directory.Exists(dir))
+			{
+				Directory.CreateDirectory(dir);
+			}
 			using (FileStream fs = new FileStream(filePath, FileMode.Truncate))
 			{
 				SaveAssets(fs);
@@ -298,11 +304,12 @@ namespace AssetBundleBuilder
 
 		public void LoadBundles(BinaryReader reader)
 		{
+			CleanBundles();
+
 			List<BundleSerializeInfo> bundleSerializeInfos = DeserializeBundles(reader);
+
 			if (bundleSerializeInfos != null)
 			{
-				m_Bundles.Clear();
-				m_BundlesIdMap.Clear();
 				foreach (var bundleSerializeInfo in bundleSerializeInfos)
 				{
 					BundleInfo bundle = bundleSerializeInfo.bundle;
@@ -355,6 +362,11 @@ namespace AssetBundleBuilder
 
 		public void SaveBundles(string filePath)
 		{
+			string dir = Path.GetDirectoryName(filePath);
+			if (!Directory.Exists(dir))
+			{
+				Directory.CreateDirectory(dir);
+			}
 			using (FileStream fs = new FileStream(filePath, FileMode.Truncate))
 			{
 				SaveBundles(fs);
@@ -369,7 +381,7 @@ namespace AssetBundleBuilder
 			}
 		}
 
-		public void SaveAssetsAndBundles(Stream output)
+		public void SaveBinary(Stream output)
 		{
 			using (BinaryWriter bw = new BinaryWriter(output))
 			{
@@ -378,7 +390,7 @@ namespace AssetBundleBuilder
 			}
 		}
 
-		public void LoadAssetsAndBundles(Stream input)
+		public void LoadBinary(Stream input)
 		{
 			using (BinaryReader br = new BinaryReader(input))
 			{
@@ -387,22 +399,252 @@ namespace AssetBundleBuilder
 			}
 		}
 
-		public void SaveAssetsAndBundles(string filePath)
+		public void SaveBinary(string filePath)
 		{
+			string dir = Path.GetDirectoryName(filePath);
+			if (!Directory.Exists(dir))
+			{
+				Directory.CreateDirectory(dir);
+			}
 			using (FileStream fs = new FileStream(filePath, FileMode.Truncate))
 			{
-				SaveAssetsAndBundles(fs);
+				SaveBinary(fs);
 			}
 		}
 
-		public void LoadAssetsAndBundles(string filePath)
+		public void LoadBinary(string filePath)
 		{
 			using (FileStream fs = new FileStream(filePath, FileMode.Open))
 			{
-				LoadAssetsAndBundles(fs);
+				LoadBinary(fs);
 			}
 		}
 
-		#endregion Load Save
+		#endregion // Load Save Binary
+
+
+		#region Load Save Json
+
+		[System.Serializable]
+		public class AssetJsonInfo
+		{
+			public string assetPath;
+			public AssetInfo.AssetType assetType;
+			public long fileSize;
+			public bool addressable;
+			public List<string> refers;
+			public List<string> dependencies;
+			public List<string> allDependencies;
+		}
+
+		[System.Serializable]
+		public class BundleJsonInfo
+		{
+			public uint id;
+			public string name;
+			public string variantName;
+			public BundleInfo.BundleType bundleType;
+			public bool standalone ;
+			public int refersHashCode;
+
+			public string mainAsset;
+			public List<string> assets;
+			public List<uint> refers;
+			public List<uint> dependencies;
+		}
+
+		[System.Serializable]
+		public class AssetBundleJsonInfo
+		{
+			public List<AssetJsonInfo> assets;
+			public List<BundleJsonInfo> bundles;
+		}
+
+		public AssetJsonInfo AssetInfoToJsonInfo(AssetInfo assetInfo)
+		{
+			AssetJsonInfo assetJsonInfo = new AssetJsonInfo();
+			assetJsonInfo.assetPath = assetInfo.assetPath;
+			assetJsonInfo.assetType = assetInfo.assetType;
+			assetJsonInfo.fileSize = assetInfo.fileSize;
+			assetJsonInfo.refers = new List<string>();
+			assetJsonInfo.dependencies = new List<string>();
+
+			foreach (var dep in assetInfo.dependencies)
+			{
+				assetJsonInfo.dependencies.Add(dep.assetPath);
+			}
+
+			foreach (var refer in assetInfo.refers)
+			{
+				assetJsonInfo.refers.Add(refer.assetPath);
+			}
+			return assetJsonInfo;
+		}
+
+		public BundleJsonInfo BundleInfoToJsonInfo(BundleInfo bundleInfo)
+		{
+			BundleJsonInfo bundleJsonInfo = new BundleJsonInfo();
+			bundleJsonInfo.id = bundleInfo.id;
+			bundleJsonInfo.name = bundleInfo.name;
+			bundleJsonInfo.variantName = bundleInfo.variantName;
+			bundleJsonInfo.bundleType = bundleInfo.bundleType;
+			bundleJsonInfo.standalone = bundleInfo.IsStandalone();
+			bundleJsonInfo.refersHashCode = bundleInfo.refersHashCode;
+			bundleJsonInfo.mainAsset = bundleInfo.mainAssetPath;
+			bundleJsonInfo.assets = new List<string>();
+			bundleJsonInfo.dependencies = new List<uint>();
+			bundleJsonInfo.refers = new List<uint>();
+
+			foreach (var asset in bundleInfo.assets)
+			{
+				bundleJsonInfo.assets.Add(asset.assetPath);
+			}
+
+			foreach (var refer in bundleInfo.refers)
+			{
+				bundleJsonInfo.refers.Add(refer.id);
+			}
+
+			foreach (var dep in bundleInfo.dependencies)
+			{
+				bundleJsonInfo.dependencies.Add(dep.id);
+			}
+			return bundleJsonInfo;
+		}
+
+		public void BuildAssets(List<AssetJsonInfo> assets)
+		{
+			CleanAssets();
+
+			if (assets == null || assets.Count == 0)
+			{
+				return;
+			}
+
+			//create assets
+			foreach (var assetJson in assets)
+			{
+				AssetInfo assetInfo = CreateAsset(assetJson.assetPath);
+				assetInfo.assetType = assetJson.assetType;
+				assetInfo.fileSize = assetJson.fileSize;
+				assetInfo.addressable = assetJson.addressable;
+			}
+
+			//build asset relations
+			foreach (var assetJson in assets)
+			{
+				AssetInfo assetInfo = GetAsset(assetJson.assetPath);
+				//deps
+				foreach (var assetPath in assetJson.dependencies)
+				{
+					AssetInfo dep = GetAsset(assetPath);
+					assetInfo.AddDependencyOnlfy(dep);
+				}
+
+				//refers
+				foreach (var assetPath in assetJson.refers)
+				{
+					AssetInfo refer = GetAsset(assetPath);
+					assetInfo.AddReferOnly(refer);
+				}
+			}
+		}
+
+		public void BuildBundles(List<BundleJsonInfo> bundles)
+		{
+			CleanBundles();
+
+			if (bundles == null)
+			{
+				return;
+			}
+
+			foreach (var bundleJson in bundles)
+			{
+				BundleInfo bundle = CreateBundle(bundleJson.id, bundleJson.name, bundleJson.variantName);
+				bundle.bundleType = bundleJson.bundleType;
+				bundle.SetStandalone(bundleJson.standalone);
+				bundle.refersHashCode = bundleJson.refersHashCode;
+
+				//main asset
+				AssetInfo mainAsset = GetAsset(bundleJson.mainAsset);
+				if (mainAsset != null)
+				{
+					bundle.SetMainAsset(mainAsset);
+				}
+
+				//assets
+				foreach (var assetPath in bundleJson.assets)
+				{
+					AssetInfo asset = GetAsset(assetPath);
+					if (asset != null)
+					{
+						bundle.AddAsset(asset);
+					}
+				}
+			}
+
+			foreach (var bundleJson in bundles)
+			{
+				BundleInfo bundle = GetBundle(bundleJson.id);
+
+				foreach (var depId in bundleJson.dependencies)
+				{
+					BundleInfo depBundle = GetBundle(depId);
+					bundle.AddDependencyOnly(depBundle);
+				}
+
+				foreach (var referId in bundleJson.refers)
+				{
+					BundleInfo referBundle = GetBundle(referId);
+					bundle.AddReferOnly(referBundle);
+				}
+			}
+		}
+
+		public string SerializeToJson(bool pretty=true)
+		{
+			AssetBundleJsonInfo assetBundleJsonInfo = new AssetBundleJsonInfo();
+			assetBundleJsonInfo.assets = new List<AssetJsonInfo>();
+			foreach (var iter in assets)
+			{
+				AssetJsonInfo assetJsonInfo = AssetInfoToJsonInfo(iter.Value);
+				assetBundleJsonInfo.assets.Add(assetJsonInfo);
+			}
+
+			assetBundleJsonInfo.bundles = new List<BundleJsonInfo>();
+			foreach (var bundle in bundles)
+			{
+				BundleJsonInfo bundleJsonInfo = BundleInfoToJsonInfo(bundle);
+				assetBundleJsonInfo.bundles.Add(bundleJsonInfo);
+			}
+			string jsonStr = JsonUtility.ToJson(assetBundleJsonInfo, pretty);
+			return jsonStr;
+		}
+
+		public void DeserializeFromJson(string jsonStr)
+		{
+			AssetBundleJsonInfo data = JsonUtility.FromJson<AssetBundleJsonInfo>(jsonStr);
+			BuildAssets(data.assets);
+			BuildBundles(data.bundles);
+		}
+
+		public void SaveToJson(string jsonFile)
+		{
+			string jsonStr = SerializeToJson();
+			string jsonFileDir = Path.GetDirectoryName(jsonFile);
+			if (!Directory.Exists(jsonFileDir))
+			{
+				Directory.CreateDirectory(jsonFileDir);
+			}
+			File.WriteAllText(jsonFile, jsonStr);
+		}
+
+		public void LoadFromJson(string jsonFile)
+		{
+			string jsonStr = File.ReadAllText(jsonFile);
+			DeserializeFromJson(jsonStr);
+		}
+		#endregion //Load Save Json
 	}
 }

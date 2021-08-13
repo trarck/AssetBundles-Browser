@@ -11,6 +11,7 @@ namespace AssetBundleBuilder.Config
     [Serializable]
     public class ImportInfo
     {
+        public int id;
         public string path;
         public string pattern;
     }
@@ -19,7 +20,7 @@ namespace AssetBundleBuilder.Config
     public class ImportConfig
     {
         public List<ImportInfo> infos;
-        public List<string> formatSelects;
+        public List<string> formats;
     }
 
     [Serializable]
@@ -76,7 +77,7 @@ namespace AssetBundleBuilder.Config
         }
         #endregion
 
-        #region Load|Save
+        #region Load Save
         public void Load()
         {
             string fullpath = GetDataFileFullpath();
@@ -96,7 +97,7 @@ namespace AssetBundleBuilder.Config
                 m_Data = new ConfigData();
                 m_Data.importConfig = new ImportConfig();
                 m_Data.importConfig.infos = new List<ImportInfo>();
-                m_Data.importConfig.formatSelects = new List<string>();
+                m_Data.importConfig.formats = new List<string>();
 
                 m_Data.bundlePathPrefixClears = new List<string>();
             }
@@ -127,7 +128,8 @@ namespace AssetBundleBuilder.Config
             workDir = workDir.Replace("\\", "/");
             return Path.Combine(workDir, dataFile);
         }
-        #endregion
+        #endregion //Load Save
+
         public void InsertBundlePathPrefixClear(string prefix,int index)
         {
             if (index < 0)

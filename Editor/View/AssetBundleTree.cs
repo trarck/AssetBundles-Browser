@@ -80,8 +80,7 @@ namespace AssetBundleBuilder.View
 
         protected override TreeViewItem BuildRoot()
         {
-            Model.Model.Refresh();
-            var root = BundleTreeItem.Create(Model.Model.GetRootBundle(),-1);
+            var root = BundleTreeItem.Create(BundleTreeManager.Instance.rootNode,-1);
             return root;
         }
 

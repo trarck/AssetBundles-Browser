@@ -5,16 +5,16 @@ using UnityEngine;
 namespace AssetBundleBuilder.Model
 {
 
-    public static class Import
+    public static class AssetBundleImport
     {
         internal static int ImportFile(string filePath, BundleFolderConcreteNode parent,Setting.Format format,bool force=true)
         {
             if (Path.IsPathRooted(filePath))
             {
-                filePath = ModelUtils.Relative(Path.GetDirectoryName(Application.dataPath), filePath);
+                filePath = YH.FileSystem.Relative(Path.GetDirectoryName(Application.dataPath), filePath);
             }
 
-            if (!Model.ValidateAsset(filePath))
+            if (!EditorAssetBundleManager.ValidateAsset(filePath))
             {
                 return 0;
             }

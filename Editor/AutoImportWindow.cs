@@ -22,7 +22,7 @@ namespace AssetBundleBuilder
         public static AutoImportWindow ShowWindow()
         {
             //Show existing window instance. If one doesn't exist, make one.
-            return EditorWindow.GetWindow<AutoImportWindow>(false, "Auto Import");
+            return GetWindow<AutoImportWindow>(false, "Auto Import");
         }
 
         private void OnEnable()
@@ -147,13 +147,13 @@ namespace AssetBundleBuilder
         {
             BuilderConfig.Instance.Load();
            m_ImportInfos = BuilderConfig.Instance.data.importConfig.infos;
-            m_FormatGUI.SetSelects(BuilderConfig.Instance.data.importConfig.formatSelects);
+            m_FormatGUI.SetSelects(BuilderConfig.Instance.data.importConfig.formats);
         }
 
         void SaveData()
         {
             BuilderConfig.Instance.data.importConfig.infos = m_ImportInfos;
-            BuilderConfig.Instance.data.importConfig.formatSelects= m_FormatGUI.GetSelects();
+            BuilderConfig.Instance.data.importConfig.formats= m_FormatGUI.GetSelects();
             BuilderConfig.Instance.Save();
         }
     }

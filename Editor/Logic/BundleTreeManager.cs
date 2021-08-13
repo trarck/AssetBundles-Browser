@@ -35,6 +35,14 @@ namespace AssetBundleBuilder.Model
 			}
 		}
 
+		public BundleNode rootNode
+		{
+			get
+			{
+				return m_Root;
+			}
+		}
+
 		public void Init()
 		{
 			m_Bundles = new Dictionary<string, BundleNode>();

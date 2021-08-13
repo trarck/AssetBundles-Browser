@@ -55,11 +55,20 @@ namespace AssetBundleBuilder
 
 		public void Clean()
 		{
+			CleanAssets();
+			CleanBundles();
+		}
+
+		public void CleanAssets()
+		{
 			if (m_Assets != null)
 			{
 				m_Assets.Clear();
 			}
+		}
 
+		public void CleanBundles()
+		{
 			if (m_Bundles != null)
 			{
 				m_Bundles.Clear();
@@ -135,7 +144,7 @@ namespace AssetBundleBuilder
 		/// <param name="asset"></param>
 		public void RefreshAssetDependencies(AssetInfo asset)
 		{
-			if (!AssetDatabase.IsValidFolder(asset.assetPath))
+			//if (!AssetDatabase.IsValidFolder(asset.assetPath))
 			{
 				//dep
 				asset.dependencies.Clear();
@@ -143,14 +152,12 @@ namespace AssetBundleBuilder
 				{
 					if (ValidateAsset(dep) && dep != asset.assetPath)
 					{
-						AssetInfo depAsset = GetAsset(dep);
-						if (depAsset == null)
+						AssetInfo depAsset = GetOrCreateAsset(dep);
+						if (depAsset != null)
 						{
-							depAsset = CreateAsset(dep);
+							depAsset.AddRefer(asset);
 							RefreshAssetDependencies(depAsset);
 						}
-
-						depAsset.AddRefer(asset);
 					}
 				}
 			}
@@ -217,14 +224,12 @@ namespace AssetBundleBuilder
 			{
 				if (ValidateAsset(dep) && dep != asset.assetPath)
 				{
-					AssetInfo depAsset = GetAsset(dep);
-					if (depAsset == null)
+					AssetInfo depAsset = GetOrCreateAsset(dep);
+					if (depAsset != null)
 					{
-						depAsset = CreateAsset(dep);
+						asset.allDependencies.Add(depAsset);
 						RefreshAssetAllDependencies2(depAsset);
 					}
-
-					asset.allDependencies.Add(depAsset);
 				}
 			}
 		}
@@ -285,11 +290,20 @@ namespace AssetBundleBuilder
 
 		public BundleInfo CreateBundle(string bundleName)
 		{
-			BundleInfo bundle = CreateBundleInfo(bundleName);
+			BundleInfo bundle = new BundleInfo(bundleName);
 			m_Bundles.Add(bundle);
 			m_BundlesIdMap[bundle.id] = bundle;
 			return bundle;
 		}
+
+		public BundleInfo CreateBundle(uint id, string bundleName,string variantName)
+		{
+			BundleInfo bundle = new BundleInfo(id,bundleName,variantName);
+			m_Bundles.Add(bundle);
+			m_BundlesIdMap[bundle.id] = bundle;
+			return bundle;
+		}
+
 		public BundleInfo CreateBundle(string bundleName, AssetInfo assetNode)
 		{
 			BundleInfo bundle = CreateBundle(bundleName);

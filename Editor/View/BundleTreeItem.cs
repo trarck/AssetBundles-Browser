@@ -82,11 +82,11 @@ namespace AssetBundleBuilder.View
 
 		public static BundleTreeItem Create(BundleNode b, int depth)
         {
-            if (!b.HaveChildren())
-            {
-                b.RefreshAssetList();
-            }
-            b.RefreshMessages();
+            //if (!b.HaveChildren())
+            //{
+            //    b.RefreshAssetList();
+            //}
+            //b.RefreshMessages();
             var result = new BundleTreeItem(b, depth, b.GetIcon());
 
             if (b.HaveChildren())
