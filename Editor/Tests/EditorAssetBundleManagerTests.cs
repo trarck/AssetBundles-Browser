@@ -6,6 +6,7 @@ using UnityEngine;
 using UnityEngine.TestTools;
 using AssetBundleBuilder;
 using System.Threading;
+using UnityEditor;
 
 namespace AssetBundleBuilder.Tests
 {
@@ -755,5 +756,236 @@ namespace AssetBundleBuilder.Tests
 				Assert.AreEqual(bundle.refers.Count, otherBundle.refers.Count);
 			}
 		}
+
+		[Test]
+		public void BinarySaveLoadTimeTest()
+		{
+			string testAssets = "Assets/ArtResources/Tests";
+
+			EditorAssetBundleManager assetManager = new EditorAssetBundleManager();
+
+			string[] prefabFiles = Directory.GetFiles(testAssets, "*.prefab", SearchOption.AllDirectories);
+			List<AssetInfo> assets = new List<AssetInfo>();
+			foreach (var f in prefabFiles)
+			{
+				AssetInfo assetNode = assetManager.CreateAsset(f);
+				//直接使用的资源，可以寻址
+				assetNode.addressable = true;
+				assets.Add(assetNode);
+			}
+
+			assetManager.RefreshAllAssetDependencies();
+
+			//create bundle from assets
+			foreach (var iter in assetManager.assets)
+			{
+				BundleInfo bundleNode = assetManager.CreateBundle(null);
+				bundleNode.SetMainAsset(iter.Value);
+				bundleNode.AddAsset(iter.Value);
+				if (iter.Value.addressable)
+				{
+					bundleNode.SetStandalone(iter.Value.addressable);
+				}
+			}
+
+			assetManager.RefreshAllBundleDependencies();
+
+			DateTime start = DateTime.Now;
+
+			string savePath = Path.Combine(Application.dataPath, "../tttt.bin");
+			assetManager.SaveBinary(savePath);
+			TimeSpan used = DateTime.Now - start;
+			Debug.LogFormat("Save binary used:{0}", used);
+
+			EditorAssetBundleManager assetManagerLoader = new EditorAssetBundleManager();
+
+			start = DateTime.Now;
+			assetManagerLoader.LoadBinary(savePath);
+			used = DateTime.Now - start;
+			Debug.LogFormat("Load binary used:{0}", used);
+
+			File.Delete(savePath);
+		}
+
+		[Test]
+		public void BinarySaveLoadBundlesTimeTest()
+		{
+			string testAssets = "Assets/ArtResources/Tests";
+
+			EditorAssetBundleManager assetManager = new EditorAssetBundleManager();
+
+			string[] prefabFiles = Directory.GetFiles(testAssets, "*.prefab", SearchOption.AllDirectories);
+			List<AssetInfo> assets = new List<AssetInfo>();
+			foreach (var f in prefabFiles)
+			{
+				AssetInfo assetNode = assetManager.CreateAsset(f);
+				//直接使用的资源，可以寻址
+				assetNode.addressable = true;
+				assets.Add(assetNode);
+			}
+
+			assetManager.RefreshAllAssetDependencies();
+
+			//create bundle from assets
+			foreach (var iter in assetManager.assets)
+			{
+				BundleInfo bundleNode = assetManager.CreateBundle(null);
+				bundleNode.SetMainAsset(iter.Value);
+				bundleNode.AddAsset(iter.Value);
+				if (iter.Value.addressable)
+				{
+					bundleNode.SetStandalone(iter.Value.addressable);
+				}
+			}
+
+			assetManager.RefreshAllBundleDependencies();
+
+			
+			DateTime start = DateTime.Now;
+
+			string savePath = Path.Combine(Application.dataPath, "../bundes.bin");
+			assetManager.SaveBundles(savePath);
+			TimeSpan used = DateTime.Now - start;
+			Debug.LogFormat("Save bundes used:{0}", used);
+
+			EditorAssetBundleManager assetManagerLoader = new EditorAssetBundleManager();
+
+			start = DateTime.Now;
+			assetManagerLoader.LoadBundles(savePath);
+			used = DateTime.Now - start;
+			Debug.LogFormat("Load bundes used:{0}", used);
+
+			File.Delete(savePath);
+		}
+
+		[Test]
+		public void JsonSaveLoadTimeTest()
+		{
+			string testAssets = "Assets/ArtResources/Tests";
+
+			EditorAssetBundleManager assetManager = new EditorAssetBundleManager();
+
+			string[] prefabFiles = Directory.GetFiles(testAssets, "*.prefab", SearchOption.AllDirectories);
+			List<AssetInfo> assets = new List<AssetInfo>();
+			foreach (var f in prefabFiles)
+			{
+				AssetInfo assetNode = assetManager.CreateAsset(f);
+				//直接使用的资源，可以寻址
+				assetNode.addressable = true;
+				assets.Add(assetNode);
+			}
+
+			assetManager.RefreshAllAssetDependencies();
+
+			//create bundle from assets
+			foreach (var iter in assetManager.assets)
+			{
+				BundleInfo bundleNode = assetManager.CreateBundle(null);
+				bundleNode.SetMainAsset(iter.Value);
+				bundleNode.AddAsset(iter.Value);
+				if (iter.Value.addressable)
+				{
+					bundleNode.SetStandalone(iter.Value.addressable);
+				}
+			}
+
+			assetManager.RefreshAllBundleDependencies();
+
+			DateTime start = DateTime.Now;
+
+			string savePath = Path.Combine(Application.dataPath, "../tttt.json");
+			assetManager.SaveToJson(savePath);
+			TimeSpan used = DateTime.Now - start;
+			Debug.LogFormat("Save json used:{0}", used);
+
+			EditorAssetBundleManager assetManagerLoader = new EditorAssetBundleManager();
+
+			start = DateTime.Now;
+			assetManagerLoader.LoadFromJson(savePath);
+			used = DateTime.Now - start;
+			Debug.LogFormat("Load json used:{0}", used);
+
+			File.Delete(savePath);
+		}
+
+
+		[Test]
+		public void BuildBundlesTest()
+		{
+			string testAssets = "Assets/ArtResources/Tests";
+			DateTime start = DateTime.Now;
+
+			string[] prefabFiles = Directory.GetFiles(testAssets, "*.prefab", SearchOption.AllDirectories);
+			List<AssetInfo> assets = new List<AssetInfo>();
+			foreach (var f in prefabFiles)
+			{
+				AssetInfo assetNode = m_AssetManager.CreateAsset(f);
+				//直接使用的资源，可以导址
+				assetNode.addressable = true;
+				assets.Add(assetNode);
+			}
+
+			//used
+			TimeSpan used = DateTime.Now - start;
+			Debug.LogFormat("import assets used:{0}", used);
+			start = DateTime.Now;
+
+			m_AssetManager.RefreshAllAssetDependencies();
+
+			//used
+			used = DateTime.Now - start;
+			Debug.LogFormat("refresh assets deps used:{0}", used);
+			start = DateTime.Now;
+
+			//create bundle from assets
+			foreach (var iter in m_AssetManager.assets)
+			{
+				BundleInfo bundleNode = m_AssetManager.CreateBundle(null);
+				bundleNode.SetMainAsset(iter.Value);
+				bundleNode.AddAsset(iter.Value);
+				if (iter.Value.addressable)
+				{
+					bundleNode.SetStandalone(iter.Value.addressable);
+				}
+			}
+
+			//used
+			used = DateTime.Now - start;
+			Debug.LogFormat("create bundle used:{0}", used);
+			start = DateTime.Now;
+			m_AssetManager.RefreshAllBundleDependencies();
+
+			//used
+			used = DateTime.Now - start;
+			Debug.LogFormat("refresh bundles deps used:{0}", used);
+
+
+			Debug.LogFormat("Before optimze Asset Count:{0},Bundle Count:{1}", m_AssetManager.assets.Count, m_AssetManager.bundles.Count);
+			Assert.AreEqual(m_AssetManager.assets.Count, m_AssetManager.bundles.Count);
+
+			start = DateTime.Now;
+
+			m_AssetManager.Combine();
+
+			used = DateTime.Now - start;
+			Debug.LogFormat("Combine bundle used:{0}", used);
+
+			Debug.LogFormat("After optimze Asset Count:{0},Bundle Count:{1}", m_AssetManager.assets.Count, m_AssetManager.bundles.Count);
+
+			m_AssetManager.RefreshAllBundlesName();
+
+			DataSource.BuildInfo buildInfo = new DataSource.BuildInfo();
+
+			buildInfo.outputDirectory = Path.Combine(Application.dataPath, "../AssetBundles");
+			buildInfo.options = BuildAssetBundleOptions.ChunkBasedCompression;
+			buildInfo.buildTarget = EditorUserBuildSettings.activeBuildTarget;
+			buildInfo.version = "1.0";
+
+			start = DateTime.Now;
+			m_AssetManager.BuildAssetBundles(buildInfo);
+			used = DateTime.Now - start;
+			Debug.LogFormat("Build AssetBundle used:{0}", used);
+		}
+
 	}
 }
