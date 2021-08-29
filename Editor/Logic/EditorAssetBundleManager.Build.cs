@@ -5,6 +5,7 @@ using System.IO;
 using System.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
+using YH.AssetManage;
 
 namespace AssetBundleBuilder
 {
@@ -40,18 +41,6 @@ namespace AssetBundleBuilder
             if (buildManifest == null)
                 return false;
 
-            //不能消除Manifest，否则无法增量构建。可以在最终目录把Manifest删除
-            //DatabaseUtil.ClearTempManifest(info.outputDirectory);
-
-            DatabaseUtil.SaveBundleManifest(buildManifest, info, this);
-
-            foreach (var assetBundleName in buildManifest.GetAllAssetBundles())
-            {
-                if (info.onBuild != null)
-                {
-                    info.onBuild(assetBundleName);
-                }
-            }
             return true;
         }
 
@@ -61,11 +50,6 @@ namespace AssetBundleBuilder
             bundleManifest.version = buildInfo.version;
 
             List<AssetBundleInfo> all = new List<AssetBundleInfo>();
-
-            //if (Model.Model.BundleListIsEmpty())
-            //{
-            //    Model.Model.Rebuild();
-            //}
 
             foreach (var assetBundleName in buildManifest.GetAllAssetBundles())
             {
