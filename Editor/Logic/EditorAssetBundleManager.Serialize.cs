@@ -276,7 +276,7 @@ namespace AssetBundleBuilder
 			{
 				Directory.CreateDirectory(dir);
 			}
-			using (FileStream fs = new FileStream(filePath, FileMode.Truncate))
+			using (FileStream fs = new FileStream(filePath, FileMode.Create))
 			{
 				SaveAssets(fs);
 			}
@@ -317,7 +317,7 @@ namespace AssetBundleBuilder
 					m_BundlesIdMap[bundle.id] = bundle;
 
 					//main asset
-					AssetInfo mainAsset = GetAsset(bundleSerializeInfo.mainAsset);
+					AssetInfo mainAsset = GetOrCreateAsset(bundleSerializeInfo.mainAsset);
 					if (mainAsset != null)
 					{
 						bundle.SetMainAsset(mainAsset);
@@ -326,7 +326,7 @@ namespace AssetBundleBuilder
 					//assets
 					foreach (var assetPath in bundleSerializeInfo.assets)
 					{
-						AssetInfo asset = GetAsset(assetPath);
+						AssetInfo asset = GetOrCreateAsset(assetPath);
 						if (asset!=null)
 						{
 							bundle.AddAsset(asset);
@@ -367,7 +367,7 @@ namespace AssetBundleBuilder
 			{
 				Directory.CreateDirectory(dir);
 			}
-			using (FileStream fs = new FileStream(filePath, FileMode.Truncate))
+			using (FileStream fs = new FileStream(filePath, FileMode.Create))
 			{
 				SaveBundles(fs);
 			}
@@ -406,7 +406,7 @@ namespace AssetBundleBuilder
 			{
 				Directory.CreateDirectory(dir);
 			}
-			using (FileStream fs = new FileStream(filePath, FileMode.Truncate))
+			using (FileStream fs = new FileStream(filePath, FileMode.Create))
 			{
 				SaveBinary(fs);
 			}
@@ -512,7 +512,7 @@ namespace AssetBundleBuilder
 			return bundleJsonInfo;
 		}
 
-		public void BuildAssets(List<AssetJsonInfo> assets)
+		public void SetupAssets(List<AssetJsonInfo> assets)
 		{
 			CleanAssets();
 
@@ -550,7 +550,7 @@ namespace AssetBundleBuilder
 			}
 		}
 
-		public void BuildBundles(List<BundleJsonInfo> bundles)
+		public void SetupBundles(List<BundleJsonInfo> bundles)
 		{
 			CleanBundles();
 
@@ -625,8 +625,8 @@ namespace AssetBundleBuilder
 		public void DeserializeFromJson(string jsonStr)
 		{
 			AssetBundleJsonInfo data = JsonUtility.FromJson<AssetBundleJsonInfo>(jsonStr);
-			BuildAssets(data.assets);
-			BuildBundles(data.bundles);
+			SetupAssets(data.assets);
+			SetupBundles(data.bundles);
 		}
 
 		public void SaveToJson(string jsonFile)

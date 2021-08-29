@@ -471,6 +471,39 @@ namespace AssetBundleBuilder
 			}
 		}
 
+		public string CreateBundleName(string filePath, bool useFullPath, bool useExt)
+		{
+			if (string.IsNullOrEmpty(filePath))
+			{
+				return null;
+			}
+
+			if (useFullPath)
+			{
+				return filePath.Replace('/', '_').Replace('\\', '_').Replace('.', '_').ToLower();
+			}
+			else if (useExt || filePath.Contains(".unity"))//Scene always use ext
+			{
+				return Path.GetFileName(filePath).Replace('.', '_').ToLower();
+			}
+			else
+			{
+				return Path.GetFileNameWithoutExtension(filePath).ToLower();
+			}
+		}
+
+		public void RefreshAllBundlesName()
+		{
+			List<BundleInfo> bundles = new List<BundleInfo>(m_Bundles);
+			foreach (var bundle in bundles)
+			{
+				if (string.IsNullOrEmpty(bundle.name))
+				{
+					bundle.name = CreateBundleName(bundle.mainAssetPath,true,true);
+				}
+			}
+		}
+
 		#endregion //Bundle
 
 		#region Asset Bundle

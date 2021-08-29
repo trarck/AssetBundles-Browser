@@ -41,51 +41,75 @@ namespace AssetBundleBuilder
             if (buildManifest == null)
                 return false;
 
+            //不能消除Manifest，否则无法增量构建。可以在最终目录把Manifest删除
+            //DatabaseUtil.ClearTempManifest(info.outputDirectory);
+
+            SaveBundleManifest(buildManifest, info);
+
+            if (info.onBuild != null)
+            {
+                info.onBuild(null);
+            }
             return true;
         }
 
-        public void SaveBundleManifest(AssetBundleManifest buildManifest, BuildInfo buildInfo, DataSource dataSource)
+        public void SaveBundleManifest(AssetBundleManifest buildManifest, BuildInfo buildInfo)
         {
             BundleManifest bundleManifest = new BundleManifest();
             bundleManifest.version = buildInfo.version;
 
-            List<AssetBundleInfo> all = new List<AssetBundleInfo>();
+            List<AssetBundleInfo> bundleInfos = new List<AssetBundleInfo>();
 
             foreach (var assetBundleName in buildManifest.GetAllAssetBundles())
             {
-                Model.BundleNameData bundleNameData = new Model.BundleNameData(assetBundleName);
-                //Model.BundleDataInfo bundleInfo = Model.Model.FindBundle(bundleNameData) as Model.BundleDataInfo;
-                FileInfo bundleInfo = new FileInfo(Path.Combine(buildInfo.outputDirectory, assetBundleName));
-                if (bundleInfo != null)
+                FileInfo assetBundleFileInfo = new FileInfo(Path.Combine(buildInfo.outputDirectory, assetBundleName));
+                if (assetBundleFileInfo != null)
                 {
-                    YH.AssetManage.AssetBundleInfo assetBundleInfo = new YH.AssetManage.AssetBundleInfo();
-                    assetBundleInfo.fullName = bundleNameData.fullNativeName;
-                    assetBundleInfo.shortName = bundleNameData.shortName;
-                    assetBundleInfo.size = (int)bundleInfo.Length;
-                    assetBundleInfo.hash = buildManifest.GetAssetBundleHash(assetBundleName).ToString();
-                    assetBundleInfo.dependencies = buildManifest.GetDirectDependencies(assetBundleName);
-
-                    List<YH.AssetManage.AssetInfo> assets = new List<YH.AssetManage.AssetInfo>();
-                    // foreach (Model.AssetInfo assetInfo in bundleInfo.GetConcretes())
-                    foreach (var assetPath in dataSource.GetAssetPathsFromAssetBundle(assetBundleName))
+                    BundleInfo bundleInfo = GetBundle(assetBundleName);
+                    if (buildInfo != null)
                     {
-                        YH.AssetManage.AssetInfo ai = new YH.AssetManage.AssetInfo();
-                        //Debug.Log(assetInfo.displayName + "," + assetInfo.bundleName + "," + assetInfo.fullAssetName);
-                        ai.fullName = assetPath;// assetInfo.fullAssetName;
-                        assets.Add(ai);
-                        //assets.Add(AssetPaths.RemoveAssetPrev(assetInfo.fullAssetName));
+                        YH.AssetManage.AssetBundleInfo assetBundleInfo = new YH.AssetManage.AssetBundleInfo();
+                        assetBundleInfo.fullName = assetBundleName;
+                        assetBundleInfo.shortName = Path.GetFileName(assetBundleName);
+                        assetBundleInfo.size = (int)assetBundleFileInfo.Length;
+                        assetBundleInfo.hash = buildManifest.GetAssetBundleHash(assetBundleName).ToString();
+                        assetBundleInfo.dependencies = buildManifest.GetDirectDependencies(assetBundleName);
+
+                        List<YH.AssetManage.AssetInfo> assets = new List<YH.AssetManage.AssetInfo>();
+                        foreach (var assetInfo in bundleInfo.assets)
+                        {
+                            YH.AssetManage.AssetInfo ai = new YH.AssetManage.AssetInfo();
+                            ai.fullName = assetInfo.assetPath;
+                            assets.Add(ai);
+                        }
+                        assetBundleInfo.assets = assets;
+
+                        bundleInfos.Add(assetBundleInfo);
                     }
-
-                    assetBundleInfo.assets = assets;
-
-                    all.Add(assetBundleInfo);
+                    else
+                    {
+                        Debug.LogWarningFormat("Can't get BundleInfo  {0}", assetBundleName);
+                    }
+                }
+                else
+                {
+                    Debug.LogErrorFormat("No builded asset bundle file {0}", assetBundleName);
                 }
             }
-            bundleManifest.bundleInfos = all;
+            bundleManifest.bundleInfos = bundleInfos;
 
-            string content = JsonUtility.ToJson(bundleManifest);
+            //save binary
+            string outputManifestFile = Path.Combine(buildInfo.outputDirectory, buildInfo.manifestName);
+            using (FileStream fs = new FileStream(outputManifestFile, FileMode.Create))
+            using(BinaryWriter br =new BinaryWriter(fs))
+            {
+                bundleManifest.Write(br);
+            }
 
-            File.WriteAllText(Path.Combine(buildInfo.outputDirectory, "all.manifest"), content);
+            //save json
+            string outputManifestJsonFile = outputManifestFile + ".json";
+            string content = JsonUtility.ToJson(bundleManifest, true);
+            File.WriteAllText(outputManifestJsonFile, content);
         }
     }
 }

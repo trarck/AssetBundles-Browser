@@ -46,6 +46,10 @@ namespace AssetBundleBuilder.DataSource
         private Action<string> m_onBuild;
         //资源的版本号
         public string version;
+
+        //manifest 文件名
+        public string manifestName = "all.manifest";
+
     }
 
     /// <summary>
