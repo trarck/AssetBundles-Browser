@@ -2,7 +2,8 @@
     "name": "Unity.AssetBundleBuilder.Editor",
     "references": [
         "AssetManager",
-        "YHLib"
+        "YHLib",
+        "Unity.ScriptableBuildPipeline.Editor"
     ],
     "optionalUnityReferences": [],
     "includePlatforms": [

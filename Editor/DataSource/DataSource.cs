@@ -35,6 +35,19 @@ namespace AssetBundleBuilder.DataSource
             set { m_buildTarget = value; }
         }
         private BuildTarget m_buildTarget;
+
+        public BuildTargetGroup buildTargetGroup
+        {
+            get
+            {
+                return m_buildTargetGroup;
+            }
+            set
+            {
+                m_buildTargetGroup = value;
+            }
+        }
+        private BuildTargetGroup m_buildTargetGroup;
         /// <summary>
         /// Callback for build event.
         /// </summary>

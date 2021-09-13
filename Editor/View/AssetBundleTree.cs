@@ -15,7 +15,6 @@ namespace AssetBundleBuilder.View
 
         internal AssetBundleTree(TreeViewState state, AssetBundleManageTab ctrl) : base(state)
         {
-            Model.Model.Rebuild();
             m_Controller = ctrl;
             showBorder = true;
         }

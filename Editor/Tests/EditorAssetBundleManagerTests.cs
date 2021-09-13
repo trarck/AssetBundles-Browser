@@ -908,17 +908,22 @@ namespace AssetBundleBuilder.Tests
 			File.Delete(savePath);
 		}
 
-
-		[Test]
-		public void BuildBundlesTest()
+		private void PrepareAssets()
 		{
 			string testAssets = "Assets/ArtResources/Tests";
 			DateTime start = DateTime.Now;
 
 			string[] prefabFiles = Directory.GetFiles(testAssets, "*.prefab", SearchOption.AllDirectories);
 			List<AssetInfo> assets = new List<AssetInfo>();
+			int n = 1000;
+			int i = 0;
 			foreach (var f in prefabFiles)
 			{
+
+				if (i++ > n)
+				{
+					break;
+				}
 				AssetInfo assetNode = m_AssetManager.CreateAsset(f);
 				//直接使用的资源，可以导址
 				assetNode.addressable = true;
@@ -972,20 +977,51 @@ namespace AssetBundleBuilder.Tests
 
 			Debug.LogFormat("After optimze Asset Count:{0},Bundle Count:{1}", m_AssetManager.assets.Count, m_AssetManager.bundles.Count);
 
+			start = DateTime.Now;
 			m_AssetManager.RefreshAllBundlesName();
+
+			used = DateTime.Now - start;
+			Debug.LogFormat("RefreshAllBundlesName used:{0}", used);
+		}
+
+		[Test]
+		public void BuildBundlesTest()
+		{
+			DateTime start = DateTime.Now;
+
+			PrepareAssets();
 
 			DataSource.BuildInfo buildInfo = new DataSource.BuildInfo();
 
-			buildInfo.outputDirectory = Path.Combine(Application.dataPath, "../AssetBundles");
+			buildInfo.outputDirectory = Path.Combine(Application.dataPath, "../AssetBundles", EditorUserBuildSettings.activeBuildTarget.ToString());
 			buildInfo.options = BuildAssetBundleOptions.ChunkBasedCompression;
 			buildInfo.buildTarget = EditorUserBuildSettings.activeBuildTarget;
 			buildInfo.version = "1.0";
 
 			start = DateTime.Now;
 			m_AssetManager.BuildAssetBundles(buildInfo);
-			used = DateTime.Now - start;
+			TimeSpan used = DateTime.Now - start;
 			Debug.LogFormat("Build AssetBundle used:{0}", used);
 		}
 
+		[Test]
+		public void BuildBundlesPiplineTest()
+		{
+			DateTime start = DateTime.Now;
+
+			PrepareAssets();
+
+			DataSource.BuildInfo buildInfo = new DataSource.BuildInfo();
+
+			buildInfo.outputDirectory = Path.Combine(Application.dataPath, "../AssetBundlesPipline", EditorUserBuildSettings.activeBuildTarget.ToString());
+			buildInfo.options = BuildAssetBundleOptions.ChunkBasedCompression;
+			buildInfo.buildTarget = EditorUserBuildSettings.activeBuildTarget;
+			buildInfo.version = "1.0";
+
+			start = DateTime.Now;
+			m_AssetManager.BuildAssetBundlesPipline(buildInfo);
+			TimeSpan used = DateTime.Now - start;
+			Debug.LogFormat("Build AssetBundle pipline used:{0}", used);
+		}
 	}
 }

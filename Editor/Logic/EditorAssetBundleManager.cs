@@ -29,6 +29,20 @@ namespace AssetBundleBuilder
 		//private List<BundleNode> m_TempBundles = new List<BundleNode>(4096);
 		//private List<BundleNode> m_TempBundleDeps = new List<BundleNode>(4096);
 
+		private static EditorAssetBundleManager m_Instance = null;
+		public static EditorAssetBundleManager Instance
+		{
+			get
+			{
+				if (m_Instance == null)
+				{
+					m_Instance = new EditorAssetBundleManager();
+					m_Instance.Init();
+				}
+				return m_Instance;
+			}
+		}
+
 		public Dictionary<string, AssetInfo> assets
 		{
 			get
@@ -51,6 +65,12 @@ namespace AssetBundleBuilder
 			{
 				m_Bundles = value;
 			}
+		}
+
+
+		public void Init()
+		{
+			
 		}
 
 		public void Clean()
@@ -144,10 +164,11 @@ namespace AssetBundleBuilder
 		/// <param name="asset"></param>
 		public void RefreshAssetDependencies(AssetInfo asset)
 		{
-			//if (!AssetDatabase.IsValidFolder(asset.assetPath))
+			if(asset.dependencyDirty)
 			{
-				//dep
-				asset.dependencies.Clear();
+				//clear deps
+				asset.dependencyDirty = false;
+
 				foreach (var dep in AssetDatabase.GetDependencies(asset.assetPath, false))
 				{
 					if (ValidateAsset(dep) && dep != asset.assetPath)
@@ -172,16 +193,6 @@ namespace AssetBundleBuilder
 		/// <param name="asset"></param>
 		public void RefreshAssetAllDependencies(AssetInfo asset)
 		{
-			//clear all deps
-			if (asset.allDependencies == null)
-			{
-				asset.allDependencies = new HashSet<AssetInfo>();
-			}
-			else
-			{
-				asset.allDependencies.Clear();
-			}
-
 			Stack<AssetInfo> assetsStack = new Stack<AssetInfo>();
 			HashSet<AssetInfo> visiteds = new HashSet<AssetInfo>();
 
@@ -201,8 +212,11 @@ namespace AssetBundleBuilder
 				{
 					foreach (var dep in current.dependencies)
 					{
-						asset.allDependencies.Add(dep);
-						assetsStack.Push(dep);
+						if (asset != dep)
+						{
+							asset.allDependencies.Add(dep);
+							assetsStack.Push(dep);
+						}
 					}
 				}
 			}
@@ -210,22 +224,20 @@ namespace AssetBundleBuilder
 
 		public void RefreshAssetAllDependencies2(AssetInfo asset)
 		{
-			//dep
-			if (asset.allDependencies == null)
+			//celar all deps
+			if (!asset.dependencyDirty)
 			{
-				asset.allDependencies = new HashSet<AssetInfo>();
+				return;
 			}
-			else
-			{
-				asset.allDependencies.Clear();
-			}
+
+			asset.dependencyDirty = false;
 
 			foreach (var dep in AssetDatabase.GetDependencies(asset.assetPath, true))
 			{
 				if (ValidateAsset(dep) && dep != asset.assetPath)
 				{
 					AssetInfo depAsset = GetOrCreateAsset(dep);
-					if (depAsset != null)
+					if (depAsset != null && asset!= depAsset)
 					{
 						asset.allDependencies.Add(depAsset);
 						RefreshAssetAllDependencies2(depAsset);
@@ -235,10 +247,27 @@ namespace AssetBundleBuilder
 		}
 
 		/// <summary>
+		/// 清除资源之间的依赖关系
+		/// </summary>
+		public void ClearAllAssetRelations()
+		{
+			foreach (var iter in m_Assets)
+			{
+				iter.Value.dependencyDirty = true;
+				iter.Value.dependencies.Clear();
+				iter.Value.refers.Clear();
+				iter.Value.allDependencies.Clear();
+			}
+		}
+
+		/// <summary>
 		/// 更新所有资源的直接依赖
 		/// </summary>
 		public void RefreshAllAssetDependencies()
 		{
+			//必须提前清除。如果和创建再一个循序清除，会导致数据丢失。
+			ClearAllAssetRelations();
+
 			List<AssetInfo> assets = new List<AssetInfo>(m_Assets.Values);
 			foreach (var asset in assets)
 			{
@@ -251,6 +280,8 @@ namespace AssetBundleBuilder
 		/// </summary>
 		public void RefreshAllAssetAllDependencies()
 		{
+			ClearAllAssetRelations();
+
 			List<AssetInfo> assets = new List<AssetInfo>(m_Assets.Values);
 			foreach (var asset in assets)
 			{
@@ -260,6 +291,8 @@ namespace AssetBundleBuilder
 
 		public void RefreshAllAssetAllDependencies2()
 		{
+			ClearAllAssetRelations();
+
 			List<AssetInfo> assets = new List<AssetInfo>(m_Assets.Values);
 			foreach (var asset in assets)
 			{
@@ -325,7 +358,7 @@ namespace AssetBundleBuilder
 		{
 			foreach (var bundle in m_Bundles)
 			{
-				if (bundle.name == bundleName)
+				if (bundle.name!=null && bundle.name.Equals(bundleName,StringComparison.OrdinalIgnoreCase))
 				{
 					return bundle;
 				}
@@ -449,10 +482,22 @@ namespace AssetBundleBuilder
 			}
 		}
 
+		/// <summary>
+		/// 清除Bundle之间的依赖关系
+		/// </summary>
+		public void ClearAllBundleRelations()
+		{
+			foreach (var bundle in m_Bundles)
+			{
+				bundle.dependencies.Clear();
+				bundle.refers.Clear();
+			}
+		}
+
 		public void RefreshAllBundleDependencies()
 		{
-			//m_TempBundles.Clear();
-			//m_TempBundles.AddRange(m_Bundles);
+			ClearAllBundleRelations();
+
 			List<BundleInfo> bundles = new List<BundleInfo>(m_Bundles);
 			foreach (var bundle in bundles)
 			{
@@ -462,8 +507,8 @@ namespace AssetBundleBuilder
 
 		public void RefreshAllBundleRelations()
 		{
-			//m_TempBundles.Clear();
-			//m_TempBundles.AddRange(m_Bundles);
+			ClearAllBundleRelations();
+
 			List<BundleInfo> bundles = new List<BundleInfo>(m_Bundles);
 			foreach (var bundle in bundles)
 			{
@@ -471,7 +516,7 @@ namespace AssetBundleBuilder
 			}
 		}
 
-		public string CreateBundleName(string filePath, bool useFullPath, bool useExt)
+		public string CreateBundleName(string filePath, bool useFullPath, bool useExt, bool flatPath)
 		{
 			if (string.IsNullOrEmpty(filePath))
 			{
@@ -480,15 +525,34 @@ namespace AssetBundleBuilder
 
 			if (useFullPath)
 			{
-				return filePath.Replace('/', '_').Replace('\\', '_').Replace('.', '_').ToLower();
-			}
-			else if (useExt || filePath.Contains(".unity"))//Scene always use ext
-			{
-				return Path.GetFileName(filePath).Replace('.', '_').ToLower();
+				if (flatPath)
+				{
+					return filePath.Replace('/', '_').Replace('\\', '_').Replace('.', '_').ToLower();
+				}
+				else
+				{
+					string baseName = null;
+					if (useExt || filePath.Contains(".unity"))//Scene always use ext
+					{
+						baseName = Path.GetFileName(filePath).Replace('.', '_').ToLower();
+					}
+					else
+					{
+						baseName = Path.GetFileNameWithoutExtension(filePath).ToLower();
+					}
+					return Path.Combine(Path.GetDirectoryName(filePath), baseName).Replace("\\", "/");
+				}
 			}
 			else
 			{
-				return Path.GetFileNameWithoutExtension(filePath).ToLower();
+				if (useExt || filePath.Contains(".unity"))//Scene always use ext
+				{
+					return Path.GetFileName(filePath).Replace('.', '_').ToLower();
+				}
+				else
+				{
+					return Path.GetFileNameWithoutExtension(filePath).ToLower();
+				}
 			}
 		}
 
@@ -499,7 +563,7 @@ namespace AssetBundleBuilder
 			{
 				if (string.IsNullOrEmpty(bundle.name))
 				{
-					bundle.name = CreateBundleName(bundle.mainAssetPath,true,true);
+					bundle.name = CreateBundleName(bundle.mainAssetPath,true,true,false);
 				}
 			}
 		}

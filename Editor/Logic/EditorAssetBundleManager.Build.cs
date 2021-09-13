@@ -6,12 +6,15 @@ using System.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
 using YH.AssetManage;
+using UnityEditor.Build.Pipeline;
+using UnityEditor.Build.Pipeline.Interfaces;
 
 namespace AssetBundleBuilder
 {
 	public partial class EditorAssetBundleManager
 	{
-        public bool BuildAssetBundles(BuildInfo info)
+
+        private List<AssetBundleBuild> CreateAssetBundleBuilds()
         {
             List<AssetBundleBuild> builds = new List<AssetBundleBuild>();
             List<string> assetsPaths = new List<string>();
@@ -31,6 +34,13 @@ namespace AssetBundleBuilder
                     builds.Add(build);
                 }
             }
+            return builds;
+        }
+
+        public bool BuildAssetBundles(BuildInfo info)
+        {
+
+            List<AssetBundleBuild> builds = CreateAssetBundleBuilds();
 
             if (!Directory.Exists(info.outputDirectory))
             {
@@ -53,7 +63,26 @@ namespace AssetBundleBuilder
             return true;
         }
 
-        public void SaveBundleManifest(AssetBundleManifest buildManifest, BuildInfo buildInfo)
+        public bool BuildAssetBundlesPipline(BuildInfo info)
+        {
+            List<AssetBundleBuild> builds = CreateAssetBundleBuilds();
+
+            if (!Directory.Exists(info.outputDirectory))
+            {
+                Directory.CreateDirectory(info.outputDirectory);
+            }
+
+            BundleBuildParameters buildParams = new BundleBuildParameters(info.buildTarget, info.buildTargetGroup, info.outputDirectory);
+            buildParams.BundleCompression = BuildCompression.LZ4;
+            IList<IBuildTask> buildTasks = DefaultBuildTasks.Create(DefaultBuildTasks.Preset.AssetBundleCompatible);
+
+            IBundleBuildResults results;
+            var exitCode = ContentPipeline.BuildAssetBundles(buildParams, new BundleBuildContent(builds), out results, buildTasks);
+
+            return true;
+        }
+
+		public void SaveBundleManifest(AssetBundleManifest buildManifest, BuildInfo buildInfo)
         {
             BundleManifest bundleManifest = new BundleManifest();
             bundleManifest.version = buildInfo.version;
@@ -66,7 +95,7 @@ namespace AssetBundleBuilder
                 if (assetBundleFileInfo != null)
                 {
                     BundleInfo bundleInfo = GetBundle(assetBundleName);
-                    if (buildInfo != null)
+                    if (bundleInfo != null)
                     {
                         YH.AssetManage.AssetBundleInfo assetBundleInfo = new YH.AssetManage.AssetBundleInfo();
                         assetBundleInfo.fullName = assetBundleName;
@@ -110,6 +139,29 @@ namespace AssetBundleBuilder
             string outputManifestJsonFile = outputManifestFile + ".json";
             string content = JsonUtility.ToJson(bundleManifest, true);
             File.WriteAllText(outputManifestJsonFile, content);
+        }
+
+        private BuildTargetGroup GetBuildTargetGroupFromTarget(BuildTarget buildTarget)
+        {
+            switch (buildTarget)
+            {
+                case BuildTarget.Android:
+                    return BuildTargetGroup.Android;
+                case BuildTarget.iOS:
+                    return BuildTargetGroup.iOS;
+                case BuildTarget.StandaloneWindows:
+                case BuildTarget.StandaloneWindows64:
+                case BuildTarget.StandaloneOSX:
+                case BuildTarget.StandaloneLinux:
+                case BuildTarget.StandaloneLinux64:
+                    return BuildTargetGroup.Standalone;
+                case BuildTarget.PS4:
+                    return BuildTargetGroup.PS4;
+                case BuildTarget.Switch:
+                    return BuildTargetGroup.Switch;
+                default:
+                    return EditorUserBuildSettings.selectedBuildTargetGroup;
+            }
         }
     }
 }

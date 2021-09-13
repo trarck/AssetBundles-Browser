@@ -37,7 +37,10 @@ namespace AssetBundleBuilder
 		//一般情况调用LoadFromFolder的资源都是独立的，调用LoadDependencies是依赖的。
 		protected bool m_Addressable = false;
 
+		protected bool m_DependencyDirty = true;
+
 		public BundleInfo bundle;
+
 
 		public string assetPath
 		{
@@ -184,6 +187,18 @@ namespace AssetBundleBuilder
 			set
 			{
 				m_AllDependencies = value;
+			}
+		}
+
+		public bool dependencyDirty
+		{
+			get
+			{
+				return m_DependencyDirty;
+			}
+			set
+			{
+				m_DependencyDirty = value;
 			}
 		}
 
