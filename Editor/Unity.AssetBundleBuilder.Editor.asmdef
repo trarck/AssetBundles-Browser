@@ -3,7 +3,8 @@
     "references": [
         "AssetManager",
         "YHLib",
-        "Unity.ScriptableBuildPipeline.Editor"
+        "Unity.ScriptableBuildPipeline.Editor",
+        "Unity.ScriptableBuildPipeline"
     ],
     "optionalUnityReferences": [],
     "includePlatforms": [

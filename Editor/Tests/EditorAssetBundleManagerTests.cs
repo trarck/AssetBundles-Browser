@@ -7,6 +7,10 @@ using UnityEngine.TestTools;
 using AssetBundleBuilder;
 using System.Threading;
 using UnityEditor;
+using UnityEditor.Build.Content;
+using UnityEditor.Build.Pipeline.Utilities;
+using UnityEditor.Build.Pipeline;
+using System.Reflection;
 
 namespace AssetBundleBuilder.Tests
 {
@@ -915,12 +919,12 @@ namespace AssetBundleBuilder.Tests
 
 			string[] prefabFiles = Directory.GetFiles(testAssets, "*.prefab", SearchOption.AllDirectories);
 			List<AssetInfo> assets = new List<AssetInfo>();
-			int n = 1000;
+			int n = 50000;
 			int i = 0;
 			foreach (var f in prefabFiles)
 			{
 
-				if (i++ > n)
+				if (++i > n)
 				{
 					break;
 				}
@@ -1022,6 +1026,139 @@ namespace AssetBundleBuilder.Tests
 			m_AssetManager.BuildAssetBundlesPipline(buildInfo);
 			TimeSpan used = DateTime.Now - start;
 			Debug.LogFormat("Build AssetBundle pipline used:{0}", used);
+		}
+
+		[Test]
+		public void WriteSerializedFileTest()
+		{
+			string outputFolder = Path.Combine(Application.dataPath, "../AssetBundlesPipline", EditorUserBuildSettings.activeBuildTarget.ToString());
+
+			string assetPath = "Assets/ArtResources/Prefabs/TestPrefab.prefab";
+			string bundleName = "TestPrefab";
+
+			BundleBuildParameters buildParams = new BundleBuildParameters(EditorUserBuildSettings.activeBuildTarget, EditorUserBuildSettings.selectedBuildTargetGroup, outputFolder);
+
+
+			AssetLoadInfo assetLoadInfo = CreateAssetLoadInfo(assetPath, EditorUserBuildSettings.activeBuildTarget);
+			List<AssetLoadInfo> assetLoadInfos = new List<AssetLoadInfo>();
+			assetLoadInfos.Add(assetLoadInfo);
+
+
+			WriteCommand writeCommand = CreateWriteCommand(bundleName, assetLoadInfos, EditorUserBuildSettings.activeBuildTarget);
+
+			BuildUsageTagSet usageSet = new BuildUsageTagSet();
+
+			var referenceMap = new BuildReferenceMap();
+			referenceMap.AddMappings(writeCommand.internalName, writeCommand.serializeObjects.ToArray());
+
+			var bundleInfo = new AssetBundleInfo();
+			bundleInfo.bundleName = bundleName;
+			bundleInfo.bundleAssets = assetLoadInfos;
+
+			ContentBuildInterface.WriteSerializedFile(outputFolder, writeCommand, buildParams.GetContentBuildSettings(), new BuildUsageTagGlobal(), usageSet, referenceMap, bundleInfo);
+
+			//Type type = typeof(ContentBuildInterface);
+			//MethodInfo m = type.GetMethod("WriteSerializedFileAssetBundle", BindingFlags.Static|BindingFlags.NonPublic);
+
+
+			////if (m != null)
+			////{
+			////	object[] args = new object[]
+			////	{
+			////			 outputFolder, writeCommand, buildParams.GetContentBuildSettings(), new BuildUsageTagGlobal(), usageSet, referenceMap, bundleInfo
+			////	};
+			////	m.Invoke(null, args);
+			////}
+
+			//Thread t = new Thread(() =>
+			//{
+			//	if (m != null)
+			//	{
+			//		object[] args = new object[]
+			//		{
+			//			 outputFolder, writeCommand, buildParams.GetContentBuildSettings(), new BuildUsageTagGlobal(), usageSet, referenceMap, bundleInfo
+			//		};
+			//		m.Invoke(null, args);
+			//	}
+			//});
+
+			//t.Start();
+		}
+
+		private AssetLoadInfo CreateAssetLoadInfo(string assetPath,BuildTarget buildTarget)
+		{
+			GUID assetGuid = new GUID(AssetDatabase.AssetPathToGUID(assetPath));
+
+			AssetLoadInfo assetInfo = new AssetLoadInfo()
+			{
+				asset = assetGuid,
+				address = assetPath
+			};
+			var includedObjects = ContentBuildInterface.GetPlayerObjectIdentifiersInAsset(assetGuid, buildTarget);
+			assetInfo.includedObjects = new List<ObjectIdentifier>(includedObjects);
+
+			var referencedObjects = ContentBuildInterface.GetPlayerDependenciesForObjects(includedObjects, buildTarget, null);
+			assetInfo.referencedObjects = new List<ObjectIdentifier>(referencedObjects);
+			FilterReferencesForAsset(assetInfo.referencedObjects);
+			return assetInfo;
+		}
+
+		private WriteCommand CreateWriteCommand(string bundleName, List<AssetLoadInfo> assets, BuildTarget buildTarget)
+		{
+			HashSet<ObjectIdentifier> allObjs = new HashSet<ObjectIdentifier>();
+			foreach (var assetLoadInfo in assets)
+			{
+				allObjs.UnionWith(assetLoadInfo.includedObjects);
+				allObjs.UnionWith(assetLoadInfo.referencedObjects);
+			}
+
+			List<SerializationInfo> serializationInfos = new List<SerializationInfo>();
+			foreach (var objId in allObjs)
+			{
+				SerializationInfo serializationInfo = new SerializationInfo();
+				serializationInfo.serializationObject = objId;
+				serializationInfo.serializationIndex = SerializationIndexFromObjectIdentifier(objId);
+
+				serializationInfos.Add(serializationInfo);
+			}
+
+			string internalName = string.Format("archive:/{0}/{0}", GenerateInternalFileName(bundleName));
+			WriteCommand command = new WriteCommand();
+			command.internalName = internalName;
+			command.fileName = Path.GetFileName(internalName);
+			command.serializeObjects = serializationInfos;
+			return command;
+		}
+
+		private string GenerateInternalFileName(string name)
+		{
+			var hash = HashingMethods.Calculate(name).ToString();
+			return string.Format("CAB-{0}", hash);
+		}
+
+		private long SerializationIndexFromObjectIdentifier(ObjectIdentifier objectID)
+		{
+			byte[] assetHash = HashingMethods.Calculate(objectID.guid, objectID.filePath).ToBytes();
+			byte[] objectHash = HashingMethods.Calculate(objectID).ToBytes();
+
+			var assetVal = BitConverter.ToUInt64(assetHash, 0);
+			var objectVal = BitConverter.ToUInt64(objectHash, 0);
+			return (long)((0xFFFFFFFF00000000 & assetVal) | (0x00000000FFFFFFFF & (objectVal ^ assetVal)));
+		}
+
+		private void FilterReferencesForAsset(List<ObjectIdentifier> references)
+		{
+			var referencesPruned = new List<ObjectIdentifier>(references.Count);
+			// Remove Default Resources and Includes for Assets assigned to Bundles
+			foreach (ObjectIdentifier reference in references)
+			{
+				if (reference.filePath.Equals("library/unity default resources", StringComparison.OrdinalIgnoreCase))
+					continue;
+
+				referencesPruned.Add(reference);
+			}
+			references.Clear();
+			references.AddRange(referencesPruned);
 		}
 	}
 }

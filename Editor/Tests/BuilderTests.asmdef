@@ -2,7 +2,8 @@
     "name": "BuilderTests",
     "references": [
         "YHLib",
-        "Unity.AssetBundleBuilder.Editor"
+        "Unity.AssetBundleBuilder.Editor",
+        "Unity.ScriptableBuildPipeline.Editor"
     ],
     "optionalUnityReferences": [
         "TestAssemblies"

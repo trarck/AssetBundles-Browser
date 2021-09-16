@@ -8,6 +8,7 @@ using UnityEngine;
 using YH.AssetManage;
 using UnityEditor.Build.Pipeline;
 using UnityEditor.Build.Pipeline.Interfaces;
+using UnityEngine.Build.Pipeline;
 
 namespace AssetBundleBuilder
 {
@@ -54,7 +55,7 @@ namespace AssetBundleBuilder
             //不能消除Manifest，否则无法增量构建。可以在最终目录把Manifest删除
             //DatabaseUtil.ClearTempManifest(info.outputDirectory);
 
-            SaveBundleManifest(buildManifest, info);
+            //SaveBundleManifest(buildManifest, info);
 
             if (info.onBuild != null)
             {
@@ -79,10 +80,11 @@ namespace AssetBundleBuilder
             IBundleBuildResults results;
             var exitCode = ContentPipeline.BuildAssetBundles(buildParams, new BundleBuildContent(builds), out results, buildTasks);
 
+            //SaveBundleManifest(results, info);
             return true;
         }
 
-		public void SaveBundleManifest(AssetBundleManifest buildManifest, BuildInfo buildInfo)
+        private void SaveBundleManifest(AssetBundleManifest buildManifest, BuildInfo buildInfo)
         {
             BundleManifest bundleManifest = new BundleManifest();
             bundleManifest.version = buildInfo.version;
@@ -130,7 +132,68 @@ namespace AssetBundleBuilder
             //save binary
             string outputManifestFile = Path.Combine(buildInfo.outputDirectory, buildInfo.manifestName);
             using (FileStream fs = new FileStream(outputManifestFile, FileMode.Create))
-            using(BinaryWriter br =new BinaryWriter(fs))
+            using (BinaryWriter br = new BinaryWriter(fs))
+            {
+                bundleManifest.Write(br);
+            }
+
+            //save json
+            string outputManifestJsonFile = outputManifestFile + ".json";
+            string content = JsonUtility.ToJson(bundleManifest, true);
+            File.WriteAllText(outputManifestJsonFile, content);
+        }
+
+        private void SaveBundleManifest(IBundleBuildResults results, BuildInfo buildInfo)
+        {
+            BundleManifest bundleManifest = new BundleManifest();
+            bundleManifest.version = buildInfo.version;
+
+            List<AssetBundleInfo> bundleInfos = new List<AssetBundleInfo>();
+
+            foreach (var iter in results.BundleInfos)
+            {
+                string assetBundleName = iter.Key;
+                BundleDetails bundleDetail= iter.Value;                
+                FileInfo assetBundleFileInfo = new FileInfo(bundleDetail.FileName);
+                if (assetBundleFileInfo != null)
+                {
+                    BundleInfo bundleInfo = GetBundle(assetBundleName);
+                    if (bundleInfo != null)
+                    {
+                        YH.AssetManage.AssetBundleInfo assetBundleInfo = new YH.AssetManage.AssetBundleInfo();
+                        assetBundleInfo.fullName = assetBundleName;
+                        assetBundleInfo.shortName = Path.GetFileName(assetBundleName);
+                        assetBundleInfo.size = (int)assetBundleFileInfo.Length;
+                        assetBundleInfo.hash = bundleDetail.Hash.ToString();
+                        assetBundleInfo.dependencies = bundleDetail.Dependencies;
+
+                        List<YH.AssetManage.AssetInfo> assets = new List<YH.AssetManage.AssetInfo>();
+                        foreach (var assetInfo in bundleInfo.assets)
+                        {
+                            YH.AssetManage.AssetInfo ai = new YH.AssetManage.AssetInfo();
+                            ai.fullName = assetInfo.assetPath;
+                            assets.Add(ai);
+                        }
+                        assetBundleInfo.assets = assets;
+
+                        bundleInfos.Add(assetBundleInfo);
+                    }
+                    else
+                    {
+                        Debug.LogWarningFormat("Can't get BundleInfo  {0}", assetBundleName);
+                    }
+                }
+                else
+                {
+                    Debug.LogErrorFormat("No builded asset bundle file {0}", assetBundleName);
+                }
+            }
+            bundleManifest.bundleInfos = bundleInfos;
+
+            //save binary
+            string outputManifestFile = Path.Combine(buildInfo.outputDirectory, buildInfo.manifestName);
+            using (FileStream fs = new FileStream(outputManifestFile, FileMode.Create))
+            using (BinaryWriter br = new BinaryWriter(fs))
             {
                 bundleManifest.Write(br);
             }
