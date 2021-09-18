@@ -1,9 +1,213 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace AssetBundleBuilder
 {
+	public class BundleNameData
+	{
+		private List<string> m_PathTokens;
+		private string m_FullBundleName;
+		private string m_ShortName;
+		private string m_VariantName;
+		private string m_FullNativeName;
+
+		//input (received from native) is a string of format:
+		//  /folder0/.../folderN/name.variant
+		//it's broken into:
+		//  /m_pathTokens[0]/.../m_pathTokens[n]/m_shortName.m_variantName
+		// and...
+		//  m_fullBundleName = /m_pathTokens[0]/.../m_pathTokens[n]/m_shortName
+		// and...
+		//  m_fullNativeName = m_fullBundleName.m_variantName which is the same as the initial input.
+		public BundleNameData(string name)
+		{
+			SetName(name);
+		}
+		public BundleNameData(string path, string name)
+		{
+			string finalName = System.String.IsNullOrEmpty(path) ? "" : path + '/';
+			finalName += name;
+			SetName(finalName);
+		}
+		public override int GetHashCode()
+		{
+			return fullNativeName.GetHashCode();
+		}
+		public string fullNativeName
+		{
+			get
+			{
+				return m_FullNativeName;
+			}
+		}
+
+		public void SetBundleName(string bundleName, string variantName)
+		{
+			string name = bundleName;
+			name += System.String.IsNullOrEmpty(variantName) ? "" : "." + variantName;
+			SetName(name);
+		}
+		public string bundleName
+		{
+			get
+			{
+				return m_FullBundleName;
+			}
+			//set { SetName(value); }
+		}
+		public string shortName
+		{
+			get
+			{
+				return m_ShortName;
+			}
+		}
+		public string variant
+		{
+			get
+			{
+				return m_VariantName;
+			}
+			set
+			{
+				m_VariantName = value;
+				m_FullNativeName = m_FullBundleName;
+				m_FullNativeName += System.String.IsNullOrEmpty(m_VariantName) ? "" : "." + m_VariantName;
+			}
+		}
+		public List<string> pathTokens
+		{
+			get
+			{
+				return m_PathTokens;
+			}
+			set
+			{
+				m_PathTokens = value.GetRange(0, value.Count - 1);
+				SetShortName(value.Last());
+				GenerateFullName();
+			}
+		}
+
+		private void SetName(string name)
+		{
+			if (m_PathTokens == null)
+				m_PathTokens = new List<string>();
+			else
+				m_PathTokens.Clear();
+
+			string shortName = GetPathNames(name, ref m_PathTokens);
+			SetShortName(shortName);
+			GenerateFullName();
+		}
+
+		private void SetShortName(string inputName)
+		{
+			m_ShortName = inputName;
+			int indexOfDot = m_ShortName.LastIndexOf('.');
+			if (indexOfDot > -1)
+			{
+				m_VariantName = m_ShortName.Substring(indexOfDot + 1);
+				m_ShortName = m_ShortName.Substring(0, indexOfDot);
+			}
+			else
+				m_VariantName = string.Empty;
+		}
+
+		public void PartialNameChange(string newToken, int indexFromBack)
+		{
+			if (indexFromBack == 0)
+			{
+				List<string> paths = new List<string>();
+				string shortName = GetPathNames(newToken, ref paths);
+				m_PathTokens.AddRange(paths);
+				SetShortName(shortName);
+			}
+			else if (indexFromBack == -1)
+			{
+				if (m_PathTokens.Count == 0)
+				{
+					m_PathTokens.AddRange(newToken.Split('/'));
+				}
+				else
+				{
+					m_PathTokens.InsertRange(0, newToken.Split('/'));
+				}
+			}
+			else if (indexFromBack <= m_PathTokens.Count)
+			{
+				int index = m_PathTokens.Count - indexFromBack;
+				m_PathTokens.RemoveAt(index);
+				m_PathTokens.InsertRange(index, newToken.Split('/'));
+			}
+			
+			GenerateFullName();
+		}
+
+		public void ShortNameChange(string newShortName)
+		{
+			if (m_ShortName != newShortName)
+			{
+				SetShortName(newShortName);
+				GenerateFullName();
+			}
+		}
+
+		private void GenerateFullName()
+		{
+			m_FullBundleName = string.Empty;
+			for (int i = 0; i < m_PathTokens.Count; i++)
+			{
+				m_FullBundleName += m_PathTokens[i];
+				m_FullBundleName += '/';
+			}
+			m_FullBundleName += m_ShortName;
+			m_FullNativeName = m_FullBundleName;
+			m_FullNativeName += System.String.IsNullOrEmpty(m_VariantName) ? "" : "." + m_VariantName;
+		}
+
+		static public string GetPathNames(string name, ref List<string> pathTokens)
+		{
+			if (name == null)
+			{
+				return "";
+			}
+
+			int indexOfSlash = name.IndexOf('/');
+			int previousIndex = 0;
+			while (indexOfSlash != -1)
+			{
+				pathTokens.Add(name.Substring(previousIndex, (indexOfSlash - previousIndex)));
+				previousIndex = indexOfSlash + 1;
+				indexOfSlash = name.IndexOf('/', previousIndex);
+			}
+			return previousIndex == 0 ? name : name.Substring(previousIndex);
+		}
+
+		static public List<string> GetPathTokens(string path)
+		{
+			List<string> pathTokens = new List<string>();
+
+			int indexOfSlash = path.IndexOf('/');
+			int previousIndex = 0;
+			while (indexOfSlash != -1)
+			{
+				pathTokens.Add(path.Substring(previousIndex, (indexOfSlash - previousIndex)));
+				previousIndex = indexOfSlash + 1;
+				indexOfSlash = path.IndexOf('/', previousIndex);
+			}
+			string left = path.Substring(previousIndex).Trim();
+			if (!string.IsNullOrEmpty(left))
+			{
+				pathTokens.Add(left);
+			}
+			return pathTokens;
+		}
+	}
+
+
 	public class BundleInfo
 	{
 		private static uint IdIndex = 0;

@@ -8,18 +8,23 @@ using UnityEditor.IMGUI.Controls;
 
 using AssetBundleBuilder.DataSource;
 using System;
+using AssetBundleBuilder.View;
 
 namespace AssetBundleBuilder.Model
 {
 	public class BundleTreeManager
 	{
-		Dictionary<string, BundleNode> m_Bundles;
+		public static string DefaultFolderName = "dummy";
+		public static string DefaultBundleName = "newbundle";
+
 		Dictionary<string, AssetNode> m_Assets;
-		BundleFolderNode m_Root;
 
 		DataSource.DataSource m_DataSource;
 		Type m_DefaultDataSourceType = typeof(JsonDataSource);
 
+
+		BundleTreeFolderItem m_RootItem;
+		Dictionary<string, BundleTreeItem> m_BundleItems;
 
 		static BundleTreeManager m_Instance = null;
 		public static BundleTreeManager Instance
@@ -35,237 +40,303 @@ namespace AssetBundleBuilder.Model
 			}
 		}
 
-		public BundleNode rootNode
+		public BundleTreeItem rootItem
 		{
 			get
 			{
-				return m_Root;
+				return m_RootItem;
 			}
 		}
 
 		public void Init()
 		{
-			m_Bundles = new Dictionary<string, BundleNode>();
 			m_Assets = new Dictionary<string, AssetNode>();
-			m_Root = new BundleFolderConcreteNode("",null);
+			m_BundleItems = new Dictionary<string, BundleTreeItem>();
+			m_RootItem = new BundleTreeFolderItem("",-1);
 		}
 
 		public void Clean()
 		{
-			if (m_Bundles != null)
-			{
-				m_Bundles.Clear();
-				m_Bundles = null;
-			}
 
 			if (m_Assets != null)
 			{
 				m_Assets.Clear();
-				m_Bundles = null;
 			}
 
-			if (m_Root != null)
-			{
-				m_Root = null;
-			}
 		}
 
 		public void Clear()
 		{
-			if (m_Bundles != null)
-			{
-				m_Bundles.Clear();
-			}
 
 			if (m_Assets != null)
 			{
 				m_Assets.Clear();
 			}
+		}
 
-			if (m_Root != null)
+		public void ReloadBundles()
+		{
+
+			EditorAssetBundleManager assetBundleManager = EditorAssetBundleManager.Instance;
+
+			string testAssets = "Assets/ArtResources/Prefabs";
+
+			string[] prefabFiles = Directory.GetFiles(testAssets, "*.prefab", SearchOption.AllDirectories);
+			foreach (var f in prefabFiles)
 			{
-				m_Root = new BundleFolderConcreteNode("", null);
+				AssetInfo assetNode = assetBundleManager.GetOrCreateAsset(f);
+				//直接使用的资源，可以寻址
+				assetNode.addressable = true;
+			}
+
+			assetBundleManager.RefreshAllAssetDependencies();
+			assetBundleManager.RefreshAllAssetAllDependencies();
+
+			assetBundleManager.CleanBundles();
+
+			//create bundle from assets
+			foreach (var iter in assetBundleManager.assets)
+			{
+				BundleInfo bundleNode = assetBundleManager.CreateBundle(null);
+				bundleNode.SetMainAsset(iter.Value);
+				bundleNode.AddAsset(iter.Value);
+				if (iter.Value.addressable)
+				{
+					bundleNode.SetStandalone(iter.Value.addressable);
+				}
+			}
+			assetBundleManager.RefreshAllBundleDependencies();
+
+			assetBundleManager.Combine();
+			assetBundleManager.RefreshAllBundlesName();
+
+			m_RootItem.ClearChildren();
+			m_BundleItems.Clear();
+
+			//create all bundle node
+			foreach (var bundleInfo in assetBundleManager.bundles)
+			{
+				CreateBundleData(bundleInfo);
 			}
 		}
 
-		public void CreateBundlesFromDataSource()
+		public bool BundleListIsEmpty()
 		{
-			string[] bundlePaths = dataSource.GetAllAssetBundleNames();
-
-			foreach (var bundlePath in bundlePaths)
-			{
-				BundleDataNode bundleDataInfo = CreateBundleDataByPath(bundlePath, m_Root);
-				string[] assets = dataSource.GetAssetPathsFromAssetBundle(bundlePath);
-
-			}
+			return m_RootItem.children==null || m_RootItem.children.Count == 0;
 		}
 
 		#region Bundle
-		public BundleNode GetBundle(string bundlePath)
+		public BundleTreeItem GetBundle(string bundlePath)
 		{
-			BundleNode bundleInfo = null;
-			m_Bundles.TryGetValue(bundlePath, out bundleInfo);
-			return bundleInfo;
+			BundleTreeItem bundle = null;
+			m_BundleItems.TryGetValue(bundlePath, out bundle);
+			return bundle;
 		}
 
-		public BundleNode GetBundle(string bundlePath,BundleFolderNode parent)
+		public BundleTreeItem GetBundle(string bundlePath, BundleTreeFolderItem parent)
 		{
-			BundleNode bundleInfo = null;
+			BundleTreeItem bundle = null;
 			if (parent != null)
 			{
-				bundlePath = parent.m_Name.fullNativeName + "/" + bundlePath;
+				bundlePath = parent.nameData.fullNativeName + "/" + bundlePath;
 			}
-			m_Bundles.TryGetValue(bundlePath, out bundleInfo);
-			return bundleInfo;
+			m_BundleItems.TryGetValue(bundlePath, out bundle);
+			return bundle;
 		}
 
-		private BundleNode GetBundle(List<string> pathTokens,  BundleFolderNode parent)
+		private BundleTreeItem GetBundle(List<string> pathTokens, BundleTreeFolderItem parent)
 		{
 			string bundleName = null;
-			BundleNode bundleInfo = null;
+			BundleTreeItem bundle = null;
 
-			for (int i = 0,l=pathTokens.Count; i < l; ++i)
+			for (int i = 0, l = pathTokens.Count; i < l; ++i)
 			{
 				bundleName = pathTokens[i];
-				bundleInfo = parent.GetChild(bundleName);
+				bundle = parent.GetChild(bundleName);
 
-				if (bundleInfo == null)
+				if (bundle == null)
 				{
 					return null;
 				}
 
-				if (bundleInfo is BundleFolderNode)
+				if (bundle is BundleTreeFolderItem)
 				{
-					parent = bundleInfo as BundleFolderNode;
+					parent = bundle as BundleTreeFolderItem;
 				}
 
-				else if (bundleInfo is BundleDataNode)
+				else if (bundle is BundleTreeDataItem)
 				{
 					if (i == l - 1)
 					{
-						return bundleInfo;
+						return bundle;
 					}
 					else
 					{
-						Debug.LogErrorFormat("GetBundleFolder:{0} is not bundle folder", parent.m_Name.fullNativeName + "/" + bundleName);
+						Debug.LogErrorFormat("GetBundleFolder:{0} is not bundle folder", parent.nameData.fullNativeName + "/" + bundleName);
 						return null;
 					}
 				}
-				else if (bundleInfo is BundleFolderNode)
+				else if (bundle is BundleTreeFolderItem)
 				{
-					parent = bundleInfo as BundleFolderNode;
+					parent = bundle as BundleTreeFolderItem;
 				}
 				else
 				{
-					Debug.LogErrorFormat("GetBundleFolder:{0} is not bundle folder", parent.m_Name.fullNativeName + "/" + bundleName);
+					Debug.LogErrorFormat("GetBundleFolder:{0} is not bundle folder", parent.nameData.fullNativeName + "/" + bundleName);
 					return null;
 				}
 			}
-			return bundleInfo;
+			return bundle;
 		}
 
-		public void AddBundle(BundleNode bundleInfo, BundleFolderNode parent)
+		public void AddBundle(BundleTreeItem bundle, BundleTreeFolderItem parent)
 		{
 			if (parent != null)
 			{
 				//add to parent
-				parent.AddChild(bundleInfo);
+				parent.AddChild(bundle);
 
 				//full path map
-				string bundlePath = string.IsNullOrEmpty(parent.m_Name.fullNativeName) ? bundleInfo.displayName : (parent.m_Name.fullNativeName + "/" + bundleInfo.displayName);
-				m_Bundles[bundlePath] = bundleInfo;
+				string bundlePath = bundle.nameData.fullNativeName;// string.IsNullOrEmpty(parent.nameData.fullNativeName) ? bundle.displayName : (parent.nameData.fullNativeName + "/" + bundle.displayName);
+				m_BundleItems[bundlePath] = bundle;
 			}
 		}
 
-		public BundleDataNode CreateBundleDataByName(string bundleName, BundleFolderNode parent = null)
+		public BundleTreeDataItem CreateBundleData(BundleInfo bundleInfo, BundleNameData nameData, BundleTreeFolderItem parent)
+		{
+			BundleTreeDataItem bundleItem = new BundleTreeDataItem(bundleInfo, nameData, parent.depth + 1);
+
+			AddBundle(bundleItem, parent);
+
+			return bundleItem;
+		}
+
+		private BundleNameData CreateBundleNameData(string bundlePath, ref BundleTreeFolderItem parent,int offset=0)
 		{
 			if (parent == null)
 			{
-				parent = m_Root;
+				parent = m_RootItem;
 			}
 
-			BundleDataNode bundleInfo = new BundleDataNode(bundleName, parent);
+			BundleNameData bundleNameData = new BundleNameData(bundlePath);
 
-			AddBundle(bundleInfo, parent);
+			parent = GetBundleFolder(bundleNameData.pathTokens, bundleNameData.pathTokens.Count-offset, parent);
 
-			return bundleInfo;
+			string bundleName = bundleNameData.shortName;
+
+			bundleName = GetUniqueName(bundleName, parent);
+
+			bundleNameData.ShortNameChange(bundleName);
+			bundleNameData.PartialNameChange(parent.nameData.fullNativeName, -1);
+			return bundleNameData;
 		}
 
-		public BundleDataNode CreateBundleDataByPath(string bundlePath, BundleFolderNode parent = null)
+		public BundleTreeDataItem CreateBundleData(BundleInfo bundleInfo, BundleTreeFolderItem parent = null)
+		{
+			if (bundleInfo==null)
+			{
+				return null;
+			}
+
+			BundleNameData bundleNameData = CreateBundleNameData(bundleInfo.name, ref parent);
+			return CreateBundleData(bundleInfo, bundleNameData, parent);
+		}
+
+		public BundleTreeDataItem CreateBundleData(string bundlePath, BundleTreeFolderItem parent = null)
 		{
 			if (string.IsNullOrEmpty(bundlePath))
 			{
 				return null;
 			}
 
-			if (parent == null)
-			{
-				parent = m_Root;
-			}
-
-			BundleNameData bundleNameData = new BundleNameData(bundlePath);
-
-			parent = GetBundleFolder(bundleNameData.pathTokens, bundleNameData.pathTokens.Count, parent);
-
-			string bundleName = bundleNameData.shortName;
-
-			bundleName = GetUniqueName(bundleName, parent);
-
-			return CreateBundleDataByName(bundleName, parent);
+			BundleNameData bundleNameData = CreateBundleNameData(bundlePath, ref parent);
+			return CreateBundleData(null, bundleNameData, parent);
 		}
 
-		public BundleFolderNode CreateBundleFolderByName(string folderName, BundleFolderNode parent=null)
+		public BundleTreeDataItem CreateEmptyBundle(BundleTreeFolderItem parent = null)
+		{
+			return CreateBundleData(DefaultBundleName, parent);
+		}
+
+		public BundleTreeFolderItem CreateBundleFolderByName(string folderName, BundleTreeFolderItem parent = null)
 		{
 			if (parent == null)
 			{
-				parent = m_Root;
+				parent = m_RootItem;
 			}
 
-			BundleFolderNode bundleInfo = new BundleFolderNode(folderName, parent);
+			BundleTreeFolderItem bundle = new BundleTreeFolderItem(folderName,parent.depth+1);
 
-			AddBundle(bundleInfo, parent);
+			AddBundle(bundle, parent);
 
-			return bundleInfo;
+			return bundle;
 		}
 
-		public BundleFolderNode CreateBundleFolderByPath(string folderPath, BundleFolderNode parent=null)
+		public BundleTreeFolderItem CreateBundleFolder(BundleNameData nameData, BundleTreeFolderItem parent = null)
 		{
-			if (string.IsNullOrEmpty(folderPath))
+			if (parent == null)
+			{
+				parent = m_RootItem;
+			}
+
+			BundleTreeFolderItem bundle = new BundleTreeFolderItem(nameData, parent.depth + 1);
+
+			AddBundle(bundle, parent);
+
+			return bundle;
+		}
+
+		public BundleTreeFolderItem CreateChildBundleFolder(string folderName, BundleTreeFolderItem parent = null)
+		{
+			if (string.IsNullOrEmpty(folderName))
 			{
 				return null;
 			}
 
 			if (parent == null)
 			{
-				parent = m_Root;
+				parent = m_RootItem;
 			}
 
-			List<string> pathTokens= BundleNameData.GetPathTokens(folderPath);
+			folderName = GetUniqueName(folderName, parent);
 
-			parent = GetBundleFolder(pathTokens, pathTokens.Count-1 , parent);
+			BundleNameData nameData = new BundleNameData(parent.nameData.bundleName, folderName);
 
-			string bundleName = pathTokens[pathTokens.Count - 1];
-
-			bundleName = GetUniqueName(bundleName, parent);
-
-			return CreateBundleFolderByName(bundleName, parent);
+			return CreateBundleFolder(nameData, parent);
 		}
 
-		public BundleFolderNode GetBundleFolder(string folderPath, BundleFolderNode parent)
+		public BundleTreeFolderItem CreateBundleFolder(string folderPath, BundleTreeFolderItem parent = null)
 		{
-			if (m_Bundles.ContainsKey(folderPath))
+			if (string.IsNullOrEmpty(folderPath))
 			{
-				return m_Bundles[folderPath] as BundleFolderNode;
+				return null;
+			}
+
+			BundleNameData nameData = CreateBundleNameData(folderPath, ref parent, 1);
+
+			return CreateBundleFolder(nameData, parent);
+		}
+
+		public BundleTreeFolderItem CreateEmptyFolder(BundleTreeFolderItem parent)
+		{
+			return CreateChildBundleFolder(DefaultFolderName, parent);
+		}
+
+		public BundleTreeFolderItem GetBundleFolder(string folderPath, BundleTreeFolderItem parent)
+		{
+			if (m_BundleItems.ContainsKey(folderPath))
+			{
+				return m_BundleItems[folderPath] as BundleTreeFolderItem;
 			}
 
 			List<string> pathTokens = BundleNameData.GetPathTokens(folderPath);
 			return GetBundleFolder(pathTokens, pathTokens.Count, parent);
 		}
 
-		private BundleFolderNode GetBundleFolder(List<string> pathTokens, int deep, BundleFolderNode parent)
+		private BundleTreeFolderItem GetBundleFolder(List<string> pathTokens, int deep, BundleTreeFolderItem parent)
 		{
 			string bundleName = null;
-			BundleNode bundleInfo = null;
+			BundleTreeItem bundleInfo = null;
 
 			for (int i = 0; i < deep; ++i)
 			{
@@ -274,37 +345,84 @@ namespace AssetBundleBuilder.Model
 
 				if (bundleInfo == null)
 				{
-					bundleInfo = CreateBundleFolderByName(bundleName, parent);
+					bundleInfo = CreateChildBundleFolder(bundleName, parent);
 				}
-				else if (bundleInfo is BundleDataNode)
+				else if (bundleInfo is BundleTreeDataItem)
 				{
-					Debug.LogErrorFormat("GetBundleFolder:{0} is not bundle folder", parent.m_Name.fullNativeName + "/" + bundleName);
+					Debug.LogErrorFormat("GetBundleFolder:{0} is not bundle folder", parent.nameData.fullNativeName + "/" + bundleName);
 					return null;
 				}
 
-				parent = bundleInfo as BundleFolderNode;
+				parent = bundleInfo as BundleTreeFolderItem;
 			}
 			return parent;
 		}
 
-		private string GetUniqueName(string name,BundleFolderNode parent)
+		private string GetUniqueName(string name, BundleTreeFolderItem parent)
 		{
 			int i = 0;
 			string newName = name;
 			while (parent.GetChild(newName) != null)
 			{
 				++i;
-				newName = name + i;
+				newName = string.Format("{0}_{1}",name , i);
 			}
 			return newName;
 		}
 
-		public void RefreshBundleAssets(BundleDataNode bundleDataInfo)
+		public BundleTreeDataItem HandleDedupeBundles(IEnumerable<BundleTreeDataItem> bundles, bool onlyOverlappedAssets)
 		{
-			string[] assets = dataSource.GetAssetPathsFromAssetBundle(bundleDataInfo.m_Name.fullNativeName);
+			//var newBundle = CreateEmptyBundle();
+			//HashSet<string> dupeAssets = new HashSet<string>();
+			//HashSet<string> fullAssetList = new HashSet<string>();
+
+			////if they were just selected, then they may still be updating.
+			//bool doneUpdating = s_BundlesToUpdate.Count == 0;
+			//while (!doneUpdating)
+			//	doneUpdating = Update();
+
+			//foreach (var bundle in bundles)
+			//{
+			//	foreach (var asset in bundle.GetDependencies())
+			//	{
+			//		if (onlyOverlappedAssets)
+			//		{
+			//			if (!fullAssetList.Add(asset.fullAssetName))
+			//				dupeAssets.Add(asset.fullAssetName);
+			//		}
+			//		else
+			//		{
+			//			if (asset.IsMessageSet(MessageSystem.MessageFlag.AssetsDuplicatedInMultBundles))
+			//				dupeAssets.Add(asset.fullAssetName);
+			//		}
+			//	}
+			//}
+
+			//if (dupeAssets.Count == 0)
+			//	return null;
+
+			//MoveAssetToBundle(dupeAssets, newBundle.m_Name.bundleName, string.Empty);
+			//ExecuteAssetMove();
+			//return newBundle;
+			return null;
 		}
 
-		#endregion Bundle
+		public void HandleBundleDelete(List<BundleTreeItem> bundleTreeItems)
+		{
+		
+		}
+
+		public void HandleBundleMerge(List<BundleTreeDataItem> bundles,BundleTreeDataItem target)
+		{
+		
+		}
+
+		public void HandleBundleReparent(List<BundleTreeDataItem> bundles, BundleTreeFolderItem parent)
+		{
+		
+		}
+
+		#endregion //Bundle
 
 		#region Asset
 		public AssetNode GetAsset(string assetPath)
@@ -330,7 +448,7 @@ namespace AssetBundleBuilder.Model
 		/// 刷新资源的直接依赖
 		/// </summary>
 		/// <param name="assetInfo"></param>
-		internal void RefreshAssetDependencies(AssetNode assetInfo)
+		public void RefreshAssetDependencies(AssetNode assetInfo)
 		{
 			if (!AssetDatabase.IsValidFolder(assetInfo.fullAssetName))
 			{
@@ -359,7 +477,7 @@ namespace AssetBundleBuilder.Model
 		/// TODO::测试通过unity的直接获取所有依赖和通过遍历的速度
 		/// </summary>
 		/// <param name="assetInfo"></param>
-		internal void RefreshAssetAllDependencies(AssetNode assetInfo)
+		public void RefreshAssetAllDependencies(AssetNode assetInfo)
 		{
 			if (!AssetDatabase.IsValidFolder(assetInfo.fullAssetName))
 			{
@@ -393,7 +511,7 @@ namespace AssetBundleBuilder.Model
 			}
 		}
 
-		internal void RefreshAssetAllDependencies2(AssetNode assetInfo)
+		public void RefreshAssetAllDependencies2(AssetNode assetInfo)
 		{
 			if (!AssetDatabase.IsValidFolder(assetInfo.fullAssetName))
 			{
@@ -437,6 +555,10 @@ namespace AssetBundleBuilder.Model
 			}
 		}
 
+		public void MoveAssetToBundle(string assetName, string bundleName, string variant)
+		{
+		}
+
 		#endregion Asset
 
 		public DataSource.DataSource dataSource
@@ -454,5 +576,41 @@ namespace AssetBundleBuilder.Model
 				m_DataSource = value;
 			}
 		}
+
+		#region Icons
+		static private Texture2D s_folderIcon = null;
+		static private Texture2D s_bundleIcon = null;
+		static private Texture2D s_sceneIcon = null;
+
+		static internal Texture2D GetFolderIcon()
+		{
+			if (s_folderIcon == null)
+				FindBundleIcons();
+			return s_folderIcon;
+		}
+		static internal Texture2D GetBundleIcon()
+		{
+			if (s_bundleIcon == null)
+				FindBundleIcons();
+			return s_bundleIcon;
+		}
+		static internal Texture2D GetSceneIcon()
+		{
+			if (s_sceneIcon == null)
+				FindBundleIcons();
+			return s_sceneIcon;
+		}
+		static private void FindBundleIcons()
+		{
+			s_folderIcon = EditorGUIUtility.FindTexture("Folder Icon");
+
+			var packagePath = System.IO.Path.GetFullPath("Packages/com.unity.assetbundlebuilder");
+			if (System.IO.Directory.Exists(packagePath))
+			{
+				s_bundleIcon = (Texture2D)AssetDatabase.LoadAssetAtPath("Packages/com.unity.assetbundlebuilder/Editor/Icons/ABundleBrowserIconY1756Basic.png", typeof(Texture2D));
+				s_sceneIcon = (Texture2D)AssetDatabase.LoadAssetAtPath("Packages/com.unity.assetbundlebuilder/Editor/Icons/ABundleBrowserIconY1756Scene.png", typeof(Texture2D));
+			}
+		}
+		#endregion
 	}
 }

@@ -22,7 +22,7 @@ namespace AssetBundleBuilder.DataSource
 
             foreach (var assetBundleName in buildManifest.GetAllAssetBundles())
             {
-                Model.BundleNameData bundleNameData = new Model.BundleNameData(assetBundleName);
+                BundleNameData bundleNameData = new BundleNameData(assetBundleName);
                 //Model.BundleDataInfo bundleInfo = Model.Model.FindBundle(bundleNameData) as Model.BundleDataInfo;
                 FileInfo bundleInfo = new FileInfo(Path.Combine(buildInfo.outputDirectory, assetBundleName));
                 if (bundleInfo != null)

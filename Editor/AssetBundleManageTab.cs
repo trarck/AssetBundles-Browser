@@ -106,7 +106,7 @@ namespace AssetBundleBuilder
             UpdateSelectedBundles(new List<BundleNode>());
 			SetSelectedItems(new List<Model.AssetNode>());
             m_BundleTree.SetSelection(new int[0]);
-            Model.Model.ForceReloadData();
+            BundleTreeManager.Instance.ReloadBundles();
             m_BundleTree.Reload();
             m_Parent.Repaint();
         }
@@ -146,7 +146,7 @@ namespace AssetBundleBuilder
             HandleVerticalResize();
 
 
-            if (Model.Model.BundleListIsEmpty())
+            if (BundleTreeManager.Instance.BundleListIsEmpty())
             {
                 m_BundleTree.OnGUI(m_Position);
                 var style = new GUIStyle(GUI.skin.label);

@@ -16,7 +16,7 @@ namespace AssetBundleBuilder
         private static Dictionary<MessageFlag, Message> s_MessageLookup = null;
 
         [Flags]
-        internal enum MessageFlag
+        public enum MessageFlag
         {
             None = 0x0,
 

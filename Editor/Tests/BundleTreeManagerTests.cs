@@ -1,6 +1,7 @@
 ﻿using NUnit.Framework;
 using UnityEngine;
 using AssetBundleBuilder.Model;
+using AssetBundleBuilder.View;
 
 namespace AssetBundleBuilder.Tests
 {
@@ -41,79 +42,79 @@ namespace AssetBundleBuilder.Tests
 		[Test]
         public void CreateBundleDataByNameTest()
         {
-			m_bundleManager.CreateBundleDataByName("TestA");
-			BundleNode bundleInfo = m_bundleManager.GetBundle("TestA");
+			m_bundleManager.CreateBundleData("TestA");
+			BundleTreeItem bundleInfo = m_bundleManager.GetBundle("TestA");
 			Assert.NotNull(bundleInfo);
 		}
 
 		[Test]
 		public void CreateBundleDataByPathTest()
 		{
-			m_bundleManager.CreateBundleDataByPath("TestB1/TestB2");
-			BundleNode bundleInfo = m_bundleManager.GetBundle("TestB1/TestB2");
+			m_bundleManager.CreateBundleData("TestB1/TestB2");
+			BundleTreeItem bundleInfo = m_bundleManager.GetBundle("TestB1/TestB2");
 			Assert.NotNull(bundleInfo);
 
-			BundleNode bundleInfo2 = m_bundleManager.GetBundle("TestB1/TestB22");
+			BundleTreeItem bundleInfo2 = m_bundleManager.GetBundle("TestB1/TestB22");
 			Assert.IsNull(bundleInfo2);
 		}
 
 		[Test]
 		public void CreateBundleDataByPathExistsTest()
 		{
-			m_bundleManager.CreateBundleDataByPath("TestC1/TestC2");
-			BundleNode bundleInfo = m_bundleManager.GetBundle("TestC1/TestC2");
+			m_bundleManager.CreateBundleData("TestC1/TestC2");
+			BundleTreeItem bundleInfo = m_bundleManager.GetBundle("TestC1/TestC2");
 			Assert.NotNull(bundleInfo);
 
-			m_bundleManager.CreateBundleDataByPath("TestC1/TestC2");
-			BundleNode bundleInfo2 = m_bundleManager.GetBundle("TestC1/TestC21");
+			m_bundleManager.CreateBundleData("TestC1/TestC21");
+			BundleTreeItem bundleInfo2 = m_bundleManager.GetBundle("TestC1/TestC21");
 			Assert.NotNull(bundleInfo2);
 		}
 
 		[Test]
 		public void CreateBundleFolderByNameTest()
 		{
-			m_bundleManager.CreateBundleFolderByName("TestFolderA");
-			BundleNode bundleInfo = m_bundleManager.GetBundle("TestFolderA");
+			m_bundleManager.CreateBundleFolder("TestFolderA");
+			BundleTreeItem bundleInfo = m_bundleManager.GetBundle("TestFolderA");
 			Assert.NotNull(bundleInfo);
-			Assert.IsInstanceOf<BundleFolderNode>(bundleInfo);
+			Assert.IsInstanceOf<BundleTreeFolderItem>(bundleInfo);
 		}
 
 		[Test]
 		public void CreateBundleFolderByPathTest()
 		{
-			m_bundleManager.CreateBundleFolderByPath("TestFolderB1/TestFolderB2");
-			BundleNode bundleInfo = m_bundleManager.GetBundle("TestFolderB1/TestFolderB2");
+			m_bundleManager.CreateBundleFolder("TestFolderB1/TestFolderB2");
+			BundleTreeItem bundleInfo = m_bundleManager.GetBundle("TestFolderB1/TestFolderB2");
 			Assert.NotNull(bundleInfo);
-			Assert.IsInstanceOf<BundleFolderNode>(bundleInfo);
+			Assert.IsInstanceOf<BundleTreeFolderItem>(bundleInfo);
 
-			BundleNode bundleInfo2 = m_bundleManager.GetBundle("TestFolderB1/TestFolderB22");
+			BundleTreeItem bundleInfo2 = m_bundleManager.GetBundle("TestFolderB1/TestFolderB22");
 			Assert.IsNull(bundleInfo2);
 		}
 
 		[Test]
 		public void CreateBundleFolderByPathExistsTest()
 		{
-			m_bundleManager.CreateBundleFolderByPath("TestFolderC1/TestFolderC2");
-			BundleNode bundleInfo = m_bundleManager.GetBundle("TestFolderC1/TestFolderC2");
+			m_bundleManager.CreateBundleFolder("TestFolderC1/TestFolderC2");
+			BundleTreeItem bundleInfo = m_bundleManager.GetBundle("TestFolderC1/TestFolderC2");
 			Assert.NotNull(bundleInfo);
-			Assert.IsInstanceOf<BundleFolderNode>(bundleInfo);
+			Assert.IsInstanceOf<BundleTreeFolderItem>(bundleInfo);
 
-			m_bundleManager.CreateBundleFolderByPath("TestFolderC1/TestFolderC2");
-			BundleNode bundleInfo2 = m_bundleManager.GetBundle("TestFolderC1/TestFolderC21");
+			m_bundleManager.CreateBundleFolder("TestFolderC1/TestFolderC21");
+			BundleTreeItem bundleInfo2 = m_bundleManager.GetBundle("TestFolderC1/TestFolderC21");
 			Assert.NotNull(bundleInfo2);
-			Assert.IsInstanceOf<BundleFolderNode>(bundleInfo2);
+			Assert.IsInstanceOf<BundleTreeFolderItem>(bundleInfo2);
 		}
 
 		[Test]
 		public void CreateBundleTest()
 		{
-			m_bundleManager.CreateBundleDataByPath("TestB1/TestB2");
-			BundleNode bundleInfo = m_bundleManager.GetBundle("TestB1/TestB2");
+			m_bundleManager.CreateBundleData("TestB1/TestB2");
+			BundleTreeItem bundleInfo = m_bundleManager.GetBundle("TestB1/TestB2");
 			Assert.NotNull(bundleInfo);
 
-			BundleNode bundleInfo2 = m_bundleManager.GetBundle("TestB1");
+			BundleTreeItem bundleInfo2 = m_bundleManager.GetBundle("TestB1");
 			Assert.NotNull(bundleInfo2);
-			Assert.IsInstanceOf<BundleFolderNode>(bundleInfo2);
+			Assert.IsInstanceOf<BundleTreeFolderItem>(bundleInfo2);
 		}
 
 		[Test]
@@ -132,7 +133,7 @@ namespace AssetBundleBuilder.Tests
 			Debug.Log(bundlePaths.Length);
 			foreach (var bundlePath in bundlePaths)
 			{
-				BundleDataNode bundleDataInfo = m_bundleManager.CreateBundleDataByPath(bundlePath);
+				BundleTreeDataItem bundleDataInfo = m_bundleManager.CreateBundleData(bundlePath);
 				Assert.NotNull(bundleDataInfo);
 			}
 		}
