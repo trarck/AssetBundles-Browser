@@ -2,13 +2,12 @@
 using UnityEngine;
 using System.Collections.Generic;
 using UnityEditor.IMGUI.Controls;
-using System.Linq;
 using AssetBundleBuilder.Model;
 
 namespace AssetBundleBuilder.View
 {
     internal class AssetBundleTree : TreeView
-    { 
+    {
         AssetBundleManageTab m_Controller;
         private bool m_ContextOnItem = false;
         List<UnityEngine.Object> m_EmptyObjectList = new List<UnityEngine.Object>();

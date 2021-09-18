@@ -71,7 +71,7 @@ namespace AssetBundleBuilder.View
     }
     internal class BundleDetailList : TreeView
     {
-        HashSet<BundleDataNode> m_Selecteditems;
+        HashSet<BundleTreeDataItem> m_Selecteditems;
         Rect m_TotalRect;
 
         const float k_DoubleIndent = 32f;
@@ -85,7 +85,7 @@ namespace AssetBundleBuilder.View
 
         internal BundleDetailList(TreeViewState state) : base(state)
         {
-            m_Selecteditems = new HashSet<BundleDataNode>();
+            m_Selecteditems = new HashSet<BundleTreeDataItem>();
             showBorder = true;
         }
         internal void Update()
@@ -204,9 +204,9 @@ namespace AssetBundleBuilder.View
             }
         }
 
-        internal static TreeViewItem AppendBundleToTree(BundleDataNode bundle)
+        internal static TreeViewItem AppendBundleToTree(BundleTreeDataItem bundle)
         {
-            var itemName = bundle.m_Name.fullNativeName;
+            var itemName = bundle.nameData.fullNativeName;
             var bunRoot = new TreeViewItem(itemName.GetHashCode(), 0, itemName);
 
             var str = itemName + k_SizeHeader;
@@ -273,7 +273,7 @@ namespace AssetBundleBuilder.View
 
 
 
-        internal void SetItems(IEnumerable<BundleNode> items)
+        internal void SetItems(IEnumerable<BundleTreeItem> items)
         {
             m_Selecteditems.Clear();
             foreach(var item in items)
@@ -284,17 +284,17 @@ namespace AssetBundleBuilder.View
             Reload();
             ExpandAll( 2 );
         }
-        internal void CollectBundles(BundleNode bundle)
+        internal void CollectBundles(BundleTreeItem bundle)
         {
-            var bunData = bundle as BundleDataNode;
+            var bunData = bundle as BundleTreeDataItem;
             if (bunData != null)
                 m_Selecteditems.Add(bunData);
             else
             {
-                var bunFolder = bundle as BundleFolderNode;
-                foreach (var bun in bunFolder.GetChildList())
+                var bunFolder = bundle as BundleTreeFolderItem;
+                foreach (var bun in bunFolder.children)
                 {
-                    CollectBundles(bun);
+                    CollectBundles(bun as BundleTreeItem);
                 }
             }
         }

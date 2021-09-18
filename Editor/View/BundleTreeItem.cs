@@ -33,6 +33,14 @@ namespace AssetBundleBuilder.View
 			}
 		}
 
+		public virtual bool dirty
+		{
+			get
+			{
+				return false;
+			}
+		}
+
 		public BundleTreeItem(string name, int depth) : base(name!=null?name.GetHashCode():0, depth, name)
 		{
 			if (name != null)
@@ -151,7 +159,6 @@ namespace AssetBundleBuilder.View
 			m_BundleInfo = bundleInfo;
 		}
 
-
 		public override bool DoesItemMatchSearch(string search)
 		{
 			if (bundleInfo != null)
@@ -181,6 +188,19 @@ namespace AssetBundleBuilder.View
 		public bool IsEmpty()
 		{
 			return m_BundleInfo == null || m_BundleInfo.assets.Count == 0;
+		}
+
+		public long GetTotalSize()
+		{
+			return m_BundleInfo != null ? m_BundleInfo.GetTotalSize():0;
+		}
+
+		public string GetTotalSizeStr()
+		{
+			long totalSize = GetTotalSize();
+			if (totalSize == 0)
+				return "--";
+			return EditorUtility.FormatBytes(totalSize);
 		}
 	}
 

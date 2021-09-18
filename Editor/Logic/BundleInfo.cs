@@ -595,6 +595,26 @@ namespace AssetBundleBuilder
 			ClearRelations();
 		}
 
+		public long GetTotalSize()
+		{
+			long size = 0;
+			//assets size
+			foreach (var asset in assets)
+			{
+				size += asset.fileSize;
+
+				//get deps not in any bundle
+				foreach (var dep in asset.allDependencies)
+				{
+					if (dep.bundle == null)
+					{
+						size += dep.fileSize;
+					}
+				}
+			}
+			return size;
+		}
+
 		public static BundleType AnalyzeAssetType(string assetPath)
 		{
 			BundleType assetType = BundleType.Normal;
