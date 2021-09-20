@@ -454,12 +454,7 @@ namespace AssetBundleBuilder.View
             {
                 foreach (var bundle in selectedBundles)
                 {
-                    //bundle.AddAssetsToNode(root);
-                    var bundleDataItem = bundle as BundleTreeDataItem;
-                    if (bundleDataItem != null)
-                    {
-                        root.AddAssets(bundleDataItem.bundleInfo);
-                    }
+                    root.AddAssets(bundle);
                 }
             }
             return root;

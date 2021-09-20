@@ -70,25 +70,26 @@ namespace AssetBundleBuilder.View
             return contains;
         }
 
-        internal void AddAssets(BundleInfo bundleInfo)
+        internal void AddAssets(BundleTreeItem item)
         {
-            //if (bundleInfo.HaveChildren())
-            //{
-            //    foreach (var child in bundleInfo.GetChildren())
-            //    {
-            //        AddAssets(child);
-            //    }
-            //}
-            //else
-            {
-				HashSet<AssetInfo> assets = bundleInfo.assets;
+			if (item is BundleTreeFolderItem)
+			{
+                BundleTreeFolderItem folder = item as BundleTreeFolderItem;
+
+                foreach (var child in folder.children)
+				{
+					AddAssets(child as BundleTreeItem);
+				}
+			}
+			else
+			{
+                BundleTreeDataItem dataItem = item as BundleTreeDataItem;
+                HashSet<AssetInfo> assets = dataItem.bundleInfo!=null? dataItem.bundleInfo.assets:null;
                 if (assets != null)
                 {
                     foreach (var asset in assets)
                     {
-
                         AddChild(new AssetTreeItem(asset));
-
                         var deps = asset.allDependencies;
                         if (deps != null)
                         {
