@@ -762,6 +762,47 @@ namespace AssetBundleBuilder.Tests
 		}
 
 		[Test]
+		public void SaveBundleTest()
+		{
+			string testAssets = "Assets/ArtResources/Prefabs";
+
+			string[] prefabFiles = Directory.GetFiles(testAssets, "*.prefab", SearchOption.AllDirectories);
+			foreach (var f in prefabFiles)
+			{
+				AssetInfo assetNode = m_AssetManager.GetOrCreateAsset(f);
+				//直接使用的资源，可以寻址
+				assetNode.addressable = true;
+			}
+
+			m_AssetManager.RefreshAllAssetDependencies();
+			m_AssetManager.RefreshAllAssetAllDependencies();
+
+			m_AssetManager.CleanBundles();
+
+			//create bundle from assets
+			foreach (var iter in m_AssetManager.assets)
+			{
+				BundleInfo bundleNode = m_AssetManager.CreateBundle(null);
+				bundleNode.SetMainAsset(iter.Value);
+				bundleNode.AddAsset(iter.Value);
+				if (iter.Value.addressable)
+				{
+					bundleNode.SetStandalone(iter.Value.addressable);
+				}
+			}
+			m_AssetManager.RefreshAllBundleDependencies();
+
+			m_AssetManager.Combine();
+			m_AssetManager.RefreshAllBundlesName();
+
+			string savePath = m_AssetManager.GetBinaryBundleSavePath();
+			m_AssetManager.SaveBundles(savePath);
+
+			string saveJsonPath = m_AssetManager.GetJsonAssetBundleSavePath();
+			m_AssetManager.SaveToJson(saveJsonPath);
+		}
+
+		[Test]
 		public void BinarySaveLoadTimeTest()
 		{
 			string testAssets = "Assets/ArtResources/Tests";
@@ -847,7 +888,7 @@ namespace AssetBundleBuilder.Tests
 			
 			DateTime start = DateTime.Now;
 
-			string savePath = Path.Combine(Application.dataPath, "../bundes.bin");
+			string savePath = Path.Combine(Application.dataPath, "../AssetDatabase/Bundes.bin");
 			assetManager.SaveBundles(savePath);
 			TimeSpan used = DateTime.Now - start;
 			Debug.LogFormat("Save bundes used:{0}", used);

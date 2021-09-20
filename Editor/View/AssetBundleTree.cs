@@ -63,13 +63,11 @@ namespace AssetBundleBuilder.View
             base.RenameEnded(args);
             if (args.newName.Length > 0 && args.newName != args.originalName)
             {
-                args.newName = args.newName.ToLower();
                 args.acceptedRename = true;
 
                 BundleTreeItem renamedItem = FindItem(args.itemID, rootItem) as BundleTreeItem;
-                //TODO::BundleNode
-                //args.acceptedRename = Model.Model.HandleBundleRename(renamedItem.bundleNode, args.newName);
-                //ReloadAndSelect(renamedItem.bundleNode.nameHashCode, false);
+                args.acceptedRename = BundleTreeManager.Instance.RenameBundle(renamedItem, args.newName);
+                ReloadAndSelect(renamedItem.nameData.GetHashCode(), false);
             }
             else
             {

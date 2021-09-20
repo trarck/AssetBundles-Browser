@@ -118,6 +118,11 @@ namespace AssetBundleBuilder
 
 		public void PartialNameChange(string newToken, int indexFromBack)
 		{
+			if (string.IsNullOrEmpty(newToken))
+			{
+				return;
+			}
+
 			if (indexFromBack == 0)
 			{
 				List<string> paths = new List<string>();

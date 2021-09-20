@@ -48,6 +48,11 @@ namespace AssetBundleBuilder
 	/// </summary>
 	public partial class EditorAssetBundleManager
 	{
+		public static string BundleDataName = "Bundles";
+		public static string AssetAndBundleDataName = "AssetBundleData";
+		public static string DataSaveDir = "AssetDatabase";
+		public static string BinaryExtName = ".bin";
+		public static string JsonExtName = ".json";
 
 		#region Serialize Binary
 		public static void SerializeAsset(AssetInfo asset , BinaryWriter writer)
@@ -422,7 +427,6 @@ namespace AssetBundleBuilder
 
 		#endregion // Load Save Binary
 
-
 		#region Load Save Json
 
 		[System.Serializable]
@@ -646,5 +650,22 @@ namespace AssetBundleBuilder
 			DeserializeFromJson(jsonStr);
 		}
 		#endregion //Load Save Json
+
+		#region Path
+		public string GetBinaryAssetBundleSavePath()
+		{
+			return Path.Combine(Application.dataPath, "../", DataSaveDir, AssetAndBundleDataName + BinaryExtName);
+		}
+
+		public string GetJsonAssetBundleSavePath()
+		{
+			return Path.Combine(Application.dataPath, "../", DataSaveDir, AssetAndBundleDataName + JsonExtName);
+		}
+		public string GetBinaryBundleSavePath()
+		{
+			return Path.Combine(Application.dataPath, "../", DataSaveDir, BundleDataName + BinaryExtName);
+		}
+
+		#endregion //Path
 	}
 }
