@@ -507,9 +507,12 @@ namespace AssetBundleBuilder.Model
 			return null;
 		}
 
-		public void HandleBundleDelete(List<BundleTreeItem> bundleTreeItems)
+		public void RemoveBundles(List<BundleTreeItem> bundletems)
 		{
-		
+			foreach (var bundleItem in bundletems)
+			{
+				RemoveBundle(bundleItem);
+			}
 		}
 
 		public void HandleBundleMerge(List<BundleTreeDataItem> bundles,BundleTreeDataItem target)

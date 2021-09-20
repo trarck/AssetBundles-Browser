@@ -331,7 +331,7 @@ namespace AssetBundleBuilder.View
         void DeleteBundles(object b)
         {
             var selectedNodes = b as List<BundleTreeItem>;
-            BundleTreeManager.Instance.HandleBundleDelete(selectedNodes);
+            BundleTreeManager.Instance.RemoveBundles(selectedNodes);
             ReloadAndSelect(new List<int>());
         }
         protected override void KeyEvent()
