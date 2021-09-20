@@ -280,6 +280,14 @@ namespace AssetBundleBuilder
 			}
 		}
 
+		public string displayName
+		{
+			get
+			{
+				return Path.GetFileName(m_Name);
+			}
+		}
+
 		public string variantName
 		{
 			get

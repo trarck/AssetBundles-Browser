@@ -167,6 +167,7 @@ namespace AssetBundleBuilder
 			if(asset.dependencyDirty)
 			{
 				//clear deps
+
 				asset.dependencyDirty = false;
 
 				foreach (var dep in AssetDatabase.GetDependencies(asset.assetPath, false))
@@ -280,8 +281,6 @@ namespace AssetBundleBuilder
 		/// </summary>
 		public void RefreshAllAssetAllDependencies()
 		{
-			ClearAllAssetRelations();
-
 			List<AssetInfo> assets = new List<AssetInfo>(m_Assets.Values);
 			foreach (var asset in assets)
 			{
@@ -291,8 +290,6 @@ namespace AssetBundleBuilder
 
 		public void RefreshAllAssetAllDependencies2()
 		{
-			ClearAllAssetRelations();
-
 			List<AssetInfo> assets = new List<AssetInfo>(m_Assets.Values);
 			foreach (var asset in assets)
 			{

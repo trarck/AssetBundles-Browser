@@ -210,42 +210,20 @@ namespace AssetBundleBuilder.View
             var bunRoot = new TreeViewItem(itemName.GetHashCode(), 0, itemName);
 
             var str = itemName + k_SizeHeader;
-            var sz = new TreeViewItem(str.GetHashCode(), 1, k_SizeHeader + bundle.TotalSize());
+            var sz = new TreeViewItem(str.GetHashCode(), 1, k_SizeHeader + bundle.GetTotalSizeStr());
 
             str = itemName + k_DependencyHeader;
             var dependency = new TreeViewItem(str.GetHashCode(), 1, k_DependencyEmpty);
-            var depList = bundle.GetBundleDependencies();
+            var depList = bundle.bundleInfo != null ? bundle.bundleInfo.dependencies : null;
             if(depList.Count > 0)
             {
                 dependency.displayName = k_DependencyHeader;
-                foreach (var dep in bundle.GetBundleDependencies())
+                foreach (var dep in depList)
                 {
-                    str = itemName + dep.m_BundleName;
-                    TreeViewItem newItem = new TreeViewItem( str.GetHashCode(), 2, dep.m_BundleName );
+                    str = itemName + dep.name;
+                    TreeViewItem newItem = new TreeViewItem( str.GetHashCode(), 2, dep.name );
                     newItem.icon = Model.Model.GetBundleIcon();
                     dependency.AddChild(newItem);
-                    
-                    Dictionary<string, TogglePathTreeViewItem> toAssetItems = new Dictionary<string, TogglePathTreeViewItem>();
-
-                    for( int i = 0; i < dep.m_FromAssets.Count; ++i )
-                    {
-                        TogglePathTreeViewItem item = null;
-                        
-                        if( ! toAssetItems.TryGetValue( dep.m_ToAssets[i].fullAssetName, out item ) )
-                        {
-                            str = itemName + dep.m_BundleName + dep.m_ToAssets[i].displayName;
-                            item = new TogglePathTreeViewItem( str.GetHashCode(), 3, "/"+dep.m_ToAssets[i].displayName, "/"+dep.m_ToAssets[i].fullAssetName );
-                            item.icon = AssetDatabase.GetCachedIcon(dep.m_ToAssets[i].fullAssetName) as Texture2D;
-                            newItem.AddChild( item );
-                            toAssetItems.Add( dep.m_ToAssets[i].fullAssetName, item );
-                        }
-
-                        str = str + dep.m_FromAssets[i].displayName;
-                        TreeViewItem refItem = new TogglePathTreeViewItem( str.GetHashCode(), 4, k_ReferencedPrefix,
-                            dep.m_FromAssets[i].displayName, dep.m_FromAssets[i].fullAssetName );
-                        refItem.icon = AssetDatabase.GetCachedIcon(dep.m_FromAssets[i].fullAssetName) as Texture2D;
-                        item.AddChild( refItem );
-                    }
                 }
             }
 

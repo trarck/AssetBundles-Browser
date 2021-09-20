@@ -11,7 +11,7 @@ namespace AssetBundleBuilder.View
 {
     internal class AssetListTree : TreeView
     {
-        List<Model.BundleNode> m_SourceBundles = new List<Model.BundleNode>();
+        List<BundleTreeItem> m_SourceBundles = new List<BundleTreeItem>();
         AssetBundleManageTab m_Controller;
         List<UnityEngine.Object> m_EmptyObjectList = new List<UnityEngine.Object>();
 
@@ -119,7 +119,7 @@ namespace AssetBundleBuilder.View
             return rows;
         }
 
-        internal void SetSelectedBundles(IEnumerable<BundleNode> bundles)
+        internal void SetSelectedBundles(IEnumerable<BundleTreeItem> bundles)
         {
             m_Controller.SetSelectedItems(null);
             m_SourceBundles = bundles.ToList();
@@ -160,7 +160,7 @@ namespace AssetBundleBuilder.View
                     }
                     break;
                 case 1:
-                    DefaultGUI.Label(cellRect, item.asset.bundleName, args.selected, args.focused);
+                    DefaultGUI.Label(cellRect, item.asset.bundle.displayName, args.selected, args.focused);
                     break;
                 case 2:
                     DefaultGUI.Label(cellRect, item.asset.GetSizeString(), args.selected, args.focused);
@@ -182,7 +182,7 @@ namespace AssetBundleBuilder.View
             var assetItem = FindItem(id, rootItem) as AssetTreeItem;
             if (assetItem != null)
             {
-                Object o = AssetDatabase.LoadAssetAtPath<Object>(assetItem.asset.fullAssetName);
+                Object o = AssetDatabase.LoadAssetAtPath<Object>(assetItem.asset.assetPath);
                 EditorGUIUtility.PingObject(o);
                 Selection.activeObject = o;
             }
@@ -200,7 +200,7 @@ namespace AssetBundleBuilder.View
             var assetItem = me as AssetTreeItem;
             if( assetItem != null && assetItem.asset != null )
             {
-                if( paths.Contains( assetItem.asset.fullAssetName ) )
+                if( paths.Contains( assetItem.asset.assetPath ) )
                 {
                     if( selected.Contains( me.id ) == false )
                         selected.Add( me.id );
@@ -222,13 +222,13 @@ namespace AssetBundleBuilder.View
                 return;
 
             List<Object> selectedObjects = new List<Object>();
-			List<Model.AssetNode> selectedAssets = new List<Model.AssetNode>();
+			List<AssetInfo> selectedAssets = new List<AssetInfo>();
             foreach (var id in selectedIds)
             {
                 var assetItem = FindItem(id, rootItem) as AssetTreeItem;
                 if (assetItem != null)
                 {
-                    Object o = AssetDatabase.LoadAssetAtPath<Object>(assetItem.asset.fullAssetName);
+                    Object o = AssetDatabase.LoadAssetAtPath<Object>(assetItem.asset.assetPath);
                     selectedObjects.Add(o);
                     Selection.activeObject = o;
                     selectedAssets.Add(assetItem.asset);
@@ -254,7 +254,7 @@ namespace AssetBundleBuilder.View
             DragAndDrop.objectReferences = m_EmptyObjectList.ToArray();
             List<AssetTreeItem> items = 
                 new List<AssetTreeItem>(args.draggedItemIDs.Select(id => FindItem(id, rootItem) as AssetTreeItem));
-            DragAndDrop.paths = items.Select(a => a.asset.fullAssetName).ToArray();
+            DragAndDrop.paths = items.Select(a => a.asset.assetPath).ToArray();
             DragAndDrop.SetGenericData("AssetListTreeSource", this);
             DragAndDrop.StartDrag("AssetListTree");
         }
@@ -265,11 +265,11 @@ namespace AssetBundleBuilder.View
             {
                 if (args.performDrop)
                 {
-                    Model.Model.MoveAssetToBundle(DragAndDrop.paths, m_SourceBundles[0].m_Name.bundleName, m_SourceBundles[0].m_Name.variant);
+                    Model.Model.MoveAssetToBundle(DragAndDrop.paths, m_SourceBundles[0].nameData.bundleName, m_SourceBundles[0].nameData.variant);
                     Model.Model.ExecuteAssetMove();
                     foreach (var bundle in m_SourceBundles)
                     {
-                        bundle.RefreshAssetList();
+                        //bundle.RefreshAssetList();
                     }
                     m_Controller.UpdateSelectedBundles(m_SourceBundles);
                 }
@@ -293,11 +293,11 @@ namespace AssetBundleBuilder.View
                 return false;
 
             //can't drag into a folder
-            var folder = m_SourceBundles[0] as BundleFolderNode;
+            var folder = m_SourceBundles[0] as BundleTreeFolderItem;
             if (folder != null)
                 return false;
 
-            var data = m_SourceBundles[0] as BundleDataNode;
+            var data = m_SourceBundles[0] as BundleTreeDataItem;
             if(data == null)
                 return false; // this should never happen.
 
@@ -354,18 +354,18 @@ namespace AssetBundleBuilder.View
         void RemoveAssets(object obj)
         {
             var selectedNodes = obj as List<AssetTreeItem>;
-            var assets = new List<Model.AssetNode>();
+            var assets = new List<AssetInfo>();
             //var bundles = new List<AssetBundleModel.BundleNode>();
             foreach (var node in selectedNodes)
             {
-                if (!System.String.IsNullOrEmpty(node.asset.bundleName))
+                if (node.asset.bundle!=null)
                     assets.Add(node.asset);
             }
-            Model.Model.MoveAssetToBundle(assets, string.Empty, string.Empty);
-            Model.Model.ExecuteAssetMove();
+            //Model.Model.MoveAssetToBundle(assets, string.Empty, string.Empty);
+            //Model.Model.ExecuteAssetMove();
             foreach (var bundle in m_SourceBundles)
             {
-                bundle.RefreshAssetList();
+                //bundle.RefreshAssetList();
             }
             m_Controller.UpdateSelectedBundles(m_SourceBundles);
             //ReloadAndSelect(new List<int>());
@@ -435,7 +435,7 @@ namespace AssetBundleBuilder.View
                     return myTypes.Order(l => l.HighestMessageLevel(), ascending);
                 case SortOption.Bundle:
                 default:
-                    return myTypes.Order(l => l.asset.bundleName, ascending);
+                    return myTypes.Order(l => l.asset.bundle.name, ascending);
             }
             
         }
@@ -447,7 +447,7 @@ namespace AssetBundleBuilder.View
             SelectionChanged(hashCodes);
         }
 
-        internal static AssetTreeItem CreateAssetListTreeView(IEnumerable<Model.BundleNode> selectedBundles)
+        internal static AssetTreeItem CreateAssetListTreeView(IEnumerable<BundleTreeItem> selectedBundles)
         {
             var root = new AssetTreeItem();
             if (selectedBundles != null)
@@ -455,7 +455,11 @@ namespace AssetBundleBuilder.View
                 foreach (var bundle in selectedBundles)
                 {
                     //bundle.AddAssetsToNode(root);
-                    root.AddAssets(bundle);
+                    var bundleDataItem = bundle as BundleTreeDataItem;
+                    if (bundleDataItem != null)
+                    {
+                        root.AddAssets(bundleDataItem.bundleInfo);
+                    }
                 }
             }
             return root;

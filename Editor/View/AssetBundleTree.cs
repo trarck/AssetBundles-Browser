@@ -86,19 +86,17 @@ namespace AssetBundleBuilder.View
         protected override void SelectionChanged(IList<int> selectedIds)
         {
 
-            var selectedBundles = new List<Model.BundleNode>();
+            var selectedBundles = new List<BundleTreeItem>();
             if (selectedIds != null)
             {
                 foreach (var id in selectedIds)
                 {
-                    //TODO::BundleNode
-                    //var item = FindItem(id, rootItem) as BundleTreeItem;
-                    //if(item != null && item.bundleNode != null)
-                    //{
-                    //    item.bundleNode.RefreshAssetList();
-                    //    selectedBundles.Add(item.bundleNode);
-                    //}
-                }
+					var item = FindItem(id, rootItem) as BundleTreeItem;
+					if (item != null)
+					{
+						selectedBundles.Add(item);
+					}
+				}
             }
 
             m_Controller.UpdateSelectedBundles(selectedBundles);
