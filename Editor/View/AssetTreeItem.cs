@@ -72,19 +72,22 @@ namespace AssetBundleBuilder.View
 
         internal void AddAssets(BundleTreeItem item)
         {
-			if (item is BundleTreeFolderItem)
-			{
+            if (item is BundleTreeFolderItem)
+            {
                 BundleTreeFolderItem folder = item as BundleTreeFolderItem;
 
-                foreach (var child in folder.children)
-				{
-					AddAssets(child as BundleTreeItem);
-				}
-			}
-			else
-			{
+                if (folder.children != null)
+                {
+                    foreach (var child in folder.children)
+                    {
+                        AddAssets(child as BundleTreeItem);
+                    }
+                }
+            }
+            else
+            {
                 BundleTreeDataItem dataItem = item as BundleTreeDataItem;
-                HashSet<AssetInfo> assets = dataItem.bundleInfo!=null? dataItem.bundleInfo.assets:null;
+                HashSet<AssetInfo> assets = dataItem.bundleInfo != null ? dataItem.bundleInfo.assets : null;
                 if (assets != null)
                 {
                     foreach (var asset in assets)
@@ -95,7 +98,7 @@ namespace AssetBundleBuilder.View
                         {
                             foreach (var dep in deps)
                             {
-                                if (dep.bundle==null && !ContainsChild(dep))
+                                if (dep.bundle == null && !ContainsChild(dep))
                                     AddChild(new AssetTreeItem(dep));
                             }
                         }

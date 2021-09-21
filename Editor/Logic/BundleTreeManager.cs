@@ -399,7 +399,10 @@ namespace AssetBundleBuilder.Model
 			BundleTreeDataItem dataBundle = bundle as BundleTreeDataItem;
 			if (dataBundle != null)
 			{
-				dataBundle.bundleInfo.name = dataBundle.nameData.fullNativeName;
+				if (dataBundle.bundleInfo != null)
+				{
+					dataBundle.bundleInfo.name = dataBundle.nameData.fullNativeName;
+				}
 			}
 			else
 			{

@@ -41,6 +41,14 @@ namespace AssetBundleBuilder.View
 			}
 		}
 
+		public virtual bool haveChildren
+		{
+			get
+			{
+				return children != null && children.Count > 0;
+			}
+		}
+
 		public BundleTreeItem(string name, int depth) : base(name!=null?name.GetHashCode():0, depth, name)
 		{
 			if (name != null)
@@ -146,6 +154,14 @@ namespace AssetBundleBuilder.View
 			get
 			{
 				return m_BundleInfo != null && m_BundleInfo.bundleType == BundleInfo.BundleType.Scene;
+			}
+		}
+
+		public bool haveDependecy
+		{
+			get
+			{
+				return bundleInfo != null && bundleInfo.dependencies != null && bundleInfo.dependencies.Count>0;
 			}
 		}
 

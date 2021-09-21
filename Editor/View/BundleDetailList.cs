@@ -214,9 +214,9 @@ namespace AssetBundleBuilder.View
 
             str = itemName + k_DependencyHeader;
             var dependency = new TreeViewItem(str.GetHashCode(), 1, k_DependencyEmpty);
-            var depList = bundle.bundleInfo != null ? bundle.bundleInfo.dependencies : null;
-            if(depList.Count > 0)
+            if(bundle.haveDependecy)
             {
+                var depList = bundle.bundleInfo.dependencies;
                 dependency.displayName = k_DependencyHeader;
                 foreach (var dep in depList)
                 {
@@ -249,8 +249,6 @@ namespace AssetBundleBuilder.View
             return bunRoot;
         }
 
-
-
         internal void SetItems(IEnumerable<BundleTreeItem> items)
         {
             m_Selecteditems.Clear();
@@ -270,9 +268,12 @@ namespace AssetBundleBuilder.View
             else
             {
                 var bunFolder = bundle as BundleTreeFolderItem;
-                foreach (var bun in bunFolder.children)
+                if (bunFolder.hasChildren)
                 {
-                    CollectBundles(bun as BundleTreeItem);
+                    foreach (var bun in bunFolder.children)
+                    {
+                        CollectBundles(bun as BundleTreeItem);
+                    }
                 }
             }
         }
