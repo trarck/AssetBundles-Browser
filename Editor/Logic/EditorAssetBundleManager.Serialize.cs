@@ -380,9 +380,12 @@ namespace AssetBundleBuilder
 
 		public void LoadBundles(string filePath)
 		{
-			using (FileStream fs = new FileStream(filePath, FileMode.Open))
+			if (File.Exists(filePath))
 			{
-				LoadBundles(fs);
+				using (FileStream fs = new FileStream(filePath, FileMode.Open))
+				{
+					LoadBundles(fs);
+				}
 			}
 		}
 

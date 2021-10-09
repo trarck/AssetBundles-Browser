@@ -232,12 +232,12 @@ namespace AssetBundleBuilder.View
 
 		public BundleTreeFolderItem(string name,int depth) : base(name, depth)
 		{
-
+			children = new List<TreeViewItem>();
 		}
 
 		public BundleTreeFolderItem(BundleNameData name, int depth) : base(name, depth)
 		{
-
+			children = new List<TreeViewItem>();
 		}
 
 		public BundleTreeItem GetChild(string name)

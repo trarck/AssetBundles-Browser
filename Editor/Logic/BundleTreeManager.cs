@@ -531,6 +531,20 @@ namespace AssetBundleBuilder.Model
 		#endregion //Bundle
 
 		#region Asset
+
+		public BundleTreeDataItem CreateBundleFromAsset(string assetName, BundleTreeFolderItem parent=null)
+		{
+			AssetInfo assetInfo = EditorAssetBundleManager.Instance.GetOrCreateAsset(assetName);
+			EditorAssetBundleManager.Instance.RefreshAssetDependencies(assetInfo);
+
+			string bundleName = EditorAssetBundleManager.Instance.CreateBundleName(assetName, true, true, false);
+			BundleInfo bundle = EditorAssetBundleManager.Instance.CreateBundle(bundleName, assetInfo);
+			EditorAssetBundleManager.Instance.RefreshBundleRelations(bundle);
+			EditorAssetBundleManager.Instance.RefreshAllBundlesName();
+			ReloadBundles();
+			return GetBundle(bundleName, parent) as BundleTreeDataItem;			
+		}
+
 		public AssetNode GetAsset(string assetPath)
 		{
 			AssetNode assetInfo = null;

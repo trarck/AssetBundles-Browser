@@ -953,6 +953,56 @@ namespace AssetBundleBuilder.Tests
 			File.Delete(savePath);
 		}
 
+		[Test]
+		public void SimpleBuildBundlesTest()
+		{
+			string assetPath = "Assets/ArtResources/Prefabs/TestMatProp.prefab";
+			AssetInfo assetNode1 = m_AssetManager.CreateAsset(assetPath);
+
+			m_AssetManager.RefreshAllAssetDependencies();
+
+			BundleInfo bundleNode1 = m_AssetManager.CreateBundle("TestMatProp");
+			bundleNode1.SetMainAsset(assetNode1);
+			bundleNode1.AddAsset(assetNode1);
+
+			m_AssetManager.RefreshAllBundleDependencies();
+			m_AssetManager.RefreshAllBundlesName();
+
+			DataSource.BuildInfo buildInfo = new DataSource.BuildInfo();
+
+			buildInfo.outputDirectory = Path.Combine(Application.dataPath, "../AssetBundles", EditorUserBuildSettings.activeBuildTarget.ToString());
+			buildInfo.options = BuildAssetBundleOptions.ChunkBasedCompression;
+			buildInfo.buildTarget = EditorUserBuildSettings.activeBuildTarget;
+			buildInfo.version = "1.0";
+
+			m_AssetManager.BuildAssetBundles(buildInfo);
+		}
+
+		[Test]
+		public void SimpleBuildBundlesTest2()
+		{
+			string assetPath = "Assets/ArtResources/Prefabs/TestMatProp.prefab";
+			AssetInfo assetNode1 = m_AssetManager.CreateAsset(assetPath);
+
+			m_AssetManager.RefreshAllAssetDependencies();
+
+			BundleInfo bundleNode1 = m_AssetManager.CreateBundle("TestMatProp");
+			bundleNode1.SetMainAsset(assetNode1);
+			bundleNode1.AddAsset(assetNode1);
+
+			m_AssetManager.RefreshAllBundleDependencies();
+			m_AssetManager.RefreshAllBundlesName();
+
+			DataSource.BuildInfo buildInfo = new DataSource.BuildInfo();
+
+			buildInfo.outputDirectory = Path.Combine(Application.dataPath, "../AssetBundles", EditorUserBuildSettings.activeBuildTarget.ToString());
+			buildInfo.options = BuildAssetBundleOptions.ChunkBasedCompression;
+			buildInfo.buildTarget = EditorUserBuildSettings.activeBuildTarget;
+			buildInfo.version = "1.0";
+
+			m_AssetManager.BuildAssetBundlesPipline(buildInfo);
+		}
+
 		private void PrepareAssets()
 		{
 			string testAssets = "Assets/ArtResources/Tests";

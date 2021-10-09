@@ -55,7 +55,7 @@ namespace AssetBundleBuilder
             //不能消除Manifest，否则无法增量构建。可以在最终目录把Manifest删除
             //DatabaseUtil.ClearTempManifest(info.outputDirectory);
 
-            //SaveBundleManifest(buildManifest, info);
+            SaveBundleManifest(buildManifest, info);
 
             if (info.onBuild != null)
             {

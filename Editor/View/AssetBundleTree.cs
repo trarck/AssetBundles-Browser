@@ -579,22 +579,16 @@ namespace AssetBundleBuilder.View
                 format |= Setting.Format.WithExt;
             }
 
-            //TODO::Import
-            //foreach (var assetPath in dragToNewSpacePaths)
-            //{
-            //    string fullPath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Application.dataPath), assetPath);
-            //    if (System.IO.Directory.Exists(fullPath))
-            //    {
-            //        hashCodes.AddRange(Import.ImportFolder(fullPath, dragToNewSpaceRoot,
-            //            format));
-            //    }
-            //    else
-            //    {
-            //        hashCodes.Add(Import.ImportFile(assetPath, dragToNewSpaceRoot as BundleFolderConcreteNode, format));
-            //    }
-            //}
-            Model.Model.ExecuteAssetMove();
-            ReloadAndSelect(hashCodes);
+			//TODO::Import
+			foreach (var assetPath in dragToNewSpacePaths)
+			{
+                string fullPath = assetPath;//                System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Application.dataPath), assetPath);
+                BundleTreeDataItem bundleDataItem = BundleTreeManager.Instance.CreateBundleFromAsset(fullPath);
+                hashCodes.Add(bundleDataItem.GetHashCode());
+			}
+            BundleTreeManager.Instance.SaveBundles();
+			//Model.Model.ExecuteAssetMove();
+			ReloadAndSelect(hashCodes);
         }
 
         private void DragPathsToNewSpace(string[] paths, BundleTreeFolderItem root)

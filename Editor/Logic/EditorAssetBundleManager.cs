@@ -334,11 +334,11 @@ namespace AssetBundleBuilder
 			return bundle;
 		}
 
-		public BundleInfo CreateBundle(string bundleName, AssetInfo assetNode)
+		public BundleInfo CreateBundle(string bundleName, AssetInfo assetInfo)
 		{
 			BundleInfo bundle = CreateBundle(bundleName);
-			bundle.SetMainAsset(assetNode);
-			bundle.AddAsset(assetNode);
+			bundle.SetMainAsset(assetInfo);
+			bundle.AddAsset(assetInfo);
 			//m_AssetBundles[assetNode.assetPath] = bundle;
 			return bundle;
 		}
