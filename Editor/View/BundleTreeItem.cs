@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.IMGUI.Controls;
 using AssetBundleBuilder.Model;
+using System.Text;
 
 namespace AssetBundleBuilder.View
 {
@@ -24,6 +25,8 @@ namespace AssetBundleBuilder.View
 				m_NameData = value;
 			}
 		}
+
+		private string m_DisplayName;
 
 		public int nameHashCode
 		{
@@ -49,17 +52,19 @@ namespace AssetBundleBuilder.View
 			}
 		}
 
-		public BundleTreeItem(string name, int depth) : base(name!=null?name.GetHashCode():0, depth, name)
+		public BundleTreeItem(int id, int depth, string displayName):base(id,depth,displayName)
 		{
-			if (name != null)
-			{
-				m_NameData = new BundleNameData(name);
-			}
+
+		}
+
+		public BundleTreeItem(int depth) : base(0,depth)
+		{
+
 		}
 
 		public BundleTreeItem(BundleNameData name, int depth) : base(name.GetHashCode(), depth, name.shortName)
 		{
-			m_NameData = name;
+
 		}
 
 		public BundleTreeItem(BundleNode b, int depth, Texture2D iconTexture) : base(b.nameHashCode, depth, b.displayName)
@@ -77,9 +82,28 @@ namespace AssetBundleBuilder.View
         {
             get
             {
-				return m_NameData.shortName;// AssetBundleBuilderMain.instance.m_ManageTab.hasSearch ? bundle.m_Name.fullNativeName : bundle.displayName;
+				return m_DisplayName;// AssetBundleBuilderMain.instance.m_ManageTab.hasSearch ? bundle.m_Name.fullNativeName : bundle.displayName;
             }
+			set
+			{
+				m_DisplayName = value;
+			}
         }
+
+		public string fullPath
+		{
+			get
+			{
+				StringBuilder sb = new StringBuilder();
+				TreeViewItem p = parent;
+				while (p != null)
+				{
+					sb.Append(p.displayName).Append("/");
+				}
+				sb.Append(displayName);
+				return sb.ToString();
+			}
+		}
 
 		public virtual bool DoesItemMatchSearch(string search)
 		{
@@ -230,7 +254,7 @@ namespace AssetBundleBuilder.View
 			}
 		}
 
-		public BundleTreeFolderItem(string name,int depth) : base(name, depth)
+		public BundleTreeFolderItem(string name,int depth,int id) : base(id, depth,name)
 		{
 			children = new List<TreeViewItem>();
 		}

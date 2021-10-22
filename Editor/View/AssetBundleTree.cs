@@ -553,8 +553,12 @@ namespace AssetBundleBuilder.View
         private void DragPathsAsOneBundle()
         {
             var newBundle = BundleTreeManager.Instance.CreateEmptyBundle(dragToNewSpaceRoot);
-            Model.Model.MoveAssetToBundle(dragToNewSpacePaths, newBundle.nameData.bundleName, newBundle.nameData.variant);
-            Model.Model.ExecuteAssetMove();
+            foreach (var assetPath in dragToNewSpacePaths)
+            {
+                AssetInfo assetInfo= EditorAssetBundleManager.Instance.GetAsset(assetPath);
+                newBundle.bundleInfo.AddAsset(assetInfo);
+            }
+          
             ReloadAndSelect(newBundle.nameHashCode, true);
         }
         private void DragPathsAsManyBundles()
@@ -584,7 +588,14 @@ namespace AssetBundleBuilder.View
 			{
                 string fullPath = assetPath;//                System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Application.dataPath), assetPath);
                 BundleTreeDataItem bundleDataItem = BundleTreeManager.Instance.CreateBundleFromAsset(fullPath);
-                hashCodes.Add(bundleDataItem.GetHashCode());
+                if (bundleDataItem != null)
+                {
+                    hashCodes.Add(bundleDataItem.GetHashCode());
+                }
+                else
+                {
+                    Debug.LogErrorFormat("Create AssetBundle from {0} fail", fullPath);
+                }
 			}
             BundleTreeManager.Instance.SaveBundles();
 			//Model.Model.ExecuteAssetMove();

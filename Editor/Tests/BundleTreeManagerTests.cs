@@ -73,7 +73,7 @@ namespace AssetBundleBuilder.Tests
 		[Test]
 		public void CreateBundleFolderByNameTest()
 		{
-			m_bundleManager.CreateBundleFolder("TestFolderA");
+			m_bundleManager.CreateBundleFolderByPath("TestFolderA");
 			BundleTreeItem bundleInfo = m_bundleManager.GetBundle("TestFolderA");
 			Assert.NotNull(bundleInfo);
 			Assert.IsInstanceOf<BundleTreeFolderItem>(bundleInfo);
@@ -82,7 +82,7 @@ namespace AssetBundleBuilder.Tests
 		[Test]
 		public void CreateBundleFolderByPathTest()
 		{
-			m_bundleManager.CreateBundleFolder("TestFolderB1/TestFolderB2");
+			m_bundleManager.CreateBundleFolderByPath("TestFolderB1/TestFolderB2");
 			BundleTreeItem bundleInfo = m_bundleManager.GetBundle("TestFolderB1/TestFolderB2");
 			Assert.NotNull(bundleInfo);
 			Assert.IsInstanceOf<BundleTreeFolderItem>(bundleInfo);
@@ -94,12 +94,12 @@ namespace AssetBundleBuilder.Tests
 		[Test]
 		public void CreateBundleFolderByPathExistsTest()
 		{
-			m_bundleManager.CreateBundleFolder("TestFolderC1/TestFolderC2");
+			m_bundleManager.CreateBundleFolderByPath("TestFolderC1/TestFolderC2");
 			BundleTreeItem bundleInfo = m_bundleManager.GetBundle("TestFolderC1/TestFolderC2");
 			Assert.NotNull(bundleInfo);
 			Assert.IsInstanceOf<BundleTreeFolderItem>(bundleInfo);
 
-			m_bundleManager.CreateBundleFolder("TestFolderC1/TestFolderC21");
+			m_bundleManager.CreateBundleFolderByPath("TestFolderC1/TestFolderC21");
 			BundleTreeItem bundleInfo2 = m_bundleManager.GetBundle("TestFolderC1/TestFolderC21");
 			Assert.NotNull(bundleInfo2);
 			Assert.IsInstanceOf<BundleTreeFolderItem>(bundleInfo2);
@@ -139,6 +139,14 @@ namespace AssetBundleBuilder.Tests
 		}
 
 		#endregion
+
+		[Test]
+		public void CreateBundleFromAssetTest()
+		{
+			string assetPath = "Assets/ArtResources/Prefabs/TestPrefab.prefab";
+			BundleTreeDataItem bundleDataItem = m_bundleManager.CreateBundleFromAsset(assetPath);
+			Assert.NotNull(bundleDataItem);
+		}
 
 		//// A UnityTest behaves like a coroutine in Play Mode. In Edit Mode you can use
 		//// `yield return null;` to skip a frame.
