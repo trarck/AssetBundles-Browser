@@ -543,10 +543,8 @@ namespace AssetBundleBuilder.Model
 				{
 					dataBundle.bundleInfo.name = dataBundle.fullName;
 				}
-				else
-				{
-					dataBundle.id = dataBundle.fullName.GetHashCode();
-				}
+
+				dataBundle.id = dataBundle.fullName.GetHashCode();
 			}
 		}
 
@@ -678,11 +676,12 @@ namespace AssetBundleBuilder.Model
 		{
 			AssetInfo assetInfo = EditorAssetBundleManager.Instance.GetOrCreateAsset(assetName);
 			EditorAssetBundleManager.Instance.RefreshAssetDependencies(assetInfo);
+			EditorAssetBundleManager.Instance.RefreshAssetAllDependencies(assetInfo);
 
 			string bundleName = EditorAssetBundleManager.Instance.CreateBundleName(assetName, true, true, false);
 			BundleInfo bundle = EditorAssetBundleManager.Instance.CreateBundle(bundleName, assetInfo);
 			//EditorAssetBundleManager.Instance.RefreshBundleRelations(bundle);
-			EditorAssetBundleManager.Instance.RefreshAllBundlesName();
+			//EditorAssetBundleManager.Instance.RefreshAllBundlesName();
 			//EditorAssetBundleManager.Instance.Combine();
 			RefreshBundles();
 			return GetBundle(bundleName, parent) as BundleTreeDataItem;			
