@@ -287,6 +287,20 @@ namespace AssetBundleBuilder
 			}
 		}
 
+		public void CreateBundleForAllAssets()
+		{
+			foreach (var iter in m_Assets)
+			{
+				AssetInfo asset = iter.Value;
+
+				if (asset.bundle == null)
+				{
+					string bundleName = CreateBundleName(asset.assetPath, true, true, false);
+					asset.bundle = CreateBundle(bundleName, asset);
+				}
+			}
+		}
+
 		public static bool ValidateAsset(string name)
 		{
 			if (!name.StartsWith("Assets/"))
@@ -416,13 +430,18 @@ namespace AssetBundleBuilder
 				//add dep
 				foreach (AssetInfo assetDep in assetNode.dependencies)
 				{
-					if (assetDep.bundle == null)
+					//if (assetDep.bundle == null)
+					//{
+					//	assetDep.bundle = CreateBundle(null, assetDep);
+					//	RefreshBundleDependencies(assetDep.bundle);
+					//}
+					//bundle.AddDependencyOnly(assetDep.bundle);
+					//assetDep.bundle.AddReferOnly(bundle);
+					if (assetDep.bundle != null)
 					{
-						assetDep.bundle = CreateBundle(null, assetDep);
-						RefreshBundleDependencies(assetDep.bundle);
+						bundle.AddDependencyOnly(assetDep.bundle);
+						assetDep.bundle.AddReferOnly(bundle);
 					}
-					bundle.AddDependencyOnly(assetDep.bundle);
-					assetDep.bundle.AddReferOnly(bundle);
 				}
 			}
 		}
@@ -434,25 +453,21 @@ namespace AssetBundleBuilder
 				//add dep
 				foreach (AssetInfo assetDep in assetNode.dependencies)
 				{
-					if (assetDep.bundle == null)
+					if (assetDep.bundle != null)
 					{
-						assetDep.bundle = CreateBundle(null, assetDep);
-						RefreshBundleRelations(assetDep.bundle);
+						bundle.AddDependencyOnly(assetDep.bundle);
+						assetDep.bundle.AddReferOnly(bundle);
 					}
-					bundle.AddDependencyOnly(assetDep.bundle);
-					assetDep.bundle.AddReferOnly(bundle);
 				}
 
 				//add refer
 				foreach (AssetInfo assetRef in assetNode.refers)
 				{
-					if (assetRef.bundle == null)
+					if (assetRef.bundle != null)
 					{
-						assetRef.bundle = CreateBundle(null, assetRef);
-						RefreshBundleRelations(assetRef.bundle);
+						bundle.AddReferOnly(assetRef.bundle);
+						assetRef.bundle.AddDependencyOnly(bundle);
 					}
-					bundle.AddReferOnly(assetRef.bundle);
-					assetRef.bundle.AddDependencyOnly(bundle);
 				}
 			}
 		}

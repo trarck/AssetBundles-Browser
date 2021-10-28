@@ -83,7 +83,7 @@ namespace AssetBundleBuilder.Tests
 			TimeSpan used = DateTime.Now - start;
 			Debug.LogFormat("create assets used:{0}", used);
 			//Debug.LogFormat("asset count:{0}", m_AssetManager.assets.Count);
-			Assert.Greater(m_AssetManager.assets.Count, 100000);
+			Assert.AreEqual(m_AssetManager.assets.Count, textureFiles.Length + matFiles.Length + prefabFiles.Length);
 
 			start = DateTime.Now;
 			m_AssetManager.RefreshAllAssetDependencies();
@@ -153,7 +153,7 @@ namespace AssetBundleBuilder.Tests
 			TimeSpan used = DateTime.Now - start;
 			Debug.LogFormat("create assets used:{0}", used);
 			//Debug.LogFormat("asset count:{0}", m_AssetManager.assets.Count);
-			Assert.Greater(m_AssetManager.assets.Count, 100000);
+			Assert.Greater(m_AssetManager.assets.Count, 0);
 
 			start = DateTime.Now;
 			m_AssetManager.RefreshAllAssetDependencies();
@@ -191,7 +191,7 @@ namespace AssetBundleBuilder.Tests
 			TimeSpan used = DateTime.Now - start;
 			Debug.LogFormat("create assets used:{0}", used);
 			//Debug.LogFormat("asset count:{0}", m_AssetManager.assets.Count);
-			Assert.Greater(m_AssetManager.assets.Count, 100000);
+			Assert.AreEqual(m_AssetManager.assets.Count, textureFiles.Length + matFiles.Length + prefabFiles.Length);
 
 			start = DateTime.Now;
 			m_AssetManager.RefreshAllAssetDependencies();
@@ -245,7 +245,7 @@ namespace AssetBundleBuilder.Tests
 			TimeSpan used = DateTime.Now - start;
 			Debug.LogFormat("create assets used:{0}", used);
 			//Debug.LogFormat("asset count:{0}", m_AssetManager.assets.Count);
-			Assert.Greater(m_AssetManager.assets.Count, 100000);
+			Assert.AreEqual(m_AssetManager.assets.Count, textureFiles.Length+matFiles.Length+prefabFiles.Length);
 
 			start = DateTime.Now;
 			m_AssetManager.RefreshAllAssetDependencies();
@@ -328,12 +328,12 @@ namespace AssetBundleBuilder.Tests
 
 			bundleNode.AddAsset(assetNode);
 
+			m_AssetManager.CreateBundleForAllAssets();
 			m_AssetManager.RefreshBundleDependencies(bundleNode);
 
 			Assert.AreEqual(assetNode.dependencies.Count, bundleNode.dependencies.Count);
 			Assert.AreEqual(assetNode.refers.Count, bundleNode.refers.Count);
-			Assert.AreEqual(m_AssetManager.assets.Count, 3);
-			Assert.AreEqual(m_AssetManager.bundles.Count, 3);
+			Assert.AreEqual(m_AssetManager.assets.Count, m_AssetManager.bundles.Count);
 		}
 
 		[Test]
@@ -346,12 +346,15 @@ namespace AssetBundleBuilder.Tests
 			AssetInfo assetNode2 = m_AssetManager.CreateAsset(assetPath);
 
 			m_AssetManager.RefreshAllAssetDependencies();
+	
 
 			BundleInfo bundleNode1 = m_AssetManager.CreateBundle("TestPrefab");
 			bundleNode1.AddAsset(assetNode1);
 
 			BundleInfo bundleNode2 = m_AssetManager.CreateBundle("MyPrefab");
 			bundleNode2.AddAsset(assetNode2);
+
+			m_AssetManager.CreateBundleForAllAssets();
 
 			m_AssetManager.RefreshAllBundleDependencies();
 
@@ -361,8 +364,7 @@ namespace AssetBundleBuilder.Tests
 			Assert.AreEqual(assetNode2.dependencies.Count, bundleNode2.dependencies.Count);
 			Assert.AreEqual(assetNode2.refers.Count, bundleNode2.refers.Count);
 
-			Assert.AreEqual(m_AssetManager.assets.Count, 4);
-			Assert.AreEqual(m_AssetManager.bundles.Count, 4);
+			Assert.AreEqual(m_AssetManager.assets.Count, m_AssetManager.bundles.Count);
 		}
 
 		[Test]
@@ -395,13 +397,13 @@ namespace AssetBundleBuilder.Tests
 			BundleInfo bundleNode = m_AssetManager.CreateBundle("APreab");
 			bundleNode.AddAsset(assetNode);
 
+			m_AssetManager.CreateBundleForAllAssets();
 			m_AssetManager.RefreshAllBundleDependencies();
 
 			Assert.AreEqual(assetNode.dependencies.Count, bundleNode.dependencies.Count);
 			Assert.AreEqual(assetNode.refers.Count, bundleNode.refers.Count);
 
-			Assert.AreEqual(m_AssetManager.assets.Count, 5);
-			Assert.AreEqual(m_AssetManager.bundles.Count, 5);
+			Assert.AreEqual(m_AssetManager.assets.Count, m_AssetManager.bundles.Count);
 		}
 
 
@@ -418,12 +420,12 @@ namespace AssetBundleBuilder.Tests
 
 			bundleNode.AddAsset(assetNode);
 
+			m_AssetManager.CreateBundleForAllAssets();
 			m_AssetManager.RefreshBundleRelations(bundleNode);
 
 			Assert.AreEqual(assetNode.dependencies.Count, bundleNode.dependencies.Count);
 			Assert.AreEqual(assetNode.refers.Count, bundleNode.refers.Count);
-			Assert.AreEqual(m_AssetManager.assets.Count, 3);
-			Assert.AreEqual(m_AssetManager.bundles.Count,3);
+			Assert.AreEqual(m_AssetManager.assets.Count, m_AssetManager.bundles.Count);
 		}
 
 		[Test]
@@ -437,13 +439,13 @@ namespace AssetBundleBuilder.Tests
 			BundleInfo bundleNode = m_AssetManager.CreateBundle("APreab");
 			bundleNode.AddAsset(assetNode);
 
+			m_AssetManager.CreateBundleForAllAssets();
 			m_AssetManager.RefreshAllBundleRelations();
 
 			Assert.AreEqual(assetNode.dependencies.Count, bundleNode.dependencies.Count);
 			Assert.AreEqual(assetNode.refers.Count, bundleNode.refers.Count);
 
-			Assert.AreEqual(m_AssetManager.assets.Count, 5);
-			Assert.AreEqual(m_AssetManager.bundles.Count, 5);
+			Assert.AreEqual(m_AssetManager.assets.Count, m_AssetManager.bundles.Count);
 		}
 		[Test]
 		public void ImportTest()
@@ -486,6 +488,7 @@ namespace AssetBundleBuilder.Tests
 			Debug.LogFormat("Create Bundle used:{0}", used);
 			start = DateTime.Now;
 
+			m_AssetManager.CreateBundleForAllAssets();
 			m_AssetManager.RefreshAllBundleDependencies();
 
 			used = DateTime.Now - start;
@@ -509,11 +512,11 @@ namespace AssetBundleBuilder.Tests
 			bundleNode.SetMainAsset(assetNode);
 			bundleNode.AddAsset(assetNode);
 
+			m_AssetManager.CreateBundleForAllAssets();
 			m_AssetManager.RefreshAllBundleDependencies();
 
 			m_AssetManager.Combine();
 
-			Assert.AreEqual(5, m_AssetManager.assets.Count);
 			Assert.AreEqual(1, m_AssetManager.bundles.Count);
 		}
 
@@ -538,11 +541,11 @@ namespace AssetBundleBuilder.Tests
 			bundleNode.SetMainAsset(assetNode2);
 			bundleNode.AddAsset(assetNode2);
 
+			m_AssetManager.CreateBundleForAllAssets();
 			m_AssetManager.RefreshAllBundleDependencies();
 
 			m_AssetManager.Combine();
 
-			Assert.AreEqual(5, m_AssetManager.assets.Count);
 			Assert.AreEqual(2, m_AssetManager.bundles.Count);
 		}
 
@@ -567,11 +570,11 @@ namespace AssetBundleBuilder.Tests
 			bundleNode.SetMainAsset(assetNode2);
 			bundleNode.AddAsset(assetNode2);
 
+			m_AssetManager.CreateBundleForAllAssets();
 			m_AssetManager.RefreshAllBundleDependencies();
 
 			m_AssetManager.Combine();
 
-			Assert.AreEqual(6, m_AssetManager.assets.Count);
 			Assert.AreEqual(3, m_AssetManager.bundles.Count);
 		}
 
@@ -619,6 +622,8 @@ namespace AssetBundleBuilder.Tests
 			used = DateTime.Now - start;
 			Debug.LogFormat("create bundle used:{0}", used);
 			start = DateTime.Now;
+
+			m_AssetManager.CreateBundleForAllAssets();
 			m_AssetManager.RefreshAllBundleDependencies();
 
 			//used
@@ -713,6 +718,7 @@ namespace AssetBundleBuilder.Tests
 			bundleNode2.SetMainAsset(assetNode2);
 			bundleNode2.AddAsset(assetNode2);
 
+			m_AssetManager.CreateBundleForAllAssets();
 			m_AssetManager.RefreshAllBundleDependencies();
 
 			MemoryStream wms = new MemoryStream();
@@ -791,6 +797,7 @@ namespace AssetBundleBuilder.Tests
 					bundleNode.SetStandalone(iter.Value.addressable);
 				}
 			}
+			m_AssetManager.CreateBundleForAllAssets();
 			m_AssetManager.RefreshAllBundleDependencies();
 
 			m_AssetManager.Combine();
@@ -834,6 +841,7 @@ namespace AssetBundleBuilder.Tests
 				}
 			}
 
+			assetManager.CreateBundleForAllAssets();
 			assetManager.RefreshAllBundleDependencies();
 
 			DateTime start = DateTime.Now;
@@ -884,6 +892,7 @@ namespace AssetBundleBuilder.Tests
 				}
 			}
 
+			assetManager.CreateBundleForAllAssets();
 			assetManager.RefreshAllBundleDependencies();
 
 
@@ -935,6 +944,7 @@ namespace AssetBundleBuilder.Tests
 				}
 			}
 
+			assetManager.CreateBundleForAllAssets();
 			assetManager.RefreshAllBundleDependencies();
 
 			DateTime start = DateTime.Now;
@@ -966,6 +976,7 @@ namespace AssetBundleBuilder.Tests
 			bundleNode1.SetMainAsset(assetNode1);
 			bundleNode1.AddAsset(assetNode1);
 
+			m_AssetManager.CreateBundleForAllAssets();
 			m_AssetManager.RefreshAllBundleDependencies();
 			m_AssetManager.RefreshAllBundlesName();
 
@@ -991,6 +1002,7 @@ namespace AssetBundleBuilder.Tests
 			bundleNode1.SetMainAsset(assetNode1);
 			bundleNode1.AddAsset(assetNode1);
 
+			m_AssetManager.CreateBundleForAllAssets();
 			m_AssetManager.RefreshAllBundleDependencies();
 			m_AssetManager.RefreshAllBundlesName();
 
@@ -1054,6 +1066,8 @@ namespace AssetBundleBuilder.Tests
 			used = DateTime.Now - start;
 			Debug.LogFormat("create bundle used:{0}", used);
 			start = DateTime.Now;
+
+			m_AssetManager.CreateBundleForAllAssets();
 			m_AssetManager.RefreshAllBundleDependencies();
 
 			//used
