@@ -517,9 +517,12 @@ namespace AssetBundleBuilder
 
 		public void LoadAssets(string filePath)
 		{
-			using (FileStream fs = new FileStream(filePath, FileMode.Open))
+			if (File.Exists(filePath))
 			{
-				LoadAssets(fs);
+				using (FileStream fs = new FileStream(filePath, FileMode.Open))
+				{
+					LoadAssets(fs);
+				}
 			}
 		}
 
@@ -667,9 +670,12 @@ namespace AssetBundleBuilder
 
 		public void LoadBinary(string filePath)
 		{
-			using (FileStream fs = new FileStream(filePath, FileMode.Open))
+			if (File.Exists(filePath))
 			{
-				LoadBinary(fs);
+				using (FileStream fs = new FileStream(filePath, FileMode.Open))
+				{
+					LoadBinary(fs);
+				}
 			}
 		}
 
@@ -892,8 +898,11 @@ namespace AssetBundleBuilder
 
 		public void LoadFromJson(string jsonFile)
 		{
-			string jsonStr = File.ReadAllText(jsonFile);
-			DeserializeFromJson(jsonStr);
+			if (File.Exists(jsonFile))
+			{
+				string jsonStr = File.ReadAllText(jsonFile);
+				DeserializeFromJson(jsonStr);
+			}
 		}
 		#endregion //Load Save Json
 

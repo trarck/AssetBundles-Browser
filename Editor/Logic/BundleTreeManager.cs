@@ -107,7 +107,7 @@ namespace AssetBundleBuilder.Model
 
 		public void SaveBundles()
 		{
-			string bundleDataPath = EditorAssetBundleManager.Instance.GetBinaryBundleSavePath();
+			string bundleDataPath = EditorAssetBundleManager.Instance.GetBinaryAssetBundleSavePath();
 			EditorAssetBundleManager.Instance.SaveBinary(bundleDataPath);
 			string saveJsonPath = EditorAssetBundleManager.Instance.GetJsonAssetBundleSavePath();
 			EditorAssetBundleManager.Instance.SaveToJson(saveJsonPath);
