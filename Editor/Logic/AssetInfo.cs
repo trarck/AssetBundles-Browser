@@ -41,6 +41,8 @@ namespace AssetBundleBuilder
 
 		public BundleInfo bundle;
 
+		//用于序列化时的索引号。也可以在序列化时使用映射表建立序列化的索引号。
+		public int serializeIndex = 0;
 
 		public string assetPath
 		{

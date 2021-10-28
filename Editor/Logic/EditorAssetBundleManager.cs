@@ -24,11 +24,6 @@ namespace AssetBundleBuilder
 		//Dictionary<string, BundleNode> m_Bundles = new Dictionary<string, BundleNode>();
 		List<BundleInfo> m_Bundles = new List<BundleInfo>(4096);
 
-		Dictionary<uint, BundleInfo> m_BundlesIdMap = new Dictionary<uint, BundleInfo>();
-
-		//private List<BundleNode> m_TempBundles = new List<BundleNode>(4096);
-		//private List<BundleNode> m_TempBundleDeps = new List<BundleNode>(4096);
-
 		private static EditorAssetBundleManager m_Instance = null;
 		public static EditorAssetBundleManager Instance
 		{
@@ -92,11 +87,6 @@ namespace AssetBundleBuilder
 			if (m_Bundles != null)
 			{
 				m_Bundles.Clear();
-			}
-
-			if (m_BundlesIdMap != null)
-			{
-				m_BundlesIdMap.Clear();
 			}
 		}
 
@@ -312,6 +302,7 @@ namespace AssetBundleBuilder
 
 		#region Bundle
 
+		private static uint BundleIdIndex = 0;
 		public BundleInfo CreateBundleInfo(string bundleName)
 		{
 			BundleInfo bundleInfo = new BundleInfo(bundleName);
@@ -322,15 +313,13 @@ namespace AssetBundleBuilder
 		{
 			BundleInfo bundle = new BundleInfo(bundleName);
 			m_Bundles.Add(bundle);
-			m_BundlesIdMap[bundle.id] = bundle;
 			return bundle;
 		}
 
-		public BundleInfo CreateBundle(uint id, string bundleName,string variantName)
+		public BundleInfo CreateBundle(string bundleName,string variantName)
 		{
-			BundleInfo bundle = new BundleInfo(id,bundleName,variantName);
+			BundleInfo bundle = new BundleInfo(bundleName,variantName);
 			m_Bundles.Add(bundle);
-			m_BundlesIdMap[bundle.id] = bundle;
 			return bundle;
 		}
 
@@ -363,20 +352,9 @@ namespace AssetBundleBuilder
 			return null;
 		}
 
-		public BundleInfo GetBundle(uint id)
-		{
-			BundleInfo bundle = null;
-			if (m_BundlesIdMap.TryGetValue(id, out bundle))
-			{
-				return bundle;
-			}
-			return null;
-		}
-
 		public void RemoveBundle(BundleInfo bundle)
 		{
 			m_Bundles.Remove(bundle);
-			m_BundlesIdMap.Remove(bundle.id);
 			bundle.enbale = false;
 			bundle.Clear();
 		}

@@ -11,30 +11,30 @@ namespace AssetBundleBuilder.View
 {
     public  class BundleTreeItem : TreeViewItem
     {
-		private BundleNameData m_NameData;
+		//private BundleNameData m_NameData;
 		protected MessageSystem.MessageState m_BundleMessages = new MessageSystem.MessageState();
 
-		public BundleNameData nameData
-		{
-			get
-			{
-				return m_NameData;
-			}
-			set
-			{
-				m_NameData = value;
-			}
-		}
+		//public BundleNameData nameData
+		//{
+		//	get
+		//	{
+		//		return m_NameData;
+		//	}
+		//	set
+		//	{
+		//		m_NameData = value;
+		//	}
+		//}
 
-		private string m_DisplayName;
+		private string m_ShortName;
 
-		public int nameHashCode
-		{
-			get
-			{
-				return m_NameData.GetHashCode();
-			}
-		}
+		//public int nameHashCode
+		//{
+		//	get
+		//	{
+		//		return m_NameData.GetHashCode();
+		//	}
+		//}
 
 		public virtual bool dirty
 		{
@@ -52,17 +52,12 @@ namespace AssetBundleBuilder.View
 			}
 		}
 
-		public BundleTreeItem(int id, int depth, string displayName):base(id,depth,displayName)
+		public BundleTreeItem(int id, int depth, string name):base(id,depth,name)
 		{
-
+			m_ShortName = name;
 		}
 
 		public BundleTreeItem(int depth) : base(0,depth)
-		{
-
-		}
-
-		public BundleTreeItem(BundleNameData name, int depth) : base(name.GetHashCode(), depth, name.shortName)
 		{
 
 		}
@@ -78,19 +73,35 @@ namespace AssetBundleBuilder.View
 			return new MessageSystem.Message("", MessageType.Info);// bundleNode.HighestMessage();
         }
 
-        public override string displayName
-        {
-            get
-            {
-				return m_DisplayName;// AssetBundleBuilderMain.instance.m_ManageTab.hasSearch ? bundle.m_Name.fullNativeName : bundle.displayName;
-            }
+		public override string displayName
+		{
+			get
+			{
+				return m_ShortName;// AssetBundleBuilderMain.instance.m_ManageTab.hasSearch ? bundle.m_Name.fullNativeName : bundle.displayName;
+			}
 			set
 			{
-				m_DisplayName = value;
+				m_ShortName = value;
 			}
-        }
+		}
 
-		public string fullPath
+		public virtual string fullName
+		{
+			get
+			{
+				StringBuilder sb = new StringBuilder();
+				TreeViewItem p = parent;
+				while (p != null)
+				{
+					sb.Append(p.displayName).Append("/");
+					p = p.parent;
+				}
+				sb.Append(displayName);
+				return sb.ToString();
+			}
+		}
+
+		public virtual string parentPath
 		{
 			get
 			{
@@ -100,8 +111,26 @@ namespace AssetBundleBuilder.View
 				{
 					sb.Append(p.displayName).Append("/");
 				}
-				sb.Append(displayName);
 				return sb.ToString();
+			}
+		}
+
+		public virtual List<string> pathTokens
+		{
+			get
+			{
+				List<string> tokens = null;
+				if (parent != null)
+				{
+
+					tokens = new List<string>();
+					TreeViewItem p = parent;
+					while (p != null)
+					{
+						tokens.Append(p.displayName);
+					}
+				}
+				return tokens;
 			}
 		}
 
@@ -189,12 +218,12 @@ namespace AssetBundleBuilder.View
 			}
 		}
 
-		public BundleTreeDataItem(BundleInfo bundleInfo, int depth) : base(bundleInfo.name, depth)
+		public BundleTreeDataItem(BundleInfo bundleInfo, int depth) : base(bundleInfo.name.GetHashCode(), depth,bundleInfo.displayName)
 		{
 			m_BundleInfo = bundleInfo;
 		}
 
-		public BundleTreeDataItem(BundleInfo bundleInfo,BundleNameData nameData, int depth) : base(nameData, depth)
+		public BundleTreeDataItem(int id, int depth, string displayName) : base(id, depth, displayName)
 		{
 			m_BundleInfo = bundleInfo;
 		}
@@ -255,11 +284,6 @@ namespace AssetBundleBuilder.View
 		}
 
 		public BundleTreeFolderItem(string name,int depth,int id) : base(id, depth,name)
-		{
-			children = new List<TreeViewItem>();
-		}
-
-		public BundleTreeFolderItem(BundleNameData name, int depth) : base(name, depth)
 		{
 			children = new List<TreeViewItem>();
 		}

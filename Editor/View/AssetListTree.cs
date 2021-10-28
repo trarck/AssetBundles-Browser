@@ -160,7 +160,7 @@ namespace AssetBundleBuilder.View
                     }
                     break;
                 case 1:
-                    DefaultGUI.Label(cellRect, item.asset.bundle.displayName, args.selected, args.focused);
+                    DefaultGUI.Label(cellRect, item.asset.bundle!=null?item.asset.bundle.displayName:"", args.selected, args.focused);
                     break;
                 case 2:
                     DefaultGUI.Label(cellRect, item.asset.GetSizeString(), args.selected, args.focused);
@@ -265,8 +265,9 @@ namespace AssetBundleBuilder.View
             {
                 if (args.performDrop)
                 {
-                    Model.Model.MoveAssetToBundle(DragAndDrop.paths, m_SourceBundles[0].nameData.bundleName, m_SourceBundles[0].nameData.variant);
-                    Model.Model.ExecuteAssetMove();
+                    //Model.Model.MoveAssetToBundle(DragAndDrop.paths, m_SourceBundles[0].nameData.bundleName, m_SourceBundles[0].nameData.variant);
+                    //Model.Model.ExecuteAssetMove();
+                    BundleTreeManager.Instance.MoveAssetToBundle(DragAndDrop.paths, m_SourceBundles[0].displayName);
                     foreach (var bundle in m_SourceBundles)
                     {
                         //bundle.RefreshAssetList();

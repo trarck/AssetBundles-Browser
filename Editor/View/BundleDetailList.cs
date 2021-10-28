@@ -206,7 +206,7 @@ namespace AssetBundleBuilder.View
 
         internal static TreeViewItem AppendBundleToTree(BundleTreeDataItem bundle)
         {
-            var itemName = bundle.nameData.fullNativeName;
+            var itemName = bundle.fullName;
             var bunRoot = new TreeViewItem(itemName.GetHashCode(), 0, itemName);
 
             var str = itemName + k_SizeHeader;

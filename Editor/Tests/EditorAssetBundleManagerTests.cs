@@ -739,9 +739,10 @@ namespace AssetBundleBuilder.Tests
 				Assert.AreEqual(asset.refers.Count, otherAsset.refers.Count);
 			}
 
+			int i = 0;
 			foreach (var bundle in m_AssetManager.bundles)
 			{
-				var otherBundle = editorAssetManager.GetBundle(bundle.id);
+				var otherBundle = editorAssetManager.bundles[i++];
 				Assert.NotNull(otherBundle);
 				if (string.IsNullOrEmpty(bundle.name))
 				{
@@ -885,7 +886,7 @@ namespace AssetBundleBuilder.Tests
 
 			assetManager.RefreshAllBundleDependencies();
 
-			
+
 			DateTime start = DateTime.Now;
 
 			string savePath = Path.Combine(Application.dataPath, "../AssetDatabase/Bundes.bin");

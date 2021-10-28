@@ -21,6 +21,12 @@ namespace AssetBundleBuilder
 		//  m_fullBundleName = /m_pathTokens[0]/.../m_pathTokens[n]/m_shortName
 		// and...
 		//  m_fullNativeName = m_fullBundleName.m_variantName which is the same as the initial input.
+
+		public BundleNameData()
+		{
+		
+		}
+
 		public BundleNameData(string name)
 		{
 			SetName(name);
@@ -43,10 +49,13 @@ namespace AssetBundleBuilder
 			}
 		}
 
-		public void SetBundleName(string bundleName, string variantName)
+		public void SetBundleName(string bundleName, string variantName=null)
 		{
 			string name = bundleName;
-			name += System.String.IsNullOrEmpty(variantName) ? "" : "." + variantName;
+			if (!string.IsNullOrEmpty(variantName))
+			{
+				name += "." + variantName;
+			}
 			SetName(name);
 		}
 		public string bundleName
@@ -215,8 +224,6 @@ namespace AssetBundleBuilder
 
 	public class BundleInfo
 	{
-		private static uint IdIndex = 0;
-
 		public enum BundleType
 		{
 			None,
@@ -225,8 +232,6 @@ namespace AssetBundleBuilder
 			Shader,
 			ShaderVariantCollection
 		}
-
-		protected uint m_Id;
 
 		//bundle name
 		protected string m_Name;
@@ -261,17 +266,8 @@ namespace AssetBundleBuilder
 
 		protected bool m_Enable = false;
 
-		public uint id
-		{
-			get
-			{
-				return m_Id;
-			}
-			set
-			{
-				m_Id = value;
-			}
-		}
+		//用于序列化时的索引号。也可以在序列化时使用映射表建立序列化的索引号。
+		public int serializeIndex = 0;
 
 		public string name
 		{
@@ -417,26 +413,17 @@ namespace AssetBundleBuilder
 			}
 		}
 
-		public BundleInfo():this(++IdIndex,null, null)
+		public BundleInfo():this(null, null)
 		{
 		}
 
-		public BundleInfo(string name) : this(++IdIndex,name, null)
+		public BundleInfo(string name) : this(name, null)
 		{
 			
 		}
-		public BundleInfo(string name, string variantName) : this(++IdIndex, name, variantName)
-		{
 
-		}
-
-		public BundleInfo(uint id,string name) : this(id, name,null)
+		public BundleInfo(string name, string variantName)
 		{
-		}
-
-		public BundleInfo(uint id, string name, string variantName)
-		{
-			m_Id = id;
 			m_Name = name;
 			m_VariantName = variantName;
 

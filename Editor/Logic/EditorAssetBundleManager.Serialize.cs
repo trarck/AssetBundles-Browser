@@ -10,16 +10,16 @@ namespace AssetBundleBuilder
 	public class AssetSerializeInfo
 	{
 		public AssetInfo asset;
-		public List<string> refers;
-		public List<string> dependencies;
-		public List<string> allDependencies;
+		public List<int> refers;
+		public List<int> dependencies;
+		public List<int> allDependencies;
 
 		public AssetSerializeInfo()
 		{
 			asset = null;
-			refers = new List<string>();
-			dependencies = new List<string>();
-			allDependencies = new List<string>();
+			refers = new List<int>();
+			dependencies = new List<int>();
+			allDependencies = new List<int>();
 		}
 	}
 
@@ -27,18 +27,18 @@ namespace AssetBundleBuilder
 	{
 		public BundleInfo bundle;
 
-		public string mainAsset;
-		public List<string> assets;
-		public List<uint> refers;
-		public List<uint> dependencies;
+		public int mainAsset;
+		public List<int> assets;
+		public List<int> refers;
+		public List<int> dependencies;
 
 		public BundleSerializeInfo()
 		{
 			bundle = null;
-			mainAsset = null;
-			assets = new List<string>();
-			refers = new List<uint>();
-			dependencies = new List<uint>();
+			mainAsset = -1;
+			assets = new List<int>();
+			refers = new List<int>();
+			dependencies = new List<int>();
 		}
 	}
 
@@ -54,7 +54,53 @@ namespace AssetBundleBuilder
 		public static string BinaryExtName = ".bin";
 		public static string JsonExtName = ".json";
 
-		#region Serialize Binary
+		#region Asset Binary Serialize
+		private static void GenerateAssetsSerilizeIndex(ICollection<AssetInfo> assets)
+		{
+			int i = 0;
+			foreach (var asset in assets)
+			{
+				//建立索引号。这里直接用数组的下标。
+				asset.serializeIndex = i++;
+			}
+		}
+		private static List<AssetSerializeInfo> CreateAssetSerializeInfos(ICollection<AssetInfo> assets)
+		{
+			//生成索引号
+			GenerateAssetsSerilizeIndex(assets);
+
+			//生成序列化信息
+			List<AssetSerializeInfo> serializeInfos = new List<AssetSerializeInfo>(assets.Count);
+			foreach (var asset in assets)
+			{
+				//生成序列化对象
+				AssetSerializeInfo serializeInfo = new AssetSerializeInfo()
+				{
+					asset = asset
+				};
+				serializeInfos.Add(serializeInfo);
+
+				//转换引用
+				foreach (var refer in asset.refers)
+				{
+					serializeInfo.refers.Add(refer.serializeIndex);
+				}
+
+				//转换依赖
+				foreach (var dep in asset.dependencies)
+				{
+					serializeInfo.dependencies.Add(dep.serializeIndex);
+				}
+
+				//转换所有依赖
+				foreach (var dep in asset.allDependencies)
+				{
+					serializeInfo.allDependencies.Add(dep.serializeIndex);
+				}
+			}
+
+			return serializeInfos;
+		}
 		public static void SerializeAsset(AssetInfo asset , BinaryWriter writer)
 		{
 			writer.Write(asset.assetPath);
@@ -65,20 +111,50 @@ namespace AssetBundleBuilder
 			writer.Write(asset.dependencies.Count);
 			foreach (var dep in asset.dependencies)
 			{
-				writer.Write(dep.assetPath);
+				writer.Write(dep.serializeIndex);
 			}
 			//refers
 			writer.Write(asset.refers.Count);
 			foreach(var refer in asset.refers)
 			{
-				writer.Write(refer.assetPath);
+				writer.Write(refer.serializeIndex);
 			}
-			////all deps
-			//writer.Write(asset.allDependencies.Count);
-			//foreach (var dep in asset.allDependencies)
-			//{
-			//	writer.Write(dep.assetPath);
-			//}
+
+			//all deps
+			writer.Write(asset.allDependencies.Count);
+			foreach (var dep in asset.allDependencies)
+			{
+				writer.Write(dep.serializeIndex);
+			}
+		}
+		public static void SerializeAsset(AssetSerializeInfo serializeInfo, BinaryWriter writer)
+		{
+			AssetInfo asset = serializeInfo.asset;
+
+			writer.Write(asset.assetPath);
+			writer.Write((byte)asset.assetType);
+			writer.Write(asset.fileSize);
+			writer.Write(asset.addressable);
+
+			//deps
+			writer.Write(serializeInfo.dependencies.Count);
+			foreach (var depIndex in serializeInfo.dependencies)
+			{
+				writer.Write(depIndex);
+			}
+			//refers
+			writer.Write(serializeInfo.refers.Count);
+			foreach (var referInfex in serializeInfo.refers)
+			{
+				writer.Write(referInfex);
+			}
+
+			//all deps
+			writer.Write(serializeInfo.allDependencies.Count);
+			foreach (var depIndex in serializeInfo.allDependencies)
+			{
+				writer.Write(depIndex);
+			}
 		}
 		public static AssetSerializeInfo DeserializeAsset(BinaryReader reader)
 		{
@@ -96,89 +172,23 @@ namespace AssetBundleBuilder
 			assetSerializeInfo.dependencies.Capacity = assetSerializeInfo.dependencies.Count + depsCount;
 			for (int i = 0; i < depsCount; ++i)
 			{
-				assetSerializeInfo.dependencies.Add(reader.ReadString());
+				assetSerializeInfo.dependencies.Add(reader.ReadInt32());
 			}
 
 			int referCount = reader.ReadInt32();
 			assetSerializeInfo.refers.Capacity = assetSerializeInfo.refers.Count + referCount;
 			for (int i = 0; i < referCount; ++i)
 			{
-				assetSerializeInfo.refers.Add(reader.ReadString());
+				assetSerializeInfo.refers.Add(reader.ReadInt32());
+			}
+
+			int allDepsCount = reader.ReadInt32();
+			assetSerializeInfo.allDependencies.Capacity = assetSerializeInfo.allDependencies.Count + allDepsCount;
+			for (int i = 0; i < allDepsCount; ++i)
+			{
+				assetSerializeInfo.allDependencies.Add(reader.ReadInt32());
 			}
 			return assetSerializeInfo;
-		}
-
-		public static void SerializeBundle(BundleInfo bundle, BinaryWriter writer)
-		{
-			writer.Write(bundle.id);
-			writer.Write(bundle.name==null?"":bundle.name);
-			writer.Write(bundle.variantName == null ? "" : bundle.variantName);
-			writer.Write((byte)bundle.bundleType);
-			writer.Write(bundle.IsStandalone());
-			writer.Write(bundle.refersHashCode);
-			//main asset
-			writer.Write(bundle.mainAssetPath);
-
-			//assets
-			writer.Write(bundle.assets.Count);
-			foreach (var asset in bundle.assets)
-			{
-				writer.Write(asset.assetPath);
-			}
-
-			//deps
-			writer.Write(bundle.dependencies.Count);
-			foreach (var dep in bundle.dependencies)
-			{
-				writer.Write(dep.id);
-			}
-
-			//refers
-			writer.Write(bundle.refers.Count);
-			foreach (var refer in bundle.refers)
-			{
-				writer.Write(refer.id);
-			}
-		}
-		public static BundleSerializeInfo DeserializeBundle(BinaryReader reader)
-		{
-			BundleSerializeInfo bundleSerializeInfo = new BundleSerializeInfo();
-
-			uint id = reader.ReadUInt32();
-			string name = reader.ReadString();
-			string variantName = reader.ReadString();
-			BundleInfo bundle = new BundleInfo(id,name, variantName);
-			bundle.bundleType =(BundleInfo.BundleType) reader.ReadByte();
-			bundle.SetStandalone(reader.ReadBoolean());
-			bundle.refersHashCode = reader.ReadInt32();
-
-			bundleSerializeInfo.bundle = bundle;
-
-			bundleSerializeInfo.mainAsset = reader.ReadString();
-
-			int assetCount = reader.ReadInt32();
-			bundleSerializeInfo.assets.Capacity = bundleSerializeInfo.assets.Count + assetCount;
-			for (int i = 0; i < assetCount; ++i)
-			{
-				bundleSerializeInfo.assets.Add(reader.ReadString());
-			}
-
-
-			int depsCount = reader.ReadInt32();
-			bundleSerializeInfo.dependencies.Capacity = bundleSerializeInfo.dependencies.Count + depsCount;
-			for (int i = 0; i < depsCount; ++i)
-			{
-				bundleSerializeInfo.dependencies.Add(reader.ReadUInt32());
-			}
-
-			int referCount = reader.ReadInt32();
-			bundleSerializeInfo.refers.Capacity = bundleSerializeInfo.refers.Count + referCount;
-			for (int i = 0; i < referCount; ++i)
-			{
-				bundleSerializeInfo.refers.Add(reader.ReadUInt32());
-			}
-
-			return bundleSerializeInfo;
 		}
 
 		public static void SerializeAssets(ICollection<AssetInfo> assets, BinaryWriter writer)
@@ -189,17 +199,217 @@ namespace AssetBundleBuilder
 				SerializeAsset(asset, writer);
 			}
 		}
-
+		public static void SerializeAssets(ICollection<AssetSerializeInfo> serializeInfos, BinaryWriter writer)
+		{
+			writer.Write(serializeInfos.Count);
+			foreach (var serializeInfo in serializeInfos)
+			{
+				SerializeAsset(serializeInfo, writer);
+			}
+		}
 		public static List<AssetSerializeInfo> DeserializeAssets(BinaryReader reader)
 		{
 			int assetCount = reader.ReadInt32();
-			List<AssetSerializeInfo>  assetSerializeInfos = new List<AssetSerializeInfo>(assetCount);
+			List<AssetSerializeInfo> assetSerializeInfos = new List<AssetSerializeInfo>(assetCount);
 			for (int i = 0; i < assetCount; ++i)
 			{
 				AssetSerializeInfo assetSerializeInfo = DeserializeAsset(reader);
 				assetSerializeInfos.Add(assetSerializeInfo);
 			}
 			return assetSerializeInfos;
+		}
+
+
+		public static void ShortSerializeAsset(AssetInfo asset, BinaryWriter writer)
+		{
+			writer.Write(asset.assetPath);
+		}
+		public static AssetInfo ShortDeserializeAsset(BinaryReader reader)
+		{
+			string assetPath = reader.ReadString();
+			AssetInfo asset = new AssetInfo(assetPath);
+			return asset;
+		}
+
+		public static void ShortSerializeAssets(ICollection<AssetInfo> assets, BinaryWriter writer)
+		{
+			writer.Write(assets.Count);
+			foreach (var asset in assets)
+			{
+				ShortSerializeAsset(asset, writer);
+			}
+		}
+		public static List<AssetInfo> ShortDeserializeAssets(BinaryReader reader)
+		{
+			int assetCount = reader.ReadInt32();
+			List<AssetInfo> assetInfos = new List<AssetInfo>(assetCount);
+			for (int i = 0; i < assetCount; ++i)
+			{
+				AssetInfo assetInfo = ShortDeserializeAsset(reader);
+				assetInfos.Add(assetInfo);
+			}
+			return assetInfos;
+		}
+
+		#endregion //Asset Binary Serialize
+
+		#region Bundle Binary Serialize
+		private static void GenerateBundlesSerilizeIndex(ICollection<BundleInfo> bundles)
+		{
+			int i = 0;
+			foreach (var bundle in bundles)
+			{
+				//建立索引号。这里直接用数组的下标。
+				bundle.serializeIndex = i++;
+			}
+		}
+		private static List<BundleSerializeInfo> CreateBundleSerializeInfos(ICollection<BundleInfo> bundles)
+		{
+			//生成索引号
+			GenerateBundlesSerilizeIndex(bundles);
+
+			//生成序列化信息
+			List<BundleSerializeInfo> serializeInfos = new List<BundleSerializeInfo>(bundles.Count);
+			foreach (var bundle in bundles)
+			{
+				//生成序列化对象
+				BundleSerializeInfo serializeInfo = new BundleSerializeInfo()
+				{
+					bundle = bundle,
+				};
+				serializeInfos.Add(serializeInfo);
+
+				//转换主资源
+				if (bundle.mainAsset != null)
+				{
+					serializeInfo.mainAsset = bundle.mainAsset.serializeIndex;
+				}
+
+				//转换资源
+				foreach (var assetInfo in bundle.assets)
+				{
+					serializeInfo.assets.Add(assetInfo.serializeIndex);
+				}
+
+				//转换引用
+				foreach (var refer in bundle.refers)
+				{
+					serializeInfo.refers.Add(refer.serializeIndex);
+				}
+
+				//转换依赖
+				foreach (var dep in bundle.dependencies)
+				{
+					serializeInfo.dependencies.Add(dep.serializeIndex);
+				}
+			}
+
+			return serializeInfos;
+		}
+		public static void SerializeBundle(BundleInfo bundle, BinaryWriter writer)
+		{
+			writer.Write(bundle.name==null?"":bundle.name);
+			writer.Write(bundle.variantName == null ? "" : bundle.variantName);
+			writer.Write((byte)bundle.bundleType);
+			writer.Write(bundle.IsStandalone());
+			writer.Write(bundle.refersHashCode);
+			//main asset
+			writer.Write(bundle.mainAsset.serializeIndex);
+
+			//assets
+			writer.Write(bundle.assets.Count);
+			foreach (var asset in bundle.assets)
+			{
+				writer.Write(asset.serializeIndex);
+			}
+
+			//deps
+			writer.Write(bundle.dependencies.Count);
+			foreach (var dep in bundle.dependencies)
+			{
+				writer.Write(dep.serializeIndex);
+			}
+
+			//refers
+			writer.Write(bundle.refers.Count);
+			foreach (var refer in bundle.refers)
+			{
+				writer.Write(refer.serializeIndex);
+			}
+		}
+		public static void SerializeBundle(BundleSerializeInfo serializeInfo, BinaryWriter writer)
+		{
+			BundleInfo bundle = serializeInfo.bundle;
+
+			writer.Write(bundle.name == null ? "" : bundle.name);
+			writer.Write(bundle.variantName == null ? "" : bundle.variantName);
+			writer.Write((byte)bundle.bundleType);
+			writer.Write(bundle.IsStandalone());
+			writer.Write(bundle.refersHashCode);
+
+			//main asset
+			writer.Write(serializeInfo.mainAsset);
+
+			//assets
+			writer.Write(serializeInfo.assets.Count);
+			foreach (var assetIndex in serializeInfo.assets)
+			{
+				writer.Write(assetIndex);
+			}
+
+			//deps
+			writer.Write(serializeInfo.dependencies.Count);
+			foreach (var depIndex in serializeInfo.dependencies)
+			{
+				writer.Write(depIndex);
+			}
+
+			//refers
+			writer.Write(serializeInfo.refers.Count);
+			foreach (var referIndex in serializeInfo.refers)
+			{
+				writer.Write(referIndex);
+			}
+		}
+		public static BundleSerializeInfo DeserializeBundle(BinaryReader reader)
+		{
+			BundleSerializeInfo bundleSerializeInfo = new BundleSerializeInfo();
+
+			string name = reader.ReadString();
+			string variantName = reader.ReadString();
+			BundleInfo bundle = new BundleInfo(name, variantName);
+
+			bundle.bundleType =(BundleInfo.BundleType) reader.ReadByte();
+			bundle.SetStandalone(reader.ReadBoolean());
+			bundle.refersHashCode = reader.ReadInt32();
+
+			bundleSerializeInfo.bundle = bundle;
+
+			bundleSerializeInfo.mainAsset = reader.ReadInt32();
+
+			int assetCount = reader.ReadInt32();
+			bundleSerializeInfo.assets.Capacity = bundleSerializeInfo.assets.Count + assetCount;
+			for (int i = 0; i < assetCount; ++i)
+			{
+				bundleSerializeInfo.assets.Add(reader.ReadInt32());
+			}
+
+
+			int depsCount = reader.ReadInt32();
+			bundleSerializeInfo.dependencies.Capacity = bundleSerializeInfo.dependencies.Count + depsCount;
+			for (int i = 0; i < depsCount; ++i)
+			{
+				bundleSerializeInfo.dependencies.Add(reader.ReadInt32());
+			}
+
+			int referCount = reader.ReadInt32();
+			bundleSerializeInfo.refers.Capacity = bundleSerializeInfo.refers.Count + referCount;
+			for (int i = 0; i < referCount; ++i)
+			{
+				bundleSerializeInfo.refers.Add(reader.ReadInt32());
+			}
+
+			return bundleSerializeInfo;
 		}
 
 		public static void SerializeBundles(ICollection<BundleInfo> bundles, BinaryWriter writer)
@@ -210,7 +420,14 @@ namespace AssetBundleBuilder
 				SerializeBundle(bundle, writer);
 			}
 		}
-
+		public static void SerializeBundles(ICollection<BundleSerializeInfo> serializeInfos, BinaryWriter writer)
+		{
+			writer.Write(serializeInfos.Count);
+			foreach (var serializeInfo in serializeInfos)
+			{
+				SerializeBundle(serializeInfo, writer);
+			}
+		}
 		public static List<BundleSerializeInfo> DeserializeBundles(BinaryReader reader)
 		{
 			int bundleCount = reader.ReadInt32();
@@ -223,47 +440,58 @@ namespace AssetBundleBuilder
 			return bundleSerializeInfos;
 		}
 
-		#endregion //Serialize
+		#endregion //Bundle Binary Serialize
 
 		#region Load Save  Binary
 		public void SaveAssets(Stream output)
 		{
 			using (BinaryWriter bw = new BinaryWriter(output))
 			{
+				GenerateAssetsSerilizeIndex(m_Assets.Values);
 				SerializeAssets(m_Assets.Values,bw);
 			}
 		}
 
-		public void LoadAssets(BinaryReader reader)
+		public List<AssetInfo> LoadAssets(BinaryReader reader)
 		{
 			CleanAssets();
 
-			List<AssetSerializeInfo> assetSerializeInfos = DeserializeAssets(reader);
+			List<AssetInfo> assetsMap = null;
+
+			List <AssetSerializeInfo> assetSerializeInfos = DeserializeAssets(reader);
 
 			if (assetSerializeInfos != null)
 			{
+				assetsMap = new List<AssetInfo>();
+
+				//建立其他资源信息
 				foreach (var assetSerializeInfo in assetSerializeInfos)
 				{
 					AssetInfo asset = assetSerializeInfo.asset;
 					m_Assets[asset.assetPath] = asset;
+
+					assetsMap.Add(asset);
 				}
 
+				//设置索引对象
 				foreach (var assetSerializeInfo in assetSerializeInfos)
 				{
 					AssetInfo asset = assetSerializeInfo.asset;
-					foreach (var depAssetPath in assetSerializeInfo.dependencies)
+					foreach (var depIndex in assetSerializeInfo.dependencies)
 					{
-						AssetInfo dep = m_Assets[depAssetPath];
+						AssetInfo dep = assetsMap[depIndex];
 						asset.AddDependencyOnlfy(dep);
 					}
 
-					foreach (var referAssetPath in assetSerializeInfo.refers)
+					foreach (var referIndex in assetSerializeInfo.refers)
 					{
-						AssetInfo refer = m_Assets[referAssetPath];
+						AssetInfo refer = assetsMap[referIndex];
 						asset.AddReferOnly(refer);
 					}
 				}
 			}
+
+			return assetsMap;
 		}
 
 		public void LoadAssets(Stream input)
@@ -299,15 +527,15 @@ namespace AssetBundleBuilder
 		{
 			using (BinaryWriter bw = new BinaryWriter(output))
 			{
-				bw.Write(m_Bundles.Count);
-				foreach (var bundle in m_Bundles)
-				{
-					SerializeBundle(bundle, bw);
-				}
+				GenerateAssetsSerilizeIndex(m_Assets.Values);
+				GenerateBundlesSerilizeIndex(m_Bundles);
+
+				ShortSerializeAssets(m_Assets.Values, bw);
+				SerializeBundles(m_Bundles, bw);
 			}
 		}
 
-		public void LoadBundles(BinaryReader reader)
+		public void LoadBundles(BinaryReader reader, List<AssetInfo> assetsMap)
 		{
 			CleanBundles();
 
@@ -315,42 +543,43 @@ namespace AssetBundleBuilder
 
 			if (bundleSerializeInfos != null)
 			{
+				//基本信息
 				foreach (var bundleSerializeInfo in bundleSerializeInfos)
 				{
 					BundleInfo bundle = bundleSerializeInfo.bundle;
 					m_Bundles.Add(bundle);
-					m_BundlesIdMap[bundle.id] = bundle;
 
 					//main asset
-					AssetInfo mainAsset = GetOrCreateAsset(bundleSerializeInfo.mainAsset);
-					if (mainAsset != null)
+					if (bundleSerializeInfo.mainAsset > -1)
 					{
+						AssetInfo mainAsset = assetsMap[bundleSerializeInfo.mainAsset];
 						bundle.SetMainAsset(mainAsset);
 					}
 
 					//assets
-					foreach (var assetPath in bundleSerializeInfo.assets)
+					foreach (var assetIndex in bundleSerializeInfo.assets)
 					{
-						AssetInfo asset = GetOrCreateAsset(assetPath);
-						if (asset!=null)
+						if (assetIndex > -1)
 						{
+							AssetInfo asset = assetsMap[assetIndex];
 							bundle.AddAsset(asset);
 						}
 					}
 				}
 
+				//索引转成对象
 				foreach (var bundleSerializeInfo in bundleSerializeInfos)
 				{
 					BundleInfo bundle = bundleSerializeInfo.bundle;
-					foreach (var depId in bundleSerializeInfo.dependencies)
+					foreach (var depIndex in bundleSerializeInfo.dependencies)
 					{
-						BundleInfo depBundle = m_BundlesIdMap[depId];
+						BundleInfo depBundle = m_Bundles[depIndex];
 						bundle.AddDependencyOnly(depBundle);
 					}
 
-					foreach (var referId in bundleSerializeInfo.refers)
+					foreach (var referIndex in bundleSerializeInfo.refers)
 					{
-						BundleInfo referBundle = m_BundlesIdMap[referId];
+						BundleInfo referBundle = m_Bundles[referIndex];
 						bundle.AddReferOnly(referBundle);
 					}
 				}
@@ -361,7 +590,8 @@ namespace AssetBundleBuilder
 		{
 			using (BinaryReader br = new BinaryReader(input))
 			{
-				LoadBundles(br);
+				List<AssetInfo> assetInfos = ShortDeserializeAssets(br);
+				LoadBundles(br, assetInfos);
 			}
 		}
 
@@ -393,8 +623,23 @@ namespace AssetBundleBuilder
 		{
 			using (BinaryWriter bw = new BinaryWriter(output))
 			{
-				SerializeAssets(m_Assets.Values,bw);
-				SerializeBundles(m_Bundles,bw);
+				List<AssetSerializeInfo> assetSerializeInfos = CreateAssetSerializeInfos(m_Assets.Values);
+				SerializeAssets(assetSerializeInfos, bw);
+
+				List<BundleSerializeInfo> bundleSerializeInfos = CreateBundleSerializeInfos(m_Bundles);
+				SerializeBundles(bundleSerializeInfos, bw);
+			}
+		}
+
+		public void SaveBinarySimple(Stream output)
+		{
+			using (BinaryWriter bw = new BinaryWriter(output))
+			{
+				GenerateAssetsSerilizeIndex(m_Assets.Values);
+				GenerateBundlesSerilizeIndex(m_Bundles);
+
+				SerializeAssets(m_Assets.Values, bw);
+				SerializeBundles(m_Bundles, bw);
 			}
 		}
 
@@ -402,8 +647,8 @@ namespace AssetBundleBuilder
 		{
 			using (BinaryReader br = new BinaryReader(input))
 			{
-				LoadAssets(br);
-				LoadBundles(br);
+				List<AssetInfo> assetsMap = LoadAssets(br);
+				LoadBundles(br, assetsMap);
 			}
 		}
 
@@ -447,7 +692,6 @@ namespace AssetBundleBuilder
 		[System.Serializable]
 		public class BundleJsonInfo
 		{
-			public uint id;
 			public string name;
 			public string variantName;
 			public BundleInfo.BundleType bundleType;
@@ -456,8 +700,8 @@ namespace AssetBundleBuilder
 
 			public string mainAsset;
 			public List<string> assets;
-			public List<uint> refers;
-			public List<uint> dependencies;
+			public List<string> refers;
+			public List<string> dependencies;
 		}
 
 		[System.Serializable]
@@ -491,7 +735,6 @@ namespace AssetBundleBuilder
 		public BundleJsonInfo BundleInfoToJsonInfo(BundleInfo bundleInfo)
 		{
 			BundleJsonInfo bundleJsonInfo = new BundleJsonInfo();
-			bundleJsonInfo.id = bundleInfo.id;
 			bundleJsonInfo.name = bundleInfo.name;
 			bundleJsonInfo.variantName = bundleInfo.variantName;
 			bundleJsonInfo.bundleType = bundleInfo.bundleType;
@@ -499,8 +742,8 @@ namespace AssetBundleBuilder
 			bundleJsonInfo.refersHashCode = bundleInfo.refersHashCode;
 			bundleJsonInfo.mainAsset = bundleInfo.mainAssetPath;
 			bundleJsonInfo.assets = new List<string>();
-			bundleJsonInfo.dependencies = new List<uint>();
-			bundleJsonInfo.refers = new List<uint>();
+			bundleJsonInfo.dependencies = new List<string>();
+			bundleJsonInfo.refers = new List<string>();
 
 			foreach (var asset in bundleInfo.assets)
 			{
@@ -509,12 +752,12 @@ namespace AssetBundleBuilder
 
 			foreach (var refer in bundleInfo.refers)
 			{
-				bundleJsonInfo.refers.Add(refer.id);
+				bundleJsonInfo.refers.Add(refer.name);
 			}
 
 			foreach (var dep in bundleInfo.dependencies)
 			{
-				bundleJsonInfo.dependencies.Add(dep.id);
+				bundleJsonInfo.dependencies.Add(dep.name);
 			}
 			return bundleJsonInfo;
 		}
@@ -568,7 +811,7 @@ namespace AssetBundleBuilder
 
 			foreach (var bundleJson in bundles)
 			{
-				BundleInfo bundle = CreateBundle(bundleJson.id, bundleJson.name, bundleJson.variantName);
+				BundleInfo bundle = CreateBundle(bundleJson.name, bundleJson.variantName);
 				bundle.bundleType = bundleJson.bundleType;
 				bundle.SetStandalone(bundleJson.standalone);
 				bundle.refersHashCode = bundleJson.refersHashCode;
@@ -593,17 +836,17 @@ namespace AssetBundleBuilder
 
 			foreach (var bundleJson in bundles)
 			{
-				BundleInfo bundle = GetBundle(bundleJson.id);
+				BundleInfo bundle = GetBundle(bundleJson.name);
 
-				foreach (var depId in bundleJson.dependencies)
+				foreach (var depName in bundleJson.dependencies)
 				{
-					BundleInfo depBundle = GetBundle(depId);
+					BundleInfo depBundle = GetBundle(depName);
 					bundle.AddDependencyOnly(depBundle);
 				}
 
-				foreach (var referId in bundleJson.refers)
+				foreach (var referName in bundleJson.refers)
 				{
-					BundleInfo referBundle = GetBundle(referId);
+					BundleInfo referBundle = GetBundle(referName);
 					bundle.AddReferOnly(referBundle);
 				}
 			}

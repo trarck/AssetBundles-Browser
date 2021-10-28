@@ -67,7 +67,7 @@ namespace AssetBundleBuilder.View
 
                 BundleTreeItem renamedItem = FindItem(args.itemID, rootItem) as BundleTreeItem;
                 args.acceptedRename = BundleTreeManager.Instance.RenameBundle(renamedItem, args.newName);
-                ReloadAndSelect(renamedItem.nameData.GetHashCode(), false);
+                ReloadAndSelect(renamedItem.id, false);
             }
             else
             {
@@ -214,14 +214,14 @@ namespace AssetBundleBuilder.View
         void CreateFolderUnderParent(BundleTreeFolderItem folder)
         {
             var newBundle = BundleTreeManager.Instance.CreateEmptyFolder(folder);
-            ReloadAndSelect(newBundle.nameHashCode, true);
+            ReloadAndSelect(newBundle.id, true);
         }
         void RenameBundle(object context)
         {
             var selectedNodes = context as List<BundleTreeItem>;
             if (selectedNodes != null && selectedNodes.Count > 0)
             {
-                BeginRename(FindItem(selectedNodes[0].nameHashCode, rootItem));
+                BeginRename(FindItem(selectedNodes[0].id, rootItem));
             }
         }
 
@@ -251,7 +251,7 @@ namespace AssetBundleBuilder.View
         void CreateBundleUnderParent(BundleTreeFolderItem folder)
         {
             var newBundle = BundleTreeManager.Instance.CreateEmptyBundle(folder);
-            ReloadAndSelect(newBundle.nameHashCode, true);
+            ReloadAndSelect(newBundle.id, true);
         }
 
 
@@ -282,7 +282,7 @@ namespace AssetBundleBuilder.View
             if (folder != null)
             {
                 var newBundle = BundleTreeManager.Instance.CreateEmptyFolder(folder);
-                ReloadAndSelect(newBundle.nameHashCode, true);
+                ReloadAndSelect(newBundle.id, true);
             }
         }
 
@@ -316,7 +316,7 @@ namespace AssetBundleBuilder.View
             if(newBundle != null)
             {
                 var selection = new List<int>();
-                selection.Add(newBundle.nameHashCode);
+                selection.Add(newBundle.id);
                 ReloadAndSelect(selection);
             }
             else
@@ -477,7 +477,7 @@ namespace AssetBundleBuilder.View
                         //TODO::Handle Merge
                         //Model.Model.HandleBundleMerge(data.draggedNodes, targetDataBundle);
                         BundleTreeManager.Instance.HandleBundleMerge(null, targetDataBundle);
-                        ReloadAndSelect(targetDataBundle.nameHashCode, false);
+                        ReloadAndSelect(targetDataBundle.id, false);
                     }
                     else if (data.paths != null)
                     {
@@ -559,7 +559,7 @@ namespace AssetBundleBuilder.View
                 newBundle.bundleInfo.AddAsset(assetInfo);
             }
           
-            ReloadAndSelect(newBundle.nameHashCode, true);
+            ReloadAndSelect(newBundle.id, true);
         }
         private void DragPathsAsManyBundles()
         {
@@ -567,8 +567,8 @@ namespace AssetBundleBuilder.View
             foreach (var assetPath in dragToNewSpacePaths)
             {
                 var newBundle = BundleTreeManager.Instance.CreateBundleData(System.IO.Path.GetFileNameWithoutExtension(assetPath).ToLower(), dragToNewSpaceRoot);
-                BundleTreeManager.Instance.MoveAssetToBundle(assetPath, newBundle.nameData.bundleName, newBundle.nameData.variant);
-                hashCodes.Add(newBundle.nameHashCode);
+                BundleTreeManager.Instance.MoveAssetToBundle(assetPath, newBundle.displayName);
+                hashCodes.Add(newBundle.id);
             }
             Model.Model.ExecuteAssetMove();
             ReloadAndSelect(hashCodes);
@@ -590,7 +590,7 @@ namespace AssetBundleBuilder.View
                 BundleTreeDataItem bundleDataItem = BundleTreeManager.Instance.CreateBundleFromAsset(fullPath);
                 if (bundleDataItem != null)
                 {
-                    hashCodes.Add(bundleDataItem.GetHashCode());
+                    hashCodes.Add(bundleDataItem.id);
                 }
                 else
                 {
