@@ -70,6 +70,8 @@ namespace AssetBundleBuilder.View
             return contains;
         }
 
+        private static HashSet<AssetInfo> m_IncludeAssets = new HashSet<AssetInfo>();
+
         internal void AddAssets(BundleTreeItem item)
         {
             if (item is BundleTreeFolderItem)
@@ -88,20 +90,15 @@ namespace AssetBundleBuilder.View
             {
                 BundleTreeDataItem dataItem = item as BundleTreeDataItem;
                 HashSet<AssetInfo> assets = dataItem.bundleInfo != null ? dataItem.bundleInfo.assets : null;
-                if (assets != null)
+
+                if (dataItem.bundleInfo != null)
                 {
-                    foreach (var asset in assets)
+                    m_IncludeAssets.Clear();
+                    dataItem.bundleInfo.GetIncludeAssets(ref m_IncludeAssets);
+                    foreach (var asset in m_IncludeAssets)
                     {
-                        AddChild(new AssetTreeItem(asset));
-                        var deps = asset.allDependencies;
-                        if (deps != null)
-                        {
-                            foreach (var dep in deps)
-                            {
-                                if (dep.bundle == null && !ContainsChild(dep))
-                                    AddChild(new AssetTreeItem(dep));
-                            }
-                        }
+                        if (!ContainsChild(asset))
+                            AddChild(new AssetTreeItem(asset));
                     }
                 }
             }

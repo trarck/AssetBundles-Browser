@@ -311,8 +311,7 @@ namespace AssetBundleBuilder.View
         void DedupeBundles(object context, bool onlyOverlappedAssets)
         {
             var selectedNodes = context as List<BundleTreeItem>;
-            //TODO::HandleDedupeBundles
-            var newBundle =BundleTreeManager.Instance.HandleDedupeBundles(null,onlyOverlappedAssets) ;// Model.Model.HandleDedupeBundles(selectedNodes.Select(item => item.bundleNode), onlyOverlappedAssets);
+            var newBundle =BundleTreeManager.Instance.HandleDedupeBundles(selectedNodes, onlyOverlappedAssets) ;
             if(newBundle != null)
             {
                 var selection = new List<int>();
@@ -354,7 +353,7 @@ namespace AssetBundleBuilder.View
             internal bool hasScene = false;
             internal bool hasNonScene = false;
             internal bool hasVariantChild = false;
-            internal List<BundleNode> draggedNodes;
+            internal List<BundleTreeItem> draggedNodes;
             internal BundleTreeItem targetNode;
             internal DragAndDropArgs args;
             internal string[] paths;
@@ -362,7 +361,7 @@ namespace AssetBundleBuilder.View
             internal DragAndDropData(DragAndDropArgs a)
             {
                 args = a;
-                draggedNodes = DragAndDrop.GetGenericData("Model.BundleNode") as List<BundleNode>;
+                draggedNodes = DragAndDrop.GetGenericData("BundleTreeItems") as List<BundleTreeItem>;
                 targetNode = args.parentItem as BundleTreeItem;
                 paths = DragAndDrop.paths;
 
@@ -370,22 +369,19 @@ namespace AssetBundleBuilder.View
                 {
                     foreach (var bundle in draggedNodes)
                     {
-                        if ((bundle as Model.BundleFolderNode) != null)
+                        if ((bundle as BundleTreeFolderItem) != null)
                         {
                             hasBundleFolder = true;
                         }
                         else
                         {
-                            var dataBundle = bundle as Model.BundleDataNode;
+                            var dataBundle = bundle as BundleTreeDataItem;
                             if (dataBundle != null)
                             {
                                 if (dataBundle.isSceneBundle)
                                     hasScene = true;
                                 else
                                     hasNonScene = true;
-
-                                if ( (dataBundle as Model.BundleVariantDataNode) != null)
-                                    hasVariantChild = true;
                             }
                         }
                     }
@@ -430,7 +426,7 @@ namespace AssetBundleBuilder.View
                         visualMode = DragAndDropVisualMode.Copy;
                         if (data.args.performDrop)
                         {
-                            Model.Model.HandleBundleReparent(data.draggedNodes, null);
+                            BundleTreeManager.Instance.HandleBundleReparent(data.draggedNodes, null);
                             Reload();
                         }
                     }
@@ -474,20 +470,15 @@ namespace AssetBundleBuilder.View
                 {
                     if (data.draggedNodes != null)
                     {
-                        //TODO::Handle Merge
-                        //Model.Model.HandleBundleMerge(data.draggedNodes, targetDataBundle);
-                        BundleTreeManager.Instance.HandleBundleMerge(null, targetDataBundle);
+                        BundleTreeManager.Instance.HandleBundleMerge(data.draggedNodes, targetDataBundle);
                         ReloadAndSelect(targetDataBundle.id, false);
                     }
                     else if (data.paths != null)
                     {
-                        //TODO::Move Asset to bundle
-                        //Model.Model.MoveAssetToBundle(data.paths, targetDataBundle.m_Name.bundleName, targetDataBundle.m_Name.variant);
-                        //Model.Model.ExecuteAssetMove();
-                        //ReloadAndSelect(targetDataBundle.nameHashCode, false);
+                        BundleTreeManager.Instance.HandleMoveAssetsToBundle(data.paths, targetDataBundle);
+                        ReloadAndSelect(targetDataBundle.id, false);
                     }
                 }
-
             }
             else
             {
@@ -498,8 +489,7 @@ namespace AssetBundleBuilder.View
                     {
                         if (data.draggedNodes != null)
                         {
-                            //TODO::HandleBundleMerge
-                            BundleTreeManager.Instance.HandleBundleReparent(null, folder);//(data.draggedNodes, folder);
+                            BundleTreeManager.Instance.HandleBundleReparent(data.draggedNodes, folder);
                             Reload();
                         }
                         else if (data.paths != null)
@@ -533,8 +523,7 @@ namespace AssetBundleBuilder.View
                     {
                         if (data.draggedNodes != null)
                         {
-                            //TODO::HandleBundleReparent
-                            BundleTreeManager.Instance.HandleBundleReparent(null/*data.draggedNodes*/, folder);
+                            BundleTreeManager.Instance.HandleBundleReparent(data.draggedNodes, folder);
                             Reload();
                         }
                         else if (data.paths != null)
@@ -552,29 +541,11 @@ namespace AssetBundleBuilder.View
         private BundleTreeFolderItem dragToNewSpaceRoot = null;
         private void DragPathsAsOneBundle()
         {
-            var newBundle = BundleTreeManager.Instance.CreateEmptyBundle(dragToNewSpaceRoot);
-            foreach (var assetPath in dragToNewSpacePaths)
-            {
-                AssetInfo assetInfo= EditorAssetBundleManager.Instance.GetAsset(assetPath);
-                newBundle.bundleInfo.AddAsset(assetInfo);
-            }
-          
+            var newBundle = BundleTreeManager.Instance.HandleCreateAssetsOneBundle(dragToNewSpacePaths,dragToNewSpaceRoot);         
             ReloadAndSelect(newBundle.id, true);
         }
-        private void DragPathsAsManyBundles()
-        {
-            List<int> hashCodes = new List<int>();
-            foreach (var assetPath in dragToNewSpacePaths)
-            {
-                var newBundle = BundleTreeManager.Instance.CreateBundleData(System.IO.Path.GetFileNameWithoutExtension(assetPath).ToLower(), dragToNewSpaceRoot);
-                BundleTreeManager.Instance.MoveAssetToBundle(assetPath, newBundle.displayName);
-                hashCodes.Add(newBundle.id);
-            }
-            Model.Model.ExecuteAssetMove();
-            ReloadAndSelect(hashCodes);
-        }
 
-        private void DragPathsAsManyBundlesEx()
+        private void DragPathsAsManyBundles()
         {
             List<int> hashCodes = new List<int>();
             Setting.Format format = Setting.Format.ShortName;
@@ -583,22 +554,8 @@ namespace AssetBundleBuilder.View
                 format |= Setting.Format.WithExt;
             }
 
-			//TODO::Import
-			foreach (var assetPath in dragToNewSpacePaths)
-			{
-                string fullPath = assetPath;//                System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Application.dataPath), assetPath);
-                BundleTreeDataItem bundleDataItem = BundleTreeManager.Instance.CreateBundleFromAsset(fullPath);
-                if (bundleDataItem != null)
-                {
-                    hashCodes.Add(bundleDataItem.id);
-                }
-                else
-                {
-                    Debug.LogErrorFormat("Create AssetBundle from {0} fail", fullPath);
-                }
-			}
-            BundleTreeManager.Instance.SaveBundles();
-			//Model.Model.ExecuteAssetMove();
+            BundleTreeManager.Instance.HandleCreateAssetsMultiBundle(dragToNewSpacePaths, dragToNewSpaceRoot);
+
 			ReloadAndSelect(hashCodes);
         }
 
@@ -613,11 +570,11 @@ namespace AssetBundleBuilder.View
                 var message = "Create ";
                 message += paths.Length;
                 message += " Bundles";
-                menu.AddItem(new GUIContent(message), false, DragPathsAsManyBundlesEx);
+                menu.AddItem(new GUIContent(message), false, DragPathsAsManyBundles);
                 menu.ShowAsContext();
             }
             else
-                DragPathsAsManyBundlesEx();
+                DragPathsAsManyBundles();
         }
 
         protected override void SetupDragAndDrop(SetupDragAndDropArgs args)
@@ -635,7 +592,7 @@ namespace AssetBundleBuilder.View
             }
             DragAndDrop.paths = null;
             DragAndDrop.objectReferences = m_EmptyObjectList.ToArray();
-            DragAndDrop.SetGenericData("Model.BundleNode", selectedBundles);
+            DragAndDrop.SetGenericData("BundleTreeItems", selectedBundles);
             DragAndDrop.visualMode = DragAndDropVisualMode.Copy;//Move;
             DragAndDrop.StartDrag("AssetBundleTree");
         }

@@ -24,6 +24,9 @@ namespace AssetBundleBuilder
 		//Dictionary<string, BundleNode> m_Bundles = new Dictionary<string, BundleNode>();
 		List<BundleInfo> m_Bundles = new List<BundleInfo>(4096);
 
+		private Stack<AssetInfo> m_VisitAssetsStack = new Stack<AssetInfo>();
+		private HashSet<AssetInfo> m_VisitedAssets = new HashSet<AssetInfo>();
+
 		private static EditorAssetBundleManager m_Instance = null;
 		public static EditorAssetBundleManager Instance
 		{
@@ -287,20 +290,6 @@ namespace AssetBundleBuilder
 			}
 		}
 
-		public void CreateBundleForAllAssets()
-		{
-			foreach (var iter in m_Assets)
-			{
-				AssetInfo asset = iter.Value;
-
-				if (asset.bundle == null)
-				{
-					string bundleName = CreateBundleName(asset.assetPath, true, true, false);
-					asset.bundle = CreateBundle(bundleName, asset);
-				}
-			}
-		}
-
 		public static bool ValidateAsset(string name)
 		{
 			if (!name.StartsWith("Assets/"))
@@ -315,8 +304,6 @@ namespace AssetBundleBuilder
 		#endregion //Asset
 
 		#region Bundle
-
-		private static uint BundleIdIndex = 0;
 		public BundleInfo CreateBundleInfo(string bundleName)
 		{
 			BundleInfo bundleInfo = new BundleInfo(bundleName);
@@ -364,6 +351,16 @@ namespace AssetBundleBuilder
 				}
 			}
 			return null;
+		}
+
+		public BundleInfo GetOrCreateBundle(string bundleName)
+		{
+			BundleInfo bundle = GetBundle(bundleName);
+			if (bundle == null)
+			{
+				bundle = CreateBundle(bundleName);
+			}
+			return bundle;
 		}
 
 		public void RemoveBundle(BundleInfo bundle)
@@ -425,22 +422,35 @@ namespace AssetBundleBuilder
 
 		public void RefreshBundleDependencies(BundleInfo bundle)
 		{
+			m_VisitAssetsStack.Clear();
+			m_VisitedAssets.Clear();
+
 			foreach (AssetInfo assetNode in bundle.assets)
 			{
-				//add dep
-				foreach (AssetInfo assetDep in assetNode.dependencies)
+				m_VisitAssetsStack.Push(assetNode);
+			}
+
+			AssetInfo currentAsset = null;
+			while (m_VisitAssetsStack.Count > 0)
+			{
+				currentAsset = m_VisitAssetsStack.Pop();
+				if (m_VisitedAssets.Contains(currentAsset))
 				{
-					//if (assetDep.bundle == null)
-					//{
-					//	assetDep.bundle = CreateBundle(null, assetDep);
-					//	RefreshBundleDependencies(assetDep.bundle);
-					//}
-					//bundle.AddDependencyOnly(assetDep.bundle);
-					//assetDep.bundle.AddReferOnly(bundle);
+					continue;
+				}
+				m_VisitedAssets.Add(currentAsset);
+
+				//add dep
+				foreach (AssetInfo assetDep in currentAsset.dependencies)
+				{
 					if (assetDep.bundle != null)
 					{
 						bundle.AddDependencyOnly(assetDep.bundle);
 						assetDep.bundle.AddReferOnly(bundle);
+					}
+					else
+					{
+						m_VisitAssetsStack.Push(assetDep);
 					}
 				}
 			}
@@ -448,25 +458,49 @@ namespace AssetBundleBuilder
 
 		public void RefreshBundleRelations(BundleInfo bundle)
 		{
+			m_VisitAssetsStack.Clear();
+			m_VisitedAssets.Clear();
+
 			foreach (AssetInfo assetNode in bundle.assets)
 			{
+				m_VisitAssetsStack.Push(assetNode);
+			}
+
+			AssetInfo currentAsset = null;
+			while (m_VisitAssetsStack.Count > 0)
+			{
+				currentAsset = m_VisitAssetsStack.Pop();
+				if (m_VisitedAssets.Contains(currentAsset))
+				{
+					continue;
+				}
+				m_VisitedAssets.Add(currentAsset);
+
 				//add dep
-				foreach (AssetInfo assetDep in assetNode.dependencies)
+				foreach (AssetInfo assetDep in currentAsset.dependencies)
 				{
 					if (assetDep.bundle != null)
 					{
 						bundle.AddDependencyOnly(assetDep.bundle);
 						assetDep.bundle.AddReferOnly(bundle);
 					}
+					else
+					{
+						m_VisitAssetsStack.Push(assetDep);
+					}
 				}
 
 				//add refer
-				foreach (AssetInfo assetRef in assetNode.refers)
+				foreach (AssetInfo assetRef in currentAsset.refers)
 				{
 					if (assetRef.bundle != null)
 					{
 						bundle.AddReferOnly(assetRef.bundle);
 						assetRef.bundle.AddDependencyOnly(bundle);
+					}
+					else
+					{
+						m_VisitAssetsStack.Push(assetRef);
 					}
 				}
 			}
@@ -479,9 +513,14 @@ namespace AssetBundleBuilder
 		{
 			foreach (var bundle in m_Bundles)
 			{
-				bundle.dependencies.Clear();
-				bundle.refers.Clear();
+				ClearBundleRelations(bundle);
 			}
+		}
+
+		public void ClearBundleRelations(BundleInfo bundle)
+		{
+			bundle.dependencies.Clear();
+			bundle.refers.Clear();
 		}
 
 		public void RefreshAllBundleDependencies()
@@ -562,28 +601,165 @@ namespace AssetBundleBuilder
 
 		#region Asset Bundle
 
-		public void CreateBundlesFromAssets()
+		public void CreateBundleForAllAssets()
 		{
 			foreach (var iter in m_Assets)
 			{
-				BundleInfo bundle = CreateBundle(null);
-				bundle.SetMainAsset(iter.Value);
-				bundle.AddAsset(iter.Value);
-				if (iter.Value.addressable)
+				AssetInfo asset = iter.Value;
+
+				if (asset.bundle == null)
 				{
-					bundle.SetStandalone(iter.Value.addressable);
+					string bundleName = CreateBundleName(asset.assetPath, true, true, false);
+					asset.bundle = CreateBundle(bundleName, asset);
 				}
 			}
 		}
 
 		public void AddAssetToBundle(BundleInfo bundle, AssetInfo asset)
 		{
-			if (bundle.mainAsset == null)
+			if (asset.bundle == bundle)
 			{
-				bundle.SetMainAsset(asset);
+				return;
 			}
 
-			bundle.AddAsset(asset);
+			if (asset.bundle != null)
+			{
+				RemoveAssetFromBundle(asset.bundle, asset);
+			}
+
+			if (bundle.AddAsset(asset))
+			{
+				if (bundle.mainAsset == null)
+				{
+					bundle.SetMainAsset(asset);
+				}
+
+				ClearBundleRelations(bundle);
+				RefreshBundleRelations(bundle);
+			}
+		}
+
+		public void AddAssetsToBundle(BundleInfo bundle, ICollection<AssetInfo> assets)
+		{
+			bool needRefresh = false;
+
+			foreach (var asset in assets)
+			{
+				if (asset.bundle == bundle)
+				{
+					continue;
+				}
+
+				if (asset.bundle != null)
+				{
+					RemoveAssetFromBundle(asset.bundle, asset);
+				}
+
+				if (bundle.AddAsset(asset))
+				{
+					if (bundle.mainAsset == null)
+					{
+						bundle.SetMainAsset(asset);
+					}
+					needRefresh = true;
+				}
+			}
+
+			if (needRefresh)
+			{
+				ClearBundleRelations(bundle);
+				RefreshBundleRelations(bundle);
+			}
+		}
+
+		public void AddAssetToBundle(BundleInfo bundle, string assetPath)
+		{
+			AssetInfo asset = GetOrCreateAsset(assetPath);
+			RefreshAssetDependencies(asset);
+			RefreshAssetAllDependencies(asset);
+			Debug.LogFormat("AddAssetToBundle old bundle {0},new bundle {1}", asset.bundle != null ? asset.bundle.name : "null",bundle.name);
+			AddAssetToBundle(bundle, asset);
+		}
+
+		public void AddAssetsToBundle(BundleInfo bundle, ICollection<string> assetPaths)
+		{
+			List<AssetInfo> assets = new List<AssetInfo>();
+			foreach (var assetPath in assetPaths)
+			{
+				AssetInfo asset = GetOrCreateAsset(assetPath);
+				RefreshAssetDependencies(asset);
+				RefreshAssetAllDependencies(asset);
+				assets.Add(asset);
+			}
+			AddAssetsToBundle(bundle, assets);
+		}
+
+		public void RemoveAssetFromBundle(BundleInfo bundle, AssetInfo asset)
+		{
+			Debug.LogFormat("Remove {0} from {1} ", asset.assetPath, bundle.name);
+			if (bundle.RemoveAsset(asset))
+			{
+				if (bundle.mainAsset == asset)
+				{
+					//reset main asset
+					foreach (var newMainAsset in bundle.assets)
+					{
+						bundle.SetMainAsset(newMainAsset);
+					}
+				}
+
+				ClearBundleRelations(bundle);
+				RefreshBundleRelations(bundle);
+			}
+		}
+
+		public void RemoveAssetFromBundle(BundleInfo bundle, string assetPath)
+		{
+			AssetInfo asset = GetAsset(assetPath);
+			if (asset != null)
+			{
+				RemoveAssetFromBundle(bundle, asset);
+			}
+		}
+
+		public void RemoveAssetBundle(AssetInfo asset)
+		{
+			if (asset.bundle != null)
+			{
+				RemoveAssetFromBundle(asset.bundle, asset);
+			}
+		}
+
+		public void RemoveAssetsBundle(ICollection<AssetInfo> assets)
+		{
+			HashSet<BundleInfo> needReshresBundles = new HashSet<BundleInfo>();
+
+			foreach (var asset in assets)
+			{
+				BundleInfo bundle = asset.bundle;
+
+				if (bundle != null)
+				{
+					if (bundle.RemoveAsset(asset))
+					{
+						if (bundle.mainAsset == asset)
+						{
+							//reset main asset
+							foreach (var newMainAsset in bundle.assets)
+							{
+								bundle.SetMainAsset(newMainAsset);
+							}
+						}
+						needReshresBundles.Add(bundle);
+					}
+				}
+			}
+
+			foreach (var bundle in needReshresBundles)
+			{
+				ClearBundleRelations(bundle);
+				RefreshBundleRelations(bundle);
+			}
 		}
 
 		public BundleInfo GetAssetBundle(string assetPath)
@@ -604,6 +780,47 @@ namespace AssetBundleBuilder
 				return asset.bundle != null;
 			}
 			return false;
+		}
+
+		public void GetAssetsIncludeByBundle(BundleInfo bundle,ref HashSet<AssetInfo> includeAssets)
+		{
+
+			if (bundle.assets == null || bundle.assets.Count == 0)
+			{
+				return;
+			}
+
+			m_VisitAssetsStack.Clear();
+			m_VisitedAssets.Clear();
+
+
+			foreach (var asset in bundle.assets)
+			{
+				//直接包含的资源
+				includeAssets.Add(asset);
+				m_VisitAssetsStack.Push(asset);
+			}
+
+			//依赖的资源，且没有包含在其它Bundle中。
+			AssetInfo currentAsset = null;
+			while (m_VisitAssetsStack.Count > 0)
+			{
+				currentAsset = m_VisitAssetsStack.Pop();
+				if (m_VisitedAssets.Contains(currentAsset))
+				{
+					continue;
+				}
+				m_VisitedAssets.Add(currentAsset);
+
+				foreach (var dep in currentAsset.dependencies)
+				{
+					if (dep.bundle == null)
+					{
+						includeAssets.Add(dep);
+						m_VisitAssetsStack.Push(dep);
+					}
+				}
+			}
 		}
 
 		#endregion //Asset Bundle

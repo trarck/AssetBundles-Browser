@@ -203,7 +203,12 @@ namespace AssetBundleBuilder
 		static public List<string> GetPathTokens(string path)
 		{
 			List<string> pathTokens = new List<string>();
+			GetPathTokens(path, ref pathTokens);
+			return pathTokens;
+		}
 
+		static public void GetPathTokens(string path, ref List<string> pathTokens)
+		{
 			int indexOfSlash = path.IndexOf('/');
 			int previousIndex = 0;
 			while (indexOfSlash != -1)
@@ -217,7 +222,6 @@ namespace AssetBundleBuilder
 			{
 				pathTokens.Add(left);
 			}
-			return pathTokens;
 		}
 	}
 
@@ -444,10 +448,10 @@ namespace AssetBundleBuilder
 			bundleType = AnalyzeAssetType(asset.assetPath);
 		}
 
-		public void AddAsset(AssetInfo asset)
+		public bool AddAsset(AssetInfo asset)
 		{
-			m_Assets.Add(asset);
 			asset.bundle = this;
+			return m_Assets.Add(asset);
 		}
 
 		public void AddAssets(IEnumerable<AssetInfo> assetInfos)
@@ -460,6 +464,17 @@ namespace AssetBundleBuilder
 			{
 				AddAsset(asset);
 			}
+		}
+
+		public bool RemoveAsset(AssetInfo asset)
+		{
+			if (asset == null)
+			{
+				return false;
+			}
+
+			asset.bundle = null;
+			return m_Assets.Remove(asset);
 		}
 
 		public void AddDependencyOnly(BundleInfo dep)
@@ -613,6 +628,48 @@ namespace AssetBundleBuilder
 				}
 			}
 			return size;
+		}
+
+		private static Stack<AssetInfo> m_VisitAssetsStack = new Stack<AssetInfo>();
+		private static HashSet<AssetInfo> m_VisitedAssets = new HashSet<AssetInfo>();
+		public void GetIncludeAssets(ref HashSet<AssetInfo> includeAssets)
+		{
+
+			if (m_Assets == null || m_Assets.Count == 0)
+			{
+				return;
+			}
+
+			m_VisitAssetsStack.Clear();
+			m_VisitedAssets.Clear();
+
+			foreach (var asset in m_Assets)
+			{
+				//直接包含的资源
+				includeAssets.Add(asset);
+				m_VisitAssetsStack.Push(asset);
+			}
+
+			//依赖的资源，且没有包含在其它Bundle中。
+			AssetInfo currentAsset = null;
+			while (m_VisitAssetsStack.Count > 0)
+			{
+				currentAsset = m_VisitAssetsStack.Pop();
+				if (m_VisitedAssets.Contains(currentAsset))
+				{
+					continue;
+				}
+				m_VisitedAssets.Add(currentAsset);
+
+				foreach (var dep in currentAsset.dependencies)
+				{
+					if (dep.bundle == null)
+					{
+						includeAssets.Add(dep);
+						m_VisitAssetsStack.Push(dep);
+					}
+				}
+			}
 		}
 
 		public static BundleType AnalyzeAssetType(string assetPath)

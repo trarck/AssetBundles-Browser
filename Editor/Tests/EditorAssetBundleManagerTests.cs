@@ -37,6 +37,7 @@ namespace AssetBundleBuilder.Tests
 		public void SetUp()
 		{
 			Debug.Log("Setup");
+			m_AssetManager.Clean();
 		}
 
 		[TearDown]

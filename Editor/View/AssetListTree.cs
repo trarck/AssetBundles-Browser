@@ -265,13 +265,7 @@ namespace AssetBundleBuilder.View
             {
                 if (args.performDrop)
                 {
-                    //Model.Model.MoveAssetToBundle(DragAndDrop.paths, m_SourceBundles[0].nameData.bundleName, m_SourceBundles[0].nameData.variant);
-                    //Model.Model.ExecuteAssetMove();
-                    BundleTreeManager.Instance.MoveAssetToBundle(DragAndDrop.paths, m_SourceBundles[0].displayName);
-                    foreach (var bundle in m_SourceBundles)
-                    {
-                        //bundle.RefreshAssetList();
-                    }
+                    BundleTreeManager.Instance.HandleMoveAssetsToBundle(DragAndDrop.paths, m_SourceBundles[0] as BundleTreeDataItem);
                     m_Controller.UpdateSelectedBundles(m_SourceBundles);
                 }
                 return DragAndDropVisualMode.Copy;//Move;
@@ -356,20 +350,14 @@ namespace AssetBundleBuilder.View
         {
             var selectedNodes = obj as List<AssetTreeItem>;
             var assets = new List<AssetInfo>();
-            //var bundles = new List<AssetBundleModel.BundleNode>();
+   
             foreach (var node in selectedNodes)
             {
                 if (node.asset.bundle!=null)
                     assets.Add(node.asset);
             }
-            //Model.Model.MoveAssetToBundle(assets, string.Empty, string.Empty);
-            //Model.Model.ExecuteAssetMove();
-            foreach (var bundle in m_SourceBundles)
-            {
-                //bundle.RefreshAssetList();
-            }
+            BundleTreeManager.Instance.HandleRemoveAssetsBundle(assets);
             m_Controller.UpdateSelectedBundles(m_SourceBundles);
-            //ReloadAndSelect(new List<int>());
         }
 
         protected override void KeyEvent()

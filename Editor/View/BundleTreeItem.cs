@@ -93,7 +93,11 @@ namespace AssetBundleBuilder.View
 				TreeViewItem p = parent;
 				while (p != null)
 				{
-					sb.Append(p.displayName).Append("/");
+					if (p.parent != null)
+					{
+						sb.Insert(0, "/");
+						sb.Insert(0, p.displayName);
+					}
 					p = p.parent;
 				}
 				sb.Append(displayName);
@@ -109,7 +113,11 @@ namespace AssetBundleBuilder.View
 				TreeViewItem p = parent;
 				while (p != null)
 				{
-					sb.Append(p.displayName).Append("/");
+					if (p.parent != null)
+					{
+						sb.Insert(0, "/");
+						sb.Insert(0, p.displayName);
+					}
 				}
 				return sb.ToString();
 			}
