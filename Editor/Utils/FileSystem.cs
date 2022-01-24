@@ -212,6 +212,36 @@ namespace AssetBundleBuilder
             return path.Replace("\\", "/");
         }
 
+        public static string NormalizeSplit(string path, ref List<string> result)
+        {
+            path = path.Replace("\\", "/");
+            if (path[path.Length - 1] == '/')
+            {
+                path = path.Substring(0, path.Length - 1);
+            }
+            string[] parts = path.Split('/');
+            int j = 0;
+            for (int i = 0; i < parts.Length; ++i)
+            {
+                if (parts[i] != "")
+                {
+                    if (parts[i] == ".")
+                    {
+                        continue;
+                    }
+
+                    if (parts[i] == "..")
+                    {
+                        result.RemoveAt(--j);
+                        continue;
+                    }
+                    result.Add(parts[i]);
+                    ++j;
+                }
+            }
+            return path;
+        }
+
         /// <summary>
         /// 获取路径的相对位置
         /// </summary>
@@ -220,25 +250,14 @@ namespace AssetBundleBuilder
         /// <returns></returns>
         public static string Relative(string fromPath, string toPath)
         {
-            fromPath = fromPath.Replace("\\", "/");
-            toPath = toPath.Replace("\\", "/");
-
-            if (fromPath[fromPath.Length - 1] == '/')
-            {
-                fromPath = fromPath.Substring(0, fromPath.Length - 1);
-            }
-
-            if (toPath[toPath.Length - 1] == '/')
-            {
-                toPath = toPath.Substring(0, toPath.Length - 1);
-            }
-
-            string[] froms = fromPath.Split('/');
-            string[] tos = toPath.Split('/');
+            List<string> froms = new List<string>();
+            List<string> tos = new List<string>();
+            NormalizeSplit(fromPath,ref froms);
+            toPath = NormalizeSplit(toPath, ref tos);
 
             int i = 0;
             //look for same part
-            for (int l=froms.Length>tos.Length?tos.Length: froms.Length; i < l; ++i)
+            for (int l=froms.Count>tos.Count ? tos.Count : froms.Count; i < l; ++i)
             {
                 if (froms[i] != tos[i])
                 {
@@ -255,17 +274,15 @@ namespace AssetBundleBuilder
             else
             {
                 System.Text.StringBuilder result = new System.Text.StringBuilder();
-                System.Text.StringBuilder toSB = new System.Text.StringBuilder();
-
-                for (int j = i; j < froms.Length; ++j)
+                for (int j = i; j < froms.Count; ++j)
                 {
                     result.Append("../");
                 }
 
-                for (int j = i; j < tos.Length; ++j)
+                for (int j = i; j < tos.Count; ++j)
                 {
                     result.Append(tos[j]);
-                    if (j < tos.Length - 1)
+                    if (j < tos.Count - 1)
                     {
                         result.Append("/");
                     }

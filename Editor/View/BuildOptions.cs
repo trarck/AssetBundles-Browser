@@ -3,7 +3,6 @@ using UnityEngine;
 using UnityEditor;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
-using AssetBundleBuilder.DataSource;
 using System.Text.RegularExpressions;
 
 namespace AssetBundleBuilder.View
@@ -181,7 +180,6 @@ namespace AssetBundleBuilder.View
             GUILayout.BeginVertical();
 
             // build target
-            using (new EditorGUI.DisabledScope(!Model.Model.DataSource.CanSpecifyBuildTarget))
             {
                 ValidBuildTarget tgt = (ValidBuildTarget)EditorGUILayout.EnumPopup(m_TargetContent, m_UserData.m_BuildTarget);
                 if (tgt != m_UserData.m_BuildTarget)
@@ -196,9 +194,7 @@ namespace AssetBundleBuilder.View
                 }
             }
 
-
             ////output path
-            using (new EditorGUI.DisabledScope(!Model.Model.DataSource.CanSpecifyBuildOutputDirectory))
             {
                 EditorGUILayout.Space();
                 GUILayout.BeginHorizontal();
@@ -252,7 +248,6 @@ namespace AssetBundleBuilder.View
 
 
             // advanced options
-            using (new EditorGUI.DisabledScope(!Model.Model.DataSource.CanSpecifyBuildOptions))
             {
                 EditorGUILayout.Space();
                 m_AdvancedSettings = EditorGUILayout.Foldout(m_AdvancedSettings, "Advanced Settings");
@@ -310,57 +305,51 @@ namespace AssetBundleBuilder.View
 
         private void ExecuteBuild()
         {
-            if (Model.Model.DataSource.CanSpecifyBuildOutputDirectory)
+
+            if (string.IsNullOrEmpty(m_UserData.m_OutputPath))
+                BrowseForFolder();
+
+            if (string.IsNullOrEmpty(m_UserData.m_OutputPath)) //in case they hit "cancel" on the open browser
             {
-                if (string.IsNullOrEmpty(m_UserData.m_OutputPath))
-                    BrowseForFolder();
-
-                if (string.IsNullOrEmpty(m_UserData.m_OutputPath)) //in case they hit "cancel" on the open browser
-                {
-                    Debug.LogError("AssetBundle Build: No valid output path for build.");
-                    return;
-                }
-
-                if (m_ForceRebuild.state)
-                {
-                    string message = "Do you want to delete all files in the directory " + m_UserData.m_OutputPath;
-                    if (m_CopyToStreaming.state)
-                        message += " and " + m_streamingPath;
-                    message += "?";
-                    if (EditorUtility.DisplayDialog("File delete confirmation", message, "Yes", "No"))
-                    {
-                        try
-                        {
-                            if (Directory.Exists(m_UserData.m_OutputPath))
-                                Directory.Delete(m_UserData.m_OutputPath, true);
-
-                            if (m_CopyToStreaming.state)
-                                if (Directory.Exists(m_streamingPath))
-                                    Directory.Delete(m_streamingPath, true);
-                        }
-                        catch (System.Exception e)
-                        {
-                            Debug.LogException(e);
-                        }
-                    }
-                }
-                if (!Directory.Exists(m_UserData.m_OutputPath))
-                    Directory.CreateDirectory(m_UserData.m_OutputPath);
+                Debug.LogError("AssetBundle Build: No valid output path for build.");
+                return;
             }
 
-            BuildAssetBundleOptions opt = BuildAssetBundleOptions.None;
-
-            if (Model.Model.DataSource.CanSpecifyBuildOptions)
+            if (m_ForceRebuild.state)
             {
-                if (m_UserData.m_Compression == CompressOptions.Uncompressed)
-                    opt |= BuildAssetBundleOptions.UncompressedAssetBundle;
-                else if (m_UserData.m_Compression == CompressOptions.ChunkBasedCompression)
-                    opt |= BuildAssetBundleOptions.ChunkBasedCompression;
-                foreach (var tog in m_ToggleData)
+                string message = "Do you want to delete all files in the directory " + m_UserData.m_OutputPath;
+                if (m_CopyToStreaming.state)
+                    message += " and " + m_streamingPath;
+                message += "?";
+                if (EditorUtility.DisplayDialog("File delete confirmation", message, "Yes", "No"))
                 {
-                    if (tog.state)
-                        opt |= tog.option;
+                    try
+                    {
+                        if (Directory.Exists(m_UserData.m_OutputPath))
+                            Directory.Delete(m_UserData.m_OutputPath, true);
+
+                        if (m_CopyToStreaming.state)
+                            if (Directory.Exists(m_streamingPath))
+                                Directory.Delete(m_streamingPath, true);
+                    }
+                    catch (System.Exception e)
+                    {
+                        Debug.LogException(e);
+                    }
                 }
+            }
+            if (!Directory.Exists(m_UserData.m_OutputPath))
+                Directory.CreateDirectory(m_UserData.m_OutputPath);
+
+            BuildAssetBundleOptions opt = BuildAssetBundleOptions.None;
+            if (m_UserData.m_Compression == CompressOptions.Uncompressed)
+                opt |= BuildAssetBundleOptions.UncompressedAssetBundle;
+            else if (m_UserData.m_Compression == CompressOptions.ChunkBasedCompression)
+                opt |= BuildAssetBundleOptions.ChunkBasedCompression;
+            foreach (var tog in m_ToggleData)
+            {
+                if (tog.state)
+                    opt |= tog.option;
             }
 
             BuildInfo buildInfo = new BuildInfo();
@@ -377,7 +366,7 @@ namespace AssetBundleBuilder.View
                 m_InspectTab.RefreshBundles();
             };
 
-            Model.Model.DataSource.BuildAssetBundles(buildInfo);
+            EditorAssetBundleManager.Instance.BuildAssetBundles(buildInfo);
 
             AssetDatabase.Refresh(ImportAssetOptions.ForceUpdate);
 

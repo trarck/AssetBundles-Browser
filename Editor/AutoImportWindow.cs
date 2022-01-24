@@ -2,9 +2,6 @@ using UnityEditor;
 using UnityEngine;
 using System.Collections.Generic;
 using System.IO;
-using System.Runtime.Serialization.Formatters.Binary;
-
-using AssetBundleBuilder.DataSource;
 using UnityEditorInternal;
 
 namespace AssetBundleBuilder
@@ -17,7 +14,7 @@ namespace AssetBundleBuilder
 
         ReorderableList m_AssetFolderList;
 
-        View.EnumGUI<Model.Setting.Format> m_FormatGUI;
+        View.EnumGUI<Setting.Format> m_FormatGUI;
 
         public static AutoImportWindow ShowWindow()
         {
@@ -27,7 +24,7 @@ namespace AssetBundleBuilder
 
         private void OnEnable()
         {
-            m_FormatGUI = new View.EnumGUI<Model.Setting.Format>();
+            m_FormatGUI = new View.EnumGUI<Setting.Format>();
             m_FormatGUI.Init("Format", true, true);
 
             LoadData();
@@ -108,16 +105,14 @@ namespace AssetBundleBuilder
         {
             SaveData();
 
-            Model.Setting.Format format = Model.Setting.Format.None;
+            Setting.Format format = Setting.Format.None;
 
-            List<Model.Setting.Format> formats = m_FormatGUI.GetValue();
+            List<Setting.Format> formats = m_FormatGUI.GetValue();
             foreach (var f in formats)
             {
                 format |= f;
             }
 
-            Model.AutoImport autoImport = new Model.AutoImport();
-            autoImport.format = format;
 
             float i = 0;
             foreach (var importInfo in m_ImportInfos)
@@ -125,18 +120,18 @@ namespace AssetBundleBuilder
                 EditorUtility.DisplayProgressBar("AutoImport", "import "+importInfo.path, ++i/m_ImportInfos.Count);
                 if (Directory.Exists(importInfo.path))
                 {
-                    autoImport.ImportFolder(importInfo.path, importInfo.pattern);
+                    EditorAssetBundleManager.Instance.ImportBundlesFromFolder(importInfo.path, importInfo.pattern,format);
                 }
                 else if (File.Exists(importInfo.path))
                 {
-                    autoImport.ImportFile(importInfo.path);
+                    EditorAssetBundleManager.Instance.ImportBundleFromFile(importInfo.path,format);
                 }
-            }          
+            }
 
-            EditorUtility.DisplayProgressBar("AutoImport", "GenerateBundles ",0);
-            autoImport.GenerateBundles();
-            
             EditorUtility.ClearProgressBar();
+
+            EditorAssetBundleManager.Instance.Save();
+
             if (AssetBundleBuilderMain.instance.mode == AssetBundleBuilderMain.Mode.Browser)
             {
                 AssetBundleBuilderMain.instance.m_ManageTab.ForceReloadData();

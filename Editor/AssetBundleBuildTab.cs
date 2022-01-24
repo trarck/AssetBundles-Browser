@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 
-using AssetBundleBuilder.DataSource;
 using System.Text.RegularExpressions;
 
 namespace AssetBundleBuilder
@@ -183,7 +182,7 @@ namespace AssetBundleBuilder
             GUILayout.BeginVertical();
 
             // build target
-            using (new EditorGUI.DisabledScope (!Model.Model.DataSource.CanSpecifyBuildTarget)) {
+            {
                 ValidBuildTarget tgt = (ValidBuildTarget)EditorGUILayout.EnumPopup(m_TargetContent, m_UserData.m_BuildTarget);
                 if (tgt != m_UserData.m_BuildTarget)
                 {
@@ -199,7 +198,7 @@ namespace AssetBundleBuilder
 
 
             ////output path
-            using (new EditorGUI.DisabledScope (!Model.Model.DataSource.CanSpecifyBuildOutputDirectory)) {
+            {
                 EditorGUILayout.Space();
                 GUILayout.BeginHorizontal();
                 var newPath = EditorGUILayout.TextField("Output Path", m_UserData.m_OutputPath);
@@ -252,7 +251,7 @@ namespace AssetBundleBuilder
 
 
             // advanced options
-            using (new EditorGUI.DisabledScope (!Model.Model.DataSource.CanSpecifyBuildOptions)) {
+            {
                 EditorGUILayout.Space();
                 m_AdvancedSettings = EditorGUILayout.Foldout(m_AdvancedSettings, "Advanced Settings");
                 if(m_AdvancedSettings)
@@ -309,7 +308,7 @@ namespace AssetBundleBuilder
 
         private void ExecuteBuild()
         {
-            if (Model.Model.DataSource.CanSpecifyBuildOutputDirectory) {
+            {
                 if (string.IsNullOrEmpty(m_UserData.m_OutputPath))
                     BrowseForFolder();
 
@@ -348,16 +347,14 @@ namespace AssetBundleBuilder
 
             BuildAssetBundleOptions opt = BuildAssetBundleOptions.None;
 
-            if (Model.Model.DataSource.CanSpecifyBuildOptions) {
-                if (m_UserData.m_Compression == CompressOptions.Uncompressed)
-                    opt |= BuildAssetBundleOptions.UncompressedAssetBundle;
-                else if (m_UserData.m_Compression == CompressOptions.ChunkBasedCompression)
-                    opt |= BuildAssetBundleOptions.ChunkBasedCompression;
-                foreach (var tog in m_ToggleData)
-                {
-                    if (tog.state)
-                        opt |= tog.option;
-                }
+            if (m_UserData.m_Compression == CompressOptions.Uncompressed)
+                opt |= BuildAssetBundleOptions.UncompressedAssetBundle;
+            else if (m_UserData.m_Compression == CompressOptions.ChunkBasedCompression)
+                opt |= BuildAssetBundleOptions.ChunkBasedCompression;
+            foreach (var tog in m_ToggleData)
+            {
+                if (tog.state)
+                    opt |= tog.option;
             }
 
             BuildInfo buildInfo = new BuildInfo();
@@ -374,7 +371,7 @@ namespace AssetBundleBuilder
                 m_InspectTab.RefreshBundles();
             };
 
-            Model.Model.DataSource.BuildAssetBundles(buildInfo);
+            EditorAssetBundleManager.Instance.BuildAssetBundles(buildInfo);
 
             AssetDatabase.Refresh(ImportAssetOptions.ForceUpdate);
 

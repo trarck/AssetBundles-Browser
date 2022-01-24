@@ -62,12 +62,6 @@ namespace AssetBundleBuilder.View
 
 		}
 
-		public BundleTreeItem(BundleNode b, int depth, Texture2D iconTexture) : base(b.nameHashCode, depth, b.displayName)
-        {
-            icon = iconTexture;
-            children = new List<TreeViewItem>();
-        }
-
 		public MessageSystem.Message BundleMessage()
         {
 			return new MessageSystem.Message("", MessageType.Info);// bundleNode.HighestMessage();
@@ -163,21 +157,6 @@ namespace AssetBundleBuilder.View
 		{
 			return m_BundleMessages.HasMessages();
 		}
-
-		public static BundleTreeItem Create(BundleNode b, int depth)
-        {
-            var result = new BundleTreeItem(b, depth, b.GetIcon());
-
-            if (b.HaveChildren())
-            {
-                foreach (var child in b.GetChildren())
-                {
-                    result.AddChild(BundleTreeItem.Create(child,depth+1));
-                }
-            }
-
-            return result;
-        }
     }
 
 	public class BundleTreeDataItem : BundleTreeItem

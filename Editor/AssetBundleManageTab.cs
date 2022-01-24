@@ -87,10 +87,10 @@ namespace AssetBundleBuilder
             {
                 s_UpdateDelay = t - 0.001f;
 
-                if(Model.Model.Update())
-                {
-                    m_Parent.Repaint();
-                }
+                //if(Model.Model.Update())
+                //{
+                //    m_Parent.Repaint();
+                //}
 
                 if (m_DetailsList != null)
                     m_DetailsList.Update();
@@ -154,7 +154,7 @@ namespace AssetBundleBuilder
                 style.wordWrap = true;
                 GUI.Label(
                     new Rect(m_Position.x + 1f, m_Position.y + 1f, m_Position.width - 2f, m_Position.height - 2f), 
-                    new GUIContent(Model.Model.GetEmptyMessage()),
+                    new GUIContent(""),//Model.Model.GetEmptyMessage()
                     style);
             }
             else

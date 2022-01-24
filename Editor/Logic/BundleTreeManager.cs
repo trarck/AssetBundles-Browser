@@ -1,12 +1,8 @@
-﻿using System.IO;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEditor;
-using UnityEngine.Assertions;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEditor.IMGUI.Controls;
 
-using AssetBundleBuilder.DataSource;
 using System;
 using AssetBundleBuilder.View;
 
@@ -17,9 +13,7 @@ namespace AssetBundleBuilder.Model
 		public static string DefaultFolderName = "dummy";
 		public static string DefaultBundleName = "newbundle";
 		public static int BundleFolderItemId = 10;
-
-		DataSource.DataSource m_DataSource;
-		Type m_DefaultDataSourceType = typeof(JsonDataSource);
+		public static /*const*/ Color k_LightGrey = Color.grey * 1.5f;
 
 		BundleTreeFolderItem m_RootItem;
 
@@ -62,8 +56,7 @@ namespace AssetBundleBuilder.Model
 
 		public void ReloadBundles()
 		{
-			string bundleDataPath = EditorAssetBundleManager.Instance.GetBinaryAssetBundleSavePath();
-			EditorAssetBundleManager.Instance.LoadBinary(bundleDataPath);
+			EditorAssetBundleManager.Instance.Load();
 			EditorAssetBundleManager.Instance.RefreshAllAssetDependencies();
 			EditorAssetBundleManager.Instance.RefreshAllAssetAllDependencies();
 
@@ -92,10 +85,7 @@ namespace AssetBundleBuilder.Model
 
 		public void SaveBundles()
 		{
-			string bundleDataPath = EditorAssetBundleManager.Instance.GetBinaryAssetBundleSavePath();
-			EditorAssetBundleManager.Instance.SaveBinary(bundleDataPath);
-			string saveJsonPath = EditorAssetBundleManager.Instance.GetJsonAssetBundleSavePath();
-			EditorAssetBundleManager.Instance.SaveToJson(saveJsonPath);
+			EditorAssetBundleManager.Instance.Save();
 		}
 
 		public bool BundleListIsEmpty()
@@ -106,7 +96,6 @@ namespace AssetBundleBuilder.Model
 		#region Bundle
 		public BundleTreeItem GetBundle(string bundlePath, BundleTreeFolderItem parent=null)
 		{
-			BundleTreeItem bundle = null;
 			if (parent == null)
 			{
 				parent = m_RootItem;
@@ -696,14 +685,14 @@ namespace AssetBundleBuilder.Model
 			return newBundle;
 		}
 
-		public List<int> HandleCreateAssetsMultiBundle(ICollection<string> assetPaths, BundleTreeFolderItem parent)
+		public List<int> HandleCreateAssetsMultiBundle(ICollection<string> assetPaths, BundleTreeFolderItem parent,Setting.Format format)
 		{
 			List<int> bundleIds = new List<int>();
 
 			foreach (var assetPath in assetPaths)
 			{
 				string fullPath = assetPath;
-				BundleTreeDataItem bundleDataItem = CreateBundleFromAsset(fullPath, parent);
+				BundleTreeDataItem bundleDataItem = CreateBundleFromAsset(fullPath, parent,format);
 				if (bundleDataItem != null)
 				{
 					bundleIds.Add(bundleDataItem.id);
@@ -768,18 +757,18 @@ namespace AssetBundleBuilder.Model
 			return bundleData;
 		}
 
-		public BundleTreeDataItem CreateBundleFromAsset(string assetName, BundleTreeFolderItem parent)
+		public BundleTreeDataItem CreateBundleFromAsset(string assetName, BundleTreeFolderItem parent,Setting.Format format)
 		{
 			if (parent == null)
 			{
 				parent = m_RootItem;
 			}
 
-			string bundleName = EditorAssetBundleManager.Instance.CreateBundleName(assetName, false, true, false);
-			BundleTreeDataItem bundleData = parent.GetChild(bundleName) as BundleTreeDataItem;
+			string bundleName = EditorAssetBundleManager.Instance.CreateBundleName(assetName, format);
+			BundleTreeDataItem bundleData = GetBundle(bundleName,parent) as BundleTreeDataItem;
 			if (bundleData == null)
 			{
-				bundleData = CreateBundleDataByName(bundleName,parent);
+				bundleData = CreateBundleData(bundleName,parent);
 			}
 
 			EditorAssetBundleManager.Instance.AddAssetToBundle(bundleData.bundleInfo, assetName);
@@ -808,22 +797,6 @@ namespace AssetBundleBuilder.Model
 		}
 
 		#endregion Asset
-
-		public DataSource.DataSource dataSource
-		{
-			get
-			{
-				if (m_DataSource == null)
-				{
-					m_DataSource = DataSourceProviderUtility.GetDataSource(m_DefaultDataSourceType, true);
-				}
-				return m_DataSource;
-			}
-			set
-			{
-				m_DataSource = value;
-			}
-		}
 
 		#region Icons
 		static private Texture2D s_folderIcon = null;

@@ -290,6 +290,62 @@ namespace AssetBundleBuilder
 			}
 		}
 
+		/// <summary>
+		/// 清除不在使用的资源。
+		/// 不包含在AssetBundle中
+		/// 不被其它包含在AssetBundle中的资源引用。
+		/// </summary>
+		public void ClearUnUseAssets()
+        {
+			List<AssetInfo> noBundleAssets = new List<AssetInfo>(m_Assets.Count);
+			//找出没有AssetBundle的Assets
+			foreach(var iter  in m_Assets)
+            {
+                if (!IsAssetBunded(iter.Value))
+                {
+					noBundleAssets.Add(iter.Value);
+				}
+            }
+
+			//从assets中移除
+			foreach(var asset in noBundleAssets)
+            {
+				m_Assets.Remove(asset.assetPath);
+            }
+        }
+
+		public bool IsAssetBunded(AssetInfo asset)
+        {
+			Stack<AssetInfo> checkingAssets = new Stack<AssetInfo>();
+			HashSet<AssetInfo> checkedAssets=new HashSet<AssetInfo>();
+			checkingAssets.Push(asset);
+
+			while (checkingAssets.Count > 0)
+			{
+				asset= checkingAssets.Pop();
+                if (checkedAssets.Contains(asset))
+                {
+					continue;
+                }
+				checkedAssets.Add(asset);
+
+				//有没有直接包含在bundle中
+				if (asset.bundle != null)
+				{
+					return true;
+				}
+
+				if (asset.refers != null)
+				{
+					foreach (var refer in asset.refers)
+					{
+						  checkingAssets.Push(refer);
+					}
+				}
+			}
+			return false;
+        }
+
 		public static bool ValidateAsset(string name)
 		{
 			if (!name.StartsWith("Assets/"))
@@ -585,23 +641,46 @@ namespace AssetBundleBuilder
 			}
 		}
 
-		public void RefreshAllBundlesName()
+		public string CreateBundleName(string filePath, Setting.Format format)
+		{
+			bool useFullPath = (format & Setting.Format.FullPath) !=0;
+			bool useExt = (format & Setting.Format.WithExt) != 0;
+			bool flatPath = (format & Setting.Format.Flat) != 0;
+
+			return CreateBundleName(filePath, useFullPath, useExt, flatPath);
+		}
+
+		public void RefreshAllBundlesName(Setting.Format format = Setting.Format.FullPath | Setting.Format.WithExt)
 		{
 			List<BundleInfo> bundles = new List<BundleInfo>(m_Bundles);
 			foreach (var bundle in bundles)
 			{
 				if (string.IsNullOrEmpty(bundle.name))
 				{
-					bundle.name = CreateBundleName(bundle.mainAssetPath,true,true,false);
+					bundle.name = CreateBundleName(bundle.mainAssetPath, format);
 				}
 			}
 		}
+
+
+		public string[] GetAllAssetBundleNames()
+        {
+			List<string> bundleNames = new List<string>();
+			foreach(var bundle in m_Bundles)
+            {
+				if (!string.IsNullOrEmpty(bundle.name))
+				{
+					bundleNames.Add(bundle.name);
+				}
+            }
+			return bundleNames.ToArray();
+        }
 
 		#endregion //Bundle
 
 		#region Asset Bundle
 
-		public void CreateBundleForAllAssets()
+		public void CreateBundleForAllAssets(Setting.Format format=Setting.Format.FullPath|Setting.Format.WithExt)
 		{
 			foreach (var iter in m_Assets)
 			{
@@ -609,7 +688,7 @@ namespace AssetBundleBuilder
 
 				if (asset.bundle == null)
 				{
-					string bundleName = CreateBundleName(asset.assetPath, true, true, false);
+					string bundleName = CreateBundleName(asset.assetPath, format);
 					asset.bundle = CreateBundle(bundleName, asset);
 				}
 			}

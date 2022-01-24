@@ -2,7 +2,7 @@
 using System.IO;
 using UnityEngine;
 
-namespace AssetBundleBuilder.Model
+namespace AssetBundleBuilder
 {
     public static class Setting
     {
@@ -12,7 +12,8 @@ namespace AssetBundleBuilder.Model
             FullPath = 1,
             ShortName = 2,
             WithFolder = 4,
-            WithExt = 8
+            WithExt = 8,
+            Flat = 16,
         }
 
         public delegate string CreateBundleNameDelegate(string filePath, bool useFullPath, bool useExt);

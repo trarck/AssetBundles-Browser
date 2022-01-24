@@ -1,11 +1,12 @@
 ﻿using UnityEditor;
 using UnityEngine;
 using System.Collections.Generic;
-using AssetBundleBuilder.Model;
 using UnityEditor.IMGUI.Controls;
 
 namespace AssetBundleBuilder.View
 {
+    using Model;
+
     internal class BundleDetailItem : TreeViewItem
     {
         internal BundleDetailItem(int id, int depth, string displayName, MessageType type) : base(id, depth, displayName)
@@ -129,7 +130,7 @@ namespace AssetBundleBuilder.View
                 Color old = GUI.color;
                 if (args.item.depth == 1 &&
                     (args.item.displayName == k_MessageEmpty || args.item.displayName == k_DependencyEmpty))
-                    GUI.color = Model.Model.k_LightGrey;
+                    GUI.color = BundleTreeManager.k_LightGrey;
                 base.RowGUI(args);
                 GUI.color = old;
             }
@@ -222,7 +223,7 @@ namespace AssetBundleBuilder.View
                 {
                     str = itemName + dep.name;
                     TreeViewItem newItem = new TreeViewItem( str.GetHashCode(), 2, dep.name );
-                    newItem.icon = Model.Model.GetBundleIcon();
+                    newItem.icon = BundleTreeManager.GetBundleIcon();
                     dependency.AddChild(newItem);
                 }
             }

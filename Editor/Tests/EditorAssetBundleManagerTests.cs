@@ -981,7 +981,7 @@ namespace AssetBundleBuilder.Tests
 			m_AssetManager.RefreshAllBundleDependencies();
 			m_AssetManager.RefreshAllBundlesName();
 
-			DataSource.BuildInfo buildInfo = new DataSource.BuildInfo();
+			BuildInfo buildInfo = new BuildInfo();
 
 			buildInfo.outputDirectory = Path.Combine(Application.dataPath, "../AssetBundles", EditorUserBuildSettings.activeBuildTarget.ToString());
 			buildInfo.options = BuildAssetBundleOptions.ChunkBasedCompression;
@@ -1007,7 +1007,7 @@ namespace AssetBundleBuilder.Tests
 			m_AssetManager.RefreshAllBundleDependencies();
 			m_AssetManager.RefreshAllBundlesName();
 
-			DataSource.BuildInfo buildInfo = new DataSource.BuildInfo();
+			BuildInfo buildInfo = new BuildInfo();
 
 			buildInfo.outputDirectory = Path.Combine(Application.dataPath, "../AssetBundles", EditorUserBuildSettings.activeBuildTarget.ToString());
 			buildInfo.options = BuildAssetBundleOptions.ChunkBasedCompression;
@@ -1102,7 +1102,7 @@ namespace AssetBundleBuilder.Tests
 
 			PrepareAssets();
 
-			DataSource.BuildInfo buildInfo = new DataSource.BuildInfo();
+			BuildInfo buildInfo = new BuildInfo();
 
 			buildInfo.outputDirectory = Path.Combine(Application.dataPath, "../AssetBundles", EditorUserBuildSettings.activeBuildTarget.ToString());
 			buildInfo.options = BuildAssetBundleOptions.ChunkBasedCompression;
@@ -1122,7 +1122,7 @@ namespace AssetBundleBuilder.Tests
 
 			PrepareAssets();
 
-			DataSource.BuildInfo buildInfo = new DataSource.BuildInfo();
+			BuildInfo buildInfo = new BuildInfo();
 
 			buildInfo.outputDirectory = Path.Combine(Application.dataPath, "../AssetBundlesPipline", EditorUserBuildSettings.activeBuildTarget.ToString());
 			buildInfo.options = BuildAssetBundleOptions.ChunkBasedCompression;

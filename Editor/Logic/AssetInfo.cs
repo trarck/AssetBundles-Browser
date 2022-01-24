@@ -291,5 +291,10 @@ namespace AssetBundleBuilder
 			return assetType;
 		}
 
+		internal IEnumerable<MessageSystem.Message> GetMessages()
+        {
+			List<MessageSystem.Message> messages = new List<MessageSystem.Message>();
+			return messages;
+		}
 	}
 }

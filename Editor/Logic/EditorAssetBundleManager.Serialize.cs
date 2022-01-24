@@ -922,5 +922,20 @@ namespace AssetBundleBuilder
 		}
 
 		#endregion //Path
+
+		public void Save()
+		{
+			ClearUnUseAssets();
+			string bundleDataPath = GetBinaryAssetBundleSavePath();
+			SaveBinary(bundleDataPath);
+			string saveJsonPath = GetJsonAssetBundleSavePath();
+			SaveToJson(saveJsonPath);
+		}
+
+		public void Load()
+		{
+			string bundleDataPath = GetBinaryAssetBundleSavePath();
+			LoadBinary(bundleDataPath);
+		}
 	}
 }

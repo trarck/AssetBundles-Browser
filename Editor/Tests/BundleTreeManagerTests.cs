@@ -117,27 +117,6 @@ namespace AssetBundleBuilder.Tests
 			Assert.IsInstanceOf<BundleTreeFolderItem>(bundleInfo2);
 		}
 
-		[Test]
-		public void GetDataSourceTest()
-		{
-			DataSource.DataSource ds = m_bundleManager.dataSource;
-			Assert.NotNull(ds);
-		}
-
-		[Test]
-		public void SetupBundleInfosTest()
-		{
-			DataSource.DataSource ds = m_bundleManager.dataSource;
-			string[] bundlePaths = ds.GetAllAssetBundleNames();
-
-			Debug.Log(bundlePaths.Length);
-			foreach (var bundlePath in bundlePaths)
-			{
-				BundleTreeDataItem bundleDataInfo = m_bundleManager.CreateBundleData(bundlePath);
-				Assert.NotNull(bundleDataInfo);
-			}
-		}
-
 		#endregion
 
 		[Test]

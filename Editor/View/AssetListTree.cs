@@ -275,10 +275,6 @@ namespace AssetBundleBuilder.View
         }
         protected bool IsValidDragDrop()
         {
-            //can't do drag & drop if data source is read only
-            if (Model.Model.DataSource.IsReadOnly ())
-                return false;
-
             //can't drag onto none or >1 bundles
             if (m_SourceBundles.Count == 0 || m_SourceBundles.Count > 1)
                 return false;
@@ -328,10 +324,6 @@ namespace AssetBundleBuilder.View
 
         protected override void ContextClickedItem(int id)
         {
-            if (Model.Model.DataSource.IsReadOnly ()) {
-                return;
-            }
-
             List<AssetTreeItem> selectedNodes = new List<AssetTreeItem>();
             foreach(var nodeID in GetSelection())
             {

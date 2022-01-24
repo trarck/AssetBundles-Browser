@@ -29,20 +29,20 @@ namespace AssetBundleBuilder.Distribute
             m_AssetBundles.Clear();
 
             //create bundle
-            string[] bundleNames= Model.Model.DataSource.GetAllAssetBundleNames();
-            foreach(var bundleName in bundleNames)
+            List<BundleInfo> bundles=  EditorAssetBundleManager.Instance.bundles;
+            foreach(var bundleInfo in bundles)
             {
                 DeepNode node = new DeepNode();
-                node.name = bundleName;
+                node.name = bundleInfo.name;
                 m_Bundles.Add(node);
                 //add assets
-                string[] assets = Model.Model.DataSource.GetAssetPathsFromAssetBundle(bundleName);
-                foreach(var asset in assets)
+                HashSet<AssetInfo> assets = bundleInfo.assets;
+                foreach (var asset in assets)
                 {
                     //TODO:: node.assets.Add(asset);
 
                     //asset in bundle map
-                    m_AssetBundles[asset] = node;
+                    m_AssetBundles[asset.assetPath] = node;
                 }
             }
 

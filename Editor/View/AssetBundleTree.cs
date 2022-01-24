@@ -44,7 +44,7 @@ namespace AssetBundleBuilder.View
 
             Color old = GUI.color;
             if (bundleItem is BundleTreeFolderItem)
-                GUI.color = Model.Model.k_LightGrey; //new Color(0.3f, 0.5f, 0.85f);
+                GUI.color = BundleTreeManager.k_LightGrey; //new Color(0.3f, 0.5f, 0.85f);
             base.RowGUI(args);
             GUI.color = old;
 
@@ -126,10 +126,8 @@ namespace AssetBundleBuilder.View
 
             GenericMenu menu = new GenericMenu();
 
-            if (!Model.Model.DataSource.IsReadOnly ()) {
-                menu.AddItem(new GUIContent("Add new bundle"), false, CreateNewBundle, selectedNodes); 
-                menu.AddItem(new GUIContent("Add new folder"), false, CreateFolder, selectedNodes);
-            }
+            menu.AddItem(new GUIContent("Add new bundle"), false, CreateNewBundle, selectedNodes); 
+            menu.AddItem(new GUIContent("Add new folder"), false, CreateFolder, selectedNodes);
 
             menu.AddItem(new GUIContent("Reload all data"), false, ForceReloadData, selectedNodes);
 
@@ -142,10 +140,6 @@ namespace AssetBundleBuilder.View
 
         protected override void ContextClickedItem(int id)
         {
-            if (Model.Model.DataSource.IsReadOnly ()) {
-                return;
-            }
-
             m_ContextOnItem = true;
             List<BundleTreeItem> selectedNodes = new List<BundleTreeItem>();
             foreach (var nodeID in GetSelection())
@@ -186,7 +180,7 @@ namespace AssetBundleBuilder.View
         }
         void ForceReloadData(object context)
         {
-            Model.Model.ForceReloadData();
+            BundleTreeManager.Instance.ReloadBundles();
             Reload();
         }
 
@@ -335,7 +329,7 @@ namespace AssetBundleBuilder.View
         }
         protected override void KeyEvent()
         {
-            if (Event.current.keyCode == KeyCode.Delete && GetSelection().Count > 0)
+            if (Event.current.keyCode == KeyCode.Delete && Event.current.type == EventType.KeyUp && GetSelection().Count > 0)
             {
                 List<BundleTreeItem> selectedNodes = new List<BundleTreeItem>();
                 foreach (var nodeID in GetSelection())
@@ -404,10 +398,6 @@ namespace AssetBundleBuilder.View
             DragAndDropVisualMode visualMode = DragAndDropVisualMode.None;
             DragAndDropData data = new DragAndDropData(args);
             
-            if (Model.Model.DataSource.IsReadOnly ()) {
-                return DragAndDropVisualMode.Rejected;
-            }
-
             if ( (data.hasScene && data.hasNonScene) ||
                 (data.hasVariantChild) )
                 return DragAndDropVisualMode.Rejected;
@@ -541,6 +531,7 @@ namespace AssetBundleBuilder.View
         private BundleTreeFolderItem dragToNewSpaceRoot = null;
         private void DragPathsAsOneBundle()
         {
+            Debug.Log("TTTTT");
             var newBundle = BundleTreeManager.Instance.HandleCreateAssetsOneBundle(dragToNewSpacePaths,dragToNewSpaceRoot);         
             ReloadAndSelect(newBundle.id, true);
         }
@@ -554,7 +545,7 @@ namespace AssetBundleBuilder.View
                 format |= Setting.Format.WithExt;
             }
 
-            BundleTreeManager.Instance.HandleCreateAssetsMultiBundle(dragToNewSpacePaths, dragToNewSpaceRoot);
+            BundleTreeManager.Instance.HandleCreateAssetsMultiBundle(dragToNewSpacePaths, dragToNewSpaceRoot,format);
 
 			ReloadAndSelect(hashCodes);
         }
@@ -712,7 +703,7 @@ namespace AssetBundleBuilder.View
             }
 
             //save to database
-            Model.Model.ExecuteAssetMove();
+            //Model.Model.ExecuteAssetMove();
 
             //refresh bundle list tree
             Refresh();

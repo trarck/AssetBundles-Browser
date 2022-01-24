@@ -64,17 +64,9 @@ namespace AssetBundleBuilder
             instance.Show();
         }
 
-        [SerializeField]
-        internal bool multiDataSource = false;
-        List<DataSource.DataSource> m_DataSourceList = null;
         public virtual void AddItemsToMenu(GenericMenu menu)
         {
-            if(menu != null)
-               menu.AddItem(new GUIContent("Custom Sources"), multiDataSource, FlipDataSource);
-        }
-        internal void FlipDataSource()
-        {
-            multiDataSource = !multiDataSource;
+
         }
 
         private void OnEnable()
@@ -103,45 +95,8 @@ namespace AssetBundleBuilder
 
             m_RefreshTexture = EditorGUIUtility.FindTexture("Refresh");
             m_ToolsTexture = Resources.Load("Icons/tools")as Texture2D;
-
-            InitDataSources();
         } 
-        private void InitDataSources()
-        {
-            //determine if we are "multi source" or not...
-            multiDataSource = false;
-            m_DataSourceList = new List<DataSource.DataSource>();
-            foreach (var info in DataSource.DataSourceProviderUtility.CustomDataSourceTypes)
-            {
-                m_DataSourceList.AddRange(info.GetMethod("CreateDataSources").Invoke(null, null) as List<DataSource.DataSource>);
-            }
-
-            if (m_DataSourceList.Count > 1)
-            {
-                multiDataSource = true;
-
-                if (!string.IsNullOrEmpty(m_Data.dataSource))
-                {
-                    for (int i = 0; i < m_DataSourceList.Count; ++i)
-                    {
-                        if (m_DataSourceList[i].Name.Equals(m_Data.dataSource, System.StringComparison.CurrentCultureIgnoreCase))
-                        {
-                            m_DataSourceIndex = i;
-                            break;
-                        }
-                    }
-                }
-                else
-                {
-                    m_DataSourceIndex = 0;
-                    m_Data.dataSource = m_DataSourceList[0].Name;
-                }
-
-                if (m_DataSourceIndex >= m_DataSourceList.Count)
-                    m_DataSourceIndex = 0;
-                Model.Model.DataSource = m_DataSourceList[m_DataSourceIndex];
-            }
-        }
+     
         private void OnDisable()
         {
             SaveData();
@@ -162,8 +117,6 @@ namespace AssetBundleBuilder
         private Rect GetSubWindowArea()
         {
             float padding = k_MenubarPadding;
-            if (multiDataSource)
-                padding += k_MenubarPadding * 0.5f;
             Rect subPos = new Rect(0, padding, position.width, position.height - padding);
             return subPos;
         }
@@ -247,57 +200,6 @@ namespace AssetBundleBuilder
             m_Mode = (Mode)GUILayout.Toolbar((int)m_Mode, labels, "LargeButton", GUILayout.Width(toolbarWidth) );
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
-            if(multiDataSource)
-            {
-                //GUILayout.BeginArea(r);
-                GUILayout.BeginHorizontal();
-
-                using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
-                {
-                    GUILayout.Label("Bundle Data Source:");
-                    GUILayout.FlexibleSpace();
-                    var c = new GUIContent(string.Format("{0} ({1})", Model.Model.DataSource.Name, Model.Model.DataSource.ProviderName), "Select Asset Bundle Set");
-                    if (GUILayout.Button(c , EditorStyles.toolbarPopup) )
-                    {
-                        GenericMenu menu = new GenericMenu();
-
-                        for (int index = 0; index < m_DataSourceList.Count; index++)
-                        {
-                            var ds = m_DataSourceList[index];
-                            if (ds == null)
-                                continue;
-
-                            if (index > 0)
-                                menu.AddSeparator("");
-                             
-                            menu.AddItem(new GUIContent(string.Format("{0} ({1})", ds.Name, ds.ProviderName)), false,
-                                () =>
-                                {
-                                    var thisDataSource = ds;
-                                    Model.Model.DataSource = thisDataSource;
-                                    m_Data.dataSource = thisDataSource.Name;
-                                    m_ManageTab.ForceReloadData();
-                                }
-                            );
-
-                        }
-
-                        menu.ShowAsContext();
-                    }
-
-                    GUILayout.FlexibleSpace();
-                    if (Model.Model.DataSource.IsReadOnly())
-                    {
-                        GUIStyle tbLabel = new GUIStyle(EditorStyles.toolbar);
-                        tbLabel.alignment = TextAnchor.MiddleRight;
-
-                        GUILayout.Label("Read Only", tbLabel);
-                    }
-                }
-
-                GUILayout.EndHorizontal();
-                //GUILayout.EndArea();
-            }
         }
 
         void SaveData()
