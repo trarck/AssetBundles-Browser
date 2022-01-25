@@ -426,8 +426,23 @@ namespace AssetBundleBuilder
 			bundle.Clear();
 		}
 
+		public void RemoveBundlesByCreateTag(uint tag)
+        {
+			for(int i = m_Bundles.Count - 1; i >= 0; i--)
+            {
+				BundleInfo bundle = m_Bundles[i];
+				if(bundle.HaveCreateTag(tag))
+                {
+					m_Bundles.RemoveAt(i);
+					bundle.enbale=false;
+					bundle.Clear();
+				}
+            }
+        }
+
 		public BundleInfo MergeBundle(BundleInfo from, BundleInfo to)
 		{
+			Debug.LogFormat("merge bundle {0} to {1}",from.name,to.name);
 			//合并资源
 			foreach (var asset in from.assets)
 			{
@@ -612,6 +627,12 @@ namespace AssetBundleBuilder
 			{
 				if (flatPath)
 				{
+					if (!useExt && !filePath.Contains(".unity"))//Scene always use ext
+					{
+						string dir=Path.GetDirectoryName(filePath);
+						string baseName = Path.GetFileNameWithoutExtension(filePath);
+						filePath = dir + "/" + baseName;
+					}
 					return filePath.Replace('/', '_').Replace('\\', '_').Replace('.', '_').ToLower();
 				}
 				else
@@ -962,13 +983,16 @@ namespace AssetBundleBuilder
 				if (bundle.enbale && bundle.canMerge)
 				{
 					int hash = bundle.refersHashCode;
-					List<BundleInfo> items = null;
-					if (!sameRefers.TryGetValue(hash, out items))
+					if (hash != 0)
 					{
-						items = new List<BundleInfo>();
-						sameRefers[hash] = items;
+						List<BundleInfo> items = null;
+						if (!sameRefers.TryGetValue(hash, out items))
+						{
+							items = new List<BundleInfo>();
+							sameRefers[hash] = items;
+						}
+						items.Add(bundle);
 					}
-					items.Add(bundle);
 				}
 			}
 

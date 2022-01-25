@@ -95,7 +95,7 @@ namespace AssetBundleBuilder
 			return bundleInfo;
 		}
 
-		public bool ImportBundlesFromFolder(string folderPath, string pattern, Setting.Format format, List<BundleInfo> bundleInfos=null)
+		public bool ImportBundlesFromFolder(string folderPath, string pattern, Setting.Format format, ICollection<BundleInfo> bundleInfos=null)
 		{
 			DirectoryInfo startInfo = new DirectoryInfo(folderPath);
 			if (!startInfo.Exists)

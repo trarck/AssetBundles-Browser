@@ -306,13 +306,21 @@ namespace AssetBundleBuilder
 
 			return serializeInfos;
 		}
-		public static void SerializeBundle(BundleInfo bundle, BinaryWriter writer)
-		{
-			writer.Write(bundle.name==null?"":bundle.name);
+		
+		private static void SerializeBundleBaseData(BundleInfo bundle, BinaryWriter writer)
+        {
+			writer.Write(bundle.name == null ? "" : bundle.name);
 			writer.Write(bundle.variantName == null ? "" : bundle.variantName);
 			writer.Write((byte)bundle.bundleType);
 			writer.Write(bundle.IsStandalone());
 			writer.Write(bundle.refersHashCode);
+			writer.Write(bundle.createTag);
+		}
+		public static void SerializeBundle(BundleInfo bundle, BinaryWriter writer)
+		{
+			//base info
+			SerializeBundleBaseData(bundle, writer);
+
 			//main asset
 			writer.Write(bundle.mainAsset.serializeIndex);
 
@@ -341,11 +349,8 @@ namespace AssetBundleBuilder
 		{
 			BundleInfo bundle = serializeInfo.bundle;
 
-			writer.Write(bundle.name == null ? "" : bundle.name);
-			writer.Write(bundle.variantName == null ? "" : bundle.variantName);
-			writer.Write((byte)bundle.bundleType);
-			writer.Write(bundle.IsStandalone());
-			writer.Write(bundle.refersHashCode);
+			//base info
+			SerializeBundleBaseData(bundle,writer);
 
 			//main asset
 			writer.Write(serializeInfo.mainAsset);
@@ -382,6 +387,7 @@ namespace AssetBundleBuilder
 			bundle.bundleType =(BundleInfo.BundleType) reader.ReadByte();
 			bundle.SetStandalone(reader.ReadBoolean());
 			bundle.refersHashCode = reader.ReadInt32();
+			bundle.createTag = reader.ReadUInt32();
 
 			bundleSerializeInfo.bundle = bundle;
 

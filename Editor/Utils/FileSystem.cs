@@ -363,13 +363,6 @@ namespace AssetBundleBuilder
             while (fols.Count > 0)
             {
                 fol = fols.Peek();
-                fol.Attributes = fol.Attributes & ~(FileAttributes.Archive | FileAttributes.ReadOnly | FileAttributes.Hidden);
-
-                foreach (FileInfo f in fol.GetFiles())
-                {
-                    f.Attributes = f.Attributes & ~(FileAttributes.Archive | FileAttributes.ReadOnly | FileAttributes.Hidden);
-                    f.Delete();
-                }
 
                 DirectoryInfo[] subs = fol.GetDirectories();
                 if (subs.Length > 0)
@@ -381,9 +374,17 @@ namespace AssetBundleBuilder
                 }
                 else
                 {
+                    fol.Attributes = fol.Attributes & ~(FileAttributes.Archive | FileAttributes.ReadOnly | FileAttributes.Hidden);
+
+                    foreach (FileInfo f in fol.GetFiles())
+                    {
+                        f.Attributes = f.Attributes & ~(FileAttributes.Archive | FileAttributes.ReadOnly | FileAttributes.Hidden);
+                        f.Delete();
+                    }
+
                     if (fol != root)
                     {
-                        fol.Delete(true);
+                        fol.Delete(false);
                     }
 
                     fols.Pop();

@@ -237,6 +237,14 @@ namespace AssetBundleBuilder
 			ShaderVariantCollection
 		}
 
+		public enum CreateTag
+        {
+			None=0,
+			Manual = 1,
+			//批量导入
+			BatchImport =2,
+		}
+
 		//bundle name
 		protected string m_Name;
 
@@ -269,6 +277,8 @@ namespace AssetBundleBuilder
 		protected BundleType m_BundleType;
 
 		protected bool m_Enable = false;
+
+		protected uint m_CreateTag;
 
 		//用于序列化时的索引号。也可以在序列化时使用映射表建立序列化的索引号。
 		public int serializeIndex = 0;
@@ -309,7 +319,7 @@ namespace AssetBundleBuilder
 		{
 			get
 			{
-				return !m_Standalone && !isScene;
+				return !m_Standalone && !isScene && !HaveCreateTag((uint)CreateTag.Manual);
 			}
 		}
 
@@ -360,12 +370,19 @@ namespace AssetBundleBuilder
 				m_Enable = value;
 			}
 		}
+
+		public uint createTag
+		{
+			get { return m_CreateTag; }
+			set { m_CreateTag = value; }
+		}
+
 		//TODO::need change to hash64。资源多时，会产生冲突。
 		public int refersHashCode
 		{
 			get
 			{
-				if (m_RefersHashCode == 0)
+				if (m_RefersHashCode == 0 && refers.Count>0)
 				{
 					System.Text.StringBuilder sb = new System.Text.StringBuilder();
 					foreach (var refer in refers)
@@ -596,6 +613,21 @@ namespace AssetBundleBuilder
 				dep.RemoveReferOnly(this);
 			}
 			dependencies.Clear();
+		}
+
+		public void SetCreateTagBit(uint bit)
+        {
+			m_CreateTag |= bit;
+        }
+
+		public void ClearCreateTagBit(uint bit)
+		{
+			m_CreateTag &= ~bit;
+		}
+
+		public bool HaveCreateTag(uint bit)
+		{
+			return (m_CreateTag & bit ) > 0;
 		}
 
 		public void Clear()

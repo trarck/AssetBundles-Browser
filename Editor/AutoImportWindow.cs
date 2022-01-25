@@ -105,30 +105,49 @@ namespace AssetBundleBuilder
         {
             SaveData();
 
-            Setting.Format format = Setting.Format.None;
+            //clear old batch imports
+            EditorAssetBundleManager.Instance.RemoveBundlesByCreateTag((uint)BundleInfo.CreateTag.BatchImport);
 
+            //import new bundles
+           Setting.Format format = Setting.Format.None;
             List<Setting.Format> formats = m_FormatGUI.GetValue();
             foreach (var f in formats)
             {
                 format |= f;
             }
 
-
             float i = 0;
+            List<BundleInfo> batchImportBundles = new List<BundleInfo>();
+
             foreach (var importInfo in m_ImportInfos)
             {
                 EditorUtility.DisplayProgressBar("AutoImport", "import "+importInfo.path, ++i/m_ImportInfos.Count);
                 if (Directory.Exists(importInfo.path))
                 {
-                    EditorAssetBundleManager.Instance.ImportBundlesFromFolder(importInfo.path, importInfo.pattern,format);
+                    EditorAssetBundleManager.Instance.ImportBundlesFromFolder(importInfo.path, importInfo.pattern,format,batchImportBundles);
                 }
                 else if (File.Exists(importInfo.path))
                 {
-                    EditorAssetBundleManager.Instance.ImportBundleFromFile(importInfo.path,format);
+                    BundleInfo bundleInfo = EditorAssetBundleManager.Instance.ImportBundleFromFile(importInfo.path, format);
+                    if (bundleInfo != null)
+                    {
+                        batchImportBundles.Add(bundleInfo);
+                    }
                 }
             }
 
+            //mark create type
+            foreach(var bundInfo in batchImportBundles)
+            {
+                bundInfo.SetCreateTagBit((uint)BundleInfo.CreateTag.BatchImport);
+            }
+
             EditorUtility.ClearProgressBar();
+
+            //EditorAssetBundleManager.Instance.RefreshAllAssetDependencies();
+            EditorAssetBundleManager.Instance.CreateBundleForAllAssets(format);
+            EditorAssetBundleManager.Instance.RefreshAllBundleDependencies();
+            EditorAssetBundleManager.Instance.Combine();
 
             EditorAssetBundleManager.Instance.Save();
 
