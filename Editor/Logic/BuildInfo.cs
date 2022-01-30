@@ -62,6 +62,7 @@ namespace AssetBundleBuilder
 
         //manifest 文件名
         public string manifestName = "all.manifest";
-
+        //assetbundle扩展名
+        public string assetBundleExt = ".ab";
     }
 }

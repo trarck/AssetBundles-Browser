@@ -12,16 +12,16 @@ namespace AssetBundleBuilder
 	public partial class EditorAssetBundleManager
 	{
 
-        private List<AssetBundleBuild> CreateAssetBundleBuilds()
+        private List<AssetBundleBuild> CreateAssetBundleBuilds(BuildInfo info)
         {
-            List<AssetBundleBuild> builds = new List<AssetBundleBuild>();
+            List<AssetBundleBuild> builds = new List<AssetBundleBuild>(bundles.Count);
             List<string> assetsPaths = new List<string>();
             foreach (var bundle in bundles)
             {
                 if (bundle.assets.Count > 0)
                 {
                     AssetBundleBuild build = new AssetBundleBuild();
-                    build.assetBundleName = bundle.name;
+                    build.assetBundleName = string.IsNullOrEmpty(info.assetBundleExt)? bundle.name: string.Format("{0}{1}", bundle.name, info.assetBundleExt);
                     if (!string.IsNullOrEmpty(bundle.variantName))
                     {
                         build.assetBundleVariant = bundle.variantName;
@@ -38,7 +38,7 @@ namespace AssetBundleBuilder
         public bool BuildAssetBundles(BuildInfo info)
         {
 
-            List<AssetBundleBuild> builds = CreateAssetBundleBuilds();
+            List<AssetBundleBuild> builds = CreateAssetBundleBuilds(info);
 
             if (!Directory.Exists(info.outputDirectory))
             {
@@ -63,7 +63,7 @@ namespace AssetBundleBuilder
 
         public bool BuildAssetBundlesPipline(BuildInfo info)
         {
-            List<AssetBundleBuild> builds = CreateAssetBundleBuilds();
+            List<AssetBundleBuild> builds = CreateAssetBundleBuilds(info);
 
             if (!Directory.Exists(info.outputDirectory))
             {
