@@ -94,6 +94,11 @@ namespace AssetBundleBuilder
                 if (assetBundleFileInfo != null)
                 {
                     BundleInfo bundleInfo = GetBundle(assetBundleName);
+                    if (bundleInfo == null)
+                    {
+                        bundleInfo = GetBundle(assetBundleName.Replace(buildInfo.assetBundleExt,""));
+                    }
+
                     if (bundleInfo != null)
                     {
                         YH.AssetManage.AssetBundleInfo assetBundleInfo = new YH.AssetManage.AssetBundleInfo();
