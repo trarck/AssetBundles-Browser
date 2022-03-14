@@ -421,6 +421,7 @@ namespace AssetBundleBuilder.Model
 
 			//更新info信息
 			UpdateBundleInfo(bundle);
+			SaveBundles();
 			return true;
 		}
 
@@ -504,6 +505,8 @@ namespace AssetBundleBuilder.Model
 				{
 					ChangeBundleParent(child as BundleTreeItem, to);
 				}
+
+				SaveBundles();
 			}
 		}
 
@@ -513,6 +516,7 @@ namespace AssetBundleBuilder.Model
 			{
 				EditorAssetBundleManager.Instance.MergeBundle(from.bundleInfo, to.bundleInfo);
 				RemoveBundle(from);
+				SaveBundles();
 			}
 		}
 
@@ -598,7 +602,7 @@ namespace AssetBundleBuilder.Model
 
 		public BundleTreeDataItem HandleDedupeBundles(IEnumerable<BundleTreeItem> bundles, bool onlyOverlappedAssets)
 		{
-			var newBundle = CreateEmptyBundle();
+
 			HashSet<AssetInfo> dupeAssets = new HashSet<AssetInfo>();
 			HashSet<AssetInfo> fullAssetList = new HashSet<AssetInfo>();
 
@@ -634,6 +638,7 @@ namespace AssetBundleBuilder.Model
 			if (dupeAssets.Count == 0)
 				return null;
 
+			var newBundle = CreateEmptyBundle();
 			MoveAssetsToBundle(dupeAssets, newBundle);
 			SaveBundles();
 			return newBundle;
