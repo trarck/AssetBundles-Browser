@@ -254,7 +254,7 @@ namespace AssetBundleBuilder
 		#endregion //Asset Binary Serialize
 
 		#region Bundle Binary Serialize
-		private static void GenerateBundlesSerilizeIndex(ICollection<BundleInfo> bundles)
+		public static void GenerateBundlesSerilizeIndex(ICollection<BundleInfo> bundles)
 		{
 			int i = 0;
 			foreach (var bundle in bundles)

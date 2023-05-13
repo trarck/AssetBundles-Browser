@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Threading.Tasks;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
@@ -64,7 +64,6 @@ namespace AssetBundleBuilder
 				m_Bundles = value;
 			}
 		}
-
 
 		public void Init()
 		{
@@ -187,14 +186,14 @@ namespace AssetBundleBuilder
 		/// <param name="asset"></param>
 		public void RefreshAssetAllDependencies(AssetInfo asset)
 		{
-			Stack<AssetInfo> assetsStack = new Stack<AssetInfo>();
+			Stack<AssetInfo> visiting = new Stack<AssetInfo>();
 			HashSet<AssetInfo> visiteds = new HashSet<AssetInfo>();
 
-			assetsStack.Push(asset);
+			visiting.Push(asset);
 
-			while (assetsStack.Count > 0)
+			while (visiting.Count > 0)
 			{
-				AssetInfo current = assetsStack.Pop();
+				AssetInfo current = visiting.Pop();
 				if (visiteds.Contains(current))
 				{
 					continue;
@@ -209,7 +208,7 @@ namespace AssetBundleBuilder
 						if (asset != dep)
 						{
 							asset.allDependencies.Add(dep);
-							assetsStack.Push(dep);
+							visiting.Push(dep);
 						}
 					}
 				}
@@ -274,6 +273,7 @@ namespace AssetBundleBuilder
 		/// </summary>
 		public void RefreshAllAssetAllDependencies()
 		{
+			//TODO::MultiThread
 			List<AssetInfo> assets = new List<AssetInfo>(m_Assets.Values);
 			foreach (var asset in assets)
 			{
@@ -616,6 +616,69 @@ namespace AssetBundleBuilder
 			}
 		}
 
+		public void RefreshBundleAllDependencies(BundleInfo bundle)
+		{
+			Stack<BundleInfo> visiting = new Stack<BundleInfo>();
+			HashSet<BundleInfo> visiteds = new HashSet<BundleInfo>();
+
+            if (bundle.allDependencies == null)
+            {
+				bundle.allDependencies = new HashSet<BundleInfo>();
+            }
+            else
+            {
+				bundle.allDependencies.Clear();
+            }
+
+			visiting.Push(bundle);
+
+			while (visiting.Count > 0)
+			{
+				BundleInfo current = visiting.Pop();
+				if (visiteds.Contains(current))
+				{
+					continue;
+				}
+
+				visiteds.Add(current);
+
+				if (current.dependencies != null && current.dependencies.Count > 0)
+				{
+					foreach (var dep in current.dependencies)
+					{
+						if (bundle != dep)
+						{
+							bundle.allDependencies.Add(dep);
+							visiting.Push(dep);
+						}
+					}
+				}
+			}
+		}
+
+		public void RefreshAllBundleAllDependencies()
+		{
+			//TODO::MultiThread
+			foreach (var bundle in m_Bundles)
+			{
+				RefreshBundleAllDependencies(bundle);
+			}
+		}
+
+		public void ClearBundleAllDependencies(BundleInfo bundle)
+		{
+			if(bundle.allDependencies!=null)
+				bundle.allDependencies.Clear();
+		}
+
+		public void ClearAllBundleAllDependencies()
+		{
+			foreach (var bundle in m_Bundles)
+			{
+				ClearBundleAllDependencies(bundle);
+			}
+		}
+
 		public string CreateBundleName(string filePath, bool useFullPath, bool useExt, bool flatPath)
 		{
 			if (string.IsNullOrEmpty(filePath))
@@ -683,7 +746,6 @@ namespace AssetBundleBuilder
 			}
 		}
 
-
 		public string[] GetAllAssetBundleNames()
         {
 			List<string> bundleNames = new List<string>();
@@ -695,6 +757,24 @@ namespace AssetBundleBuilder
 				}
             }
 			return bundleNames.ToArray();
+        }
+
+		public bool TryGetValidBundles(List<BundleInfo> validBundles)
+		{
+			if (m_Bundles == null || validBundles == null)
+			{
+				return false;
+			}
+
+			for (int i = 0; i < m_Bundles.Count; ++i)
+            {
+				if(m_Bundles[i].assets==null || m_Bundles[i].assets.Count == 0)
+                {
+					continue;
+				}
+				validBundles.Add(m_Bundles[i]);
+			}
+			return true;
         }
 
 		#endregion //Bundle

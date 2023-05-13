@@ -54,8 +54,8 @@ namespace AssetBundleBuilder
 			{
 				m_AssetPath = value;
 				m_DisplayName = Path.GetFileNameWithoutExtension(m_AssetPath);
-				//m_HashCode = YH.Hash.xxHash.xxHash64.ComputeHash(m_AssetPath);
-			}
+                //m_HashCode = YH.Hash.xxHash.xxHash64.ComputeHash(m_AssetPath);
+            }
 		}
 		public string displayName
 		{

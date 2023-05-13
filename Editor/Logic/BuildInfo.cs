@@ -64,5 +64,7 @@ namespace AssetBundleBuilder
         public string manifestName = "all.manifest";
         //assetbundle扩展名
         public string assetBundleExt = ".ab";
+        //是否保存所有依赖
+        public bool bundleDependenciesAll;
     }
 }

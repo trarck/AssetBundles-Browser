@@ -14,7 +14,7 @@ namespace AssetBundleBuilder
         [SerializeField]
         private ConfigTabData m_ConfigData;
 
-        //ÎÄ¼þ¼ÐÇ°×ººöÂÔÁÐ±í
+        //ï¿½Ä¼ï¿½ï¿½ï¿½Ç°×ºï¿½ï¿½ï¿½ï¿½ï¿½Ð±ï¿½
         ReorderableList m_IgnoreFolderPrefixList;
 
         internal AssetBundleConfigTab()

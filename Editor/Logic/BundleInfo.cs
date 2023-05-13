@@ -265,6 +265,9 @@ namespace AssetBundleBuilder
 		public HashSet<BundleInfo> refers;
 		//直接依赖
 		public HashSet<BundleInfo> dependencies;
+		//所有依赖
+		public HashSet<BundleInfo> allDependencies;
+
 		//单独的.是--独立加载，需要主动加载的资源。否--依赖加载，不会主动加载。
 		//一般prefab，场景需要手动加载，一些贴图和音乐也需要手动加载。
 		//fbx基本是依赖加载，大部分材质也是依赖加载。
@@ -279,6 +282,8 @@ namespace AssetBundleBuilder
 		protected bool m_Enable = false;
 
 		protected uint m_CreateTag;
+
+		protected ulong m_ContentHash;
 
 		//用于序列化时的索引号。也可以在序列化时使用映射表建立序列化的索引号。
 		public int serializeIndex = 0;
@@ -433,6 +438,18 @@ namespace AssetBundleBuilder
 				return "";
 			}
 		}
+
+		public ulong contentHash
+        {
+            get
+            {
+				return m_ContentHash;
+            }
+            set
+            {
+				m_ContentHash = value;
+            }
+        }
 
 		public BundleInfo():this(null, null)
 		{
