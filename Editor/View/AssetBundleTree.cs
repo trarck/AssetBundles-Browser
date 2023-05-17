@@ -531,7 +531,6 @@ namespace AssetBundleBuilder.View
         private BundleTreeFolderItem dragToNewSpaceRoot = null;
         private void DragPathsAsOneBundle()
         {
-            Debug.Log("TTTTT");
             var newBundle = BundleTreeManager.Instance.HandleCreateAssetsOneBundle(dragToNewSpacePaths,dragToNewSpaceRoot);         
             ReloadAndSelect(newBundle.id, true);
         }
