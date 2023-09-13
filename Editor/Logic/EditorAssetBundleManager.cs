@@ -169,7 +169,7 @@ namespace AssetBundleBuilder
 						AssetInfo depAsset = GetOrCreateAsset(dep);
 						if (depAsset != null)
 						{
-							depAsset.AddRefer(asset);
+							asset.AddDependency(depAsset);
 							RefreshAssetDependencies(depAsset);
 						}
 					}
