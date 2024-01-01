@@ -60,7 +60,7 @@ namespace AssetBundleBuilder
             }
 
             SaveBundleManifest(validBundles, info);
-
+            NormalizeBundleFilesName(validBundles, info);
             if (info.onBuild != null)
             {
                 info.onBuild(null);
@@ -101,6 +101,7 @@ namespace AssetBundleBuilder
             }
 
             SaveBundleManifest(validBundles, info);
+            NormalizeBundleFilesName(validBundles, info);
             return true;
         }
 
@@ -120,7 +121,17 @@ namespace AssetBundleBuilder
             string outputManifestJsonFile = outputManifestFile + ".json";
 
         }
-    
+
+        private static void NormalizeBundleFilesName(List<BundleInfo> validBundles, BuildInfo buildInfo)
+        {
+            foreach (var bundleInfo in validBundles)
+            {
+                string sourceBundleFilePath = Path.Combine(buildInfo.outputDirectory, bundleInfo.name + buildInfo.assetBundleExt);
+                string renameBundleFilePath = Path.Combine(buildInfo.outputDirectory, HexConverter.ToString(bundleInfo.bundleId,HexConverter.Casing.Lower)+ buildInfo.assetBundleExt);
+                File.Copy(sourceBundleFilePath, renameBundleFilePath, true);
+            }
+        }
+
         private BuildTargetGroup GetBuildTargetGroupFromTarget(BuildTarget buildTarget)
         {
             switch (buildTarget)
