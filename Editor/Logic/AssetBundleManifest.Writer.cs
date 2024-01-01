@@ -34,8 +34,8 @@ namespace AssetBundleBuilder
 
             CreateHeader(flag);
 
-            AddBlockInfo(BlockType.Version);
-            AddBlockInfo(BlockType.Bundle);
+            AddBlockInfo(StreamBlockType.Version);
+            AddBlockInfo(StreamBlockType.Bundle);
 
             SetBlockTableCount();
 
@@ -56,9 +56,9 @@ namespace AssetBundleBuilder
         protected void CreateHeader(ManifestFlag flag)
         {
             _Header.magic = Magic;
-            _Header.format = Format;
+            _Header.format = CurrentFormat;
             _Header.flag = flag;
-            _Header.blockCount = 0;
+            _Header.streamBlockCount = 0;
         }
 
         protected void WriteHeader()
@@ -66,12 +66,12 @@ namespace AssetBundleBuilder
             _Writer.Write(_Header.magic);
             _Writer.Write(_Header.format);
             _Writer.Write((ushort)_Header.flag);
-            _Writer.Write(_Header.blockCount);
+            _Writer.Write(_Header.streamBlockCount);
         }
 
         protected void SetBlockTableCount()
         {
-            _Header.blockCount =(byte)_BlockInfos.Count;
+            _Header.streamBlockCount =(byte)_BlockInfos.Count;
         }
 
         protected int GetBlockTableRawSize()
@@ -79,7 +79,7 @@ namespace AssetBundleBuilder
             return sizeof(int) * _BlockInfos.Count;
         }
 
-        protected int AddBlockInfo(BlockType type)
+        protected int AddBlockInfo(StreamBlockType type)
         {
             if (_BlockInfos == null)
             {
@@ -91,7 +91,7 @@ namespace AssetBundleBuilder
             return _BlockInfos.Count - 1;
         }
 
-        protected void SetBlockOffset(BlockType type, uint offset)
+        protected void SetBlockOffset(StreamBlockType type, uint offset)
         {
             for (int i = 0; i < _BlockInfos.Count; ++i)
             {
@@ -135,7 +135,7 @@ namespace AssetBundleBuilder
         protected void WriteVersion(Version version)
         {
             VersionSerializer.SerializeVersion(version, _Writer);
-            SetBlockOffset(BlockType.Version, (uint)_Writer.BaseStream.Position);
+            SetBlockOffset(StreamBlockType.Version, (uint)_Writer.BaseStream.Position);
         }
 
         protected void WriteBundles(List<BundleInfo> bundles)
@@ -163,7 +163,7 @@ namespace AssetBundleBuilder
                 WriteDependencies(bundleInfo);
             }
 
-            SetBlockOffset(BlockType.Bundle, (uint)_Writer.BaseStream.Position);
+            SetBlockOffset(StreamBlockType.Bundle, (uint)_Writer.BaseStream.Position);
         }
 
         protected void WriteAssets(BundleInfo bundleInfo)
