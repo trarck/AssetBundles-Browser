@@ -9,9 +9,9 @@ namespace AssetBundleBuilder
     {
         protected BinaryWriter _Writer;
 
-        List<AssetBundleManifestBlockInfo> _BlockInfos;
-        protected int _BlockIndex = 0;
-        protected long _BlockTableOffset = 0;
+        List<AssetBundleManifestStreamInfo> _StreamInfos;
+        protected int _StreamIndex = 0;
+        protected long _StreamTableOffset = 0;
 
         public BinaryWriter Writer
         {
@@ -34,68 +34,68 @@ namespace AssetBundleBuilder
 
             CreateHeader(flag);
 
-            AddBlockInfo(BlockType.Version);
-            AddBlockInfo(BlockType.Bundle);
+            AddStreamInfo(StreamType.Version);
+            AddStreamInfo(StreamType.Bundle);
 
-            SetBlockTableCount();
+            SetStreamTableCount();
 
             WriteHeader();
 
             //block table
-            StoreBlockTableOffset();
+            StoreStreamTableOffset();
 
             WriteVersion(version);
 
             WriteBundles(bundles);
 
-            RestoreBlockTableOffset();
+            RestoreStreamTableOffset();
 
-            WriteBlockTable();
+            WriteStreamTable();
         }
 
         protected void CreateHeader(ManifestFlag flag)
         {
             _Header.magic = Magic;
-            _Header.format = Format;
+            _Header.format = CurrentFormat;
             _Header.flag = flag;
-            _Header.blockCount = 0;
+            _Header.streamBlockCount = 0;
         }
 
         protected void WriteHeader()
         {
             _Writer.Write(_Header.magic);
             _Writer.Write(_Header.format);
-            _Writer.Write((ushort)_Header.flag);
-            _Writer.Write(_Header.blockCount);
+            _Writer.Write((byte)_Header.flag);
+            _Writer.Write(_Header.streamBlockCount);
         }
 
-        protected void SetBlockTableCount()
+        protected void SetStreamTableCount()
         {
-            _Header.blockCount =(byte)_BlockInfos.Count;
+            _Header.streamBlockCount =(byte)_StreamInfos.Count;
         }
 
         protected int GetBlockTableRawSize()
         {
-            return sizeof(int) * _BlockInfos.Count;
+            return sizeof(int) * _StreamInfos.Count;
         }
 
-        protected int AddBlockInfo(BlockType type)
+        protected int AddStreamInfo(StreamType type)
         {
-            if (_BlockInfos == null)
+            if (_StreamInfos == null)
             {
-                _BlockInfos = new List<AssetBundleManifestBlockInfo>();
+                _StreamInfos = new List<AssetBundleManifestStreamInfo>();
             }
-            AssetBundleManifestBlockInfo blockInfo = new AssetBundleManifestBlockInfo();
+            AssetBundleManifestStreamInfo blockInfo = new AssetBundleManifestStreamInfo();
             blockInfo.type = type;
-            _BlockInfos.Add(blockInfo);
-            return _BlockInfos.Count - 1;
+            _StreamInfos.Add(blockInfo);
+            return _StreamInfos.Count - 1;
         }
 
-        protected void SetBlockOffset(BlockType type, uint offset)
+        protected void SetBlockOffset(StreamType type, uint offset)
         {
-            for (int i = 0; i < _BlockInfos.Count; ++i)
+            for (int i = 0; i < _StreamInfos.Count; ++i)
             {
-                if (_BlockInfos[i].type == type)
+                if (_StreamInfos[i].type == type)
                 {
                     SetBlockOffset(i, offset);
                     return;
@@ -105,54 +105,58 @@ namespace AssetBundleBuilder
 
         protected void SetBlockOffset(int blockIndex, uint offset)
         {
-            if (blockIndex >= 0 && blockIndex < _BlockInfos.Count)
+            if (blockIndex >= 0 && blockIndex < _StreamInfos.Count)
             {
-                AssetBundleManifestBlockInfo blockInfo = _BlockInfos[blockIndex];
+                AssetBundleManifestStreamInfo blockInfo = _StreamInfos[blockIndex];
                 blockInfo.offset = offset;
-                _BlockInfos[blockIndex] = blockInfo;
+                _StreamInfos[blockIndex] = blockInfo;
             }
         }
 
-        protected void StoreBlockTableOffset()
+        protected void StoreStreamTableOffset()
         {
-            _BlockTableOffset = _Writer.BaseStream.Position;
+            _StreamTableOffset = _Writer.BaseStream.Position;
             _Writer.BaseStream.Position += GetBlockTableRawSize();
         }
 
-        protected void RestoreBlockTableOffset()
+        protected void RestoreStreamTableOffset()
         {
-            _Writer.BaseStream.Position = _BlockTableOffset;
+            _Writer.BaseStream.Position = _StreamTableOffset;
         }
 
-        protected void WriteBlockTable()
+        protected void WriteStreamTable()
         {
-            for (int i = 0; i < _BlockInfos.Count; ++i)
+            for (int i = 0; i < _StreamInfos.Count; ++i)
             {
-                _Writer.Write(_BlockInfos[i].SerializeValue());
+                _Writer.Write(_StreamInfos[i].SerializeValue());
             }
         }
 
         protected void WriteVersion(Version version)
         {
+            SetBlockOffset(StreamType.Version, (uint)_Writer.BaseStream.Position);
             VersionSerializer.SerializeVersion(version, _Writer);
-            SetBlockOffset(BlockType.Version, (uint)_Writer.BaseStream.Position);
         }
 
         protected void WriteBundles(List<BundleInfo> bundles)
         {
-            if(bundles==null || bundles.Count == 0)
+            SetBlockOffset(StreamType.Bundle, (uint)_Writer.BaseStream.Position);
+
+            if (bundles==null || bundles.Count == 0)
             {
                 return;
             }
             
+            // bundle count
             _Writer.Write(bundles.Count);
 
             //write base info
             for (int i = 0; i < bundles.Count; i++)
             {
                 BundleInfo bundleInfo = bundles[i];
-                bundleInfo.serializeIndex = i;
-                _Writer.Write(bundleInfo.contentHash);
+                //bundle id
+                bundleInfo.bundleId =(ulong)(i+1);
+                _Writer.Write(bundleInfo.bundleId);
                 WriteAssets(bundleInfo);
             }
 
@@ -162,8 +166,6 @@ namespace AssetBundleBuilder
                 BundleInfo bundleInfo = bundles[i];
                 WriteDependencies(bundleInfo);
             }
-
-            SetBlockOffset(BlockType.Bundle, (uint)_Writer.BaseStream.Position);
         }
 
         protected void WriteAssets(BundleInfo bundleInfo)
@@ -200,7 +202,7 @@ namespace AssetBundleBuilder
             _Writer.Write(deps.Count);
             foreach (var dep in deps)
             {
-                _Writer.Write(dep.serializeIndex);
+                _Writer.Write(dep.bundleId);
             }
         }
     }

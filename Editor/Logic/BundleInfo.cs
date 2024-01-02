@@ -245,6 +245,8 @@ namespace AssetBundleBuilder
 			BatchImport =2,
 		}
 
+		public ulong bundleId;
+
 		//bundle name
 		protected string m_Name;
 
