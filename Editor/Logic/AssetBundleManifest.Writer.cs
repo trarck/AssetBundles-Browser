@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using YH.AssetManage;
+using YH.xxHash;
 
 namespace AssetBundleBuilder
 {
@@ -178,7 +179,7 @@ namespace AssetBundleBuilder
             _Writer.Write(bundleInfo.assets.Count);
             foreach(var asset in bundleInfo.assets)
             {
-                ulong hashCode = YH.Hash.xxHash.xxHash64.ComputeHash(asset.assetPath);
+                ulong hashCode = xxHash64.ComputeHash(asset.assetPath);
                 _Writer.Write(hashCode);
             }
         }
