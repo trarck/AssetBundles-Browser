@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
-using System.Threading.Tasks;
-using UnityEditor;
 using UnityEngine;
 
 namespace AssetBundleBuilder
@@ -13,7 +10,7 @@ namespace AssetBundleBuilder
 		{
 			if (Path.IsPathRooted(assetPath))
 			{
-				assetPath = YH.FileSystem.Relative(Path.GetDirectoryName(Application.dataPath), assetPath);
+				assetPath = FileSystem.Relative(Path.GetDirectoryName(Application.dataPath), assetPath);
 			}
 
 			if (!ValidateAsset(assetPath))
