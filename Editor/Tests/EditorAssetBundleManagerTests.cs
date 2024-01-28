@@ -8,8 +8,10 @@ using AssetBundleBuilder;
 using System.Threading;
 using UnityEditor;
 using UnityEditor.Build.Content;
+#if USE_BSP
 using UnityEditor.Build.Pipeline.Utilities;
 using UnityEditor.Build.Pipeline;
+#endif
 using System.Reflection;
 
 namespace AssetBundleBuilder.Tests
@@ -1135,6 +1137,7 @@ namespace AssetBundleBuilder.Tests
 			Debug.LogFormat("Build AssetBundle pipline used:{0}", used);
 		}
 
+#if USE_BSP
 		[Test]
 		public void WriteSerializedFileTest()
 		{
@@ -1191,7 +1194,8 @@ namespace AssetBundleBuilder.Tests
 
 			//t.Start();
 		}
-
+#endif
+#if USE_BSP
 		private AssetLoadInfo CreateAssetLoadInfo(string assetPath,BuildTarget buildTarget)
 		{
 			GUID assetGuid = new GUID(AssetDatabase.AssetPathToGUID(assetPath));
@@ -1267,5 +1271,6 @@ namespace AssetBundleBuilder.Tests
 			references.Clear();
 			references.AddRange(referencesPruned);
 		}
+#endif
 	}
 }

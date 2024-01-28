@@ -3,9 +3,11 @@ using System.IO;
 using UnityEditor;
 using UnityEngine;
 using YH.AssetManage;
+# if USE_BSP
 using UnityEditor.Build.Pipeline;
 using UnityEditor.Build.Pipeline.Interfaces;
 using UnityEngine.Build.Pipeline;
+#endif
 
 namespace AssetBundleBuilder
 {
@@ -82,7 +84,7 @@ namespace AssetBundleBuilder
             {
                 Directory.CreateDirectory(info.outputDirectory);
             }
-
+#if USE_BSP
             BundleBuildParameters buildParams = new BundleBuildParameters(info.buildTarget, info.buildTargetGroup, info.outputDirectory);
             buildParams.BundleCompression = BuildCompression.LZ4;
             IList<IBuildTask> buildTasks = DefaultBuildTasks.Create(DefaultBuildTasks.Preset.AssetBundleCompatible);
@@ -93,6 +95,9 @@ namespace AssetBundleBuilder
             {
                 return false;
             }
+#else
+            return false;
+#endif
 
             //如果使用全量依赖，则刷新一次
             if (info.bundleDependenciesAll)
